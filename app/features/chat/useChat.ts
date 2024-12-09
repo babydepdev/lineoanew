@@ -1,4 +1,4 @@
-import { ConversationWithMessages, SerializedConversation } from '@/app/types/chat';
+import {  SerializedConversation } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 import { useChatEvents } from './useChatEvents';
 import { useChatActions } from './useChatActions';
