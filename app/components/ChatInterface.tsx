@@ -21,27 +21,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
     setConversations,
     setSelectedConversation,
     updateConversation,
+    addMessage,
   } = useConversationStore();
 
   const handleMessageReceived = useCallback((message: PusherMessage) => {
     if (!message?.conversationId) return;
     
-    const conversation = conversations.find(c => c.id === message.conversationId);
-    if (conversation) {
-      const updatedConversation = {
-        ...conversation,
-        messages: [...conversation.messages, {
-          ...message,
-          timestamp: new Date(message.timestamp)
-        } as Message]
-      };
-      updateConversation(updatedConversation);
-      
-      if (selectedConversation?.id === message.conversationId) {
-        setSelectedConversation(updatedConversation);
-      }
-    }
-  }, [conversations, selectedConversation, updateConversation, setSelectedConversation]);
+    const messageWithDate = {
+      ...message,
+      timestamp: new Date(message.timestamp)
+    } as Message;
+    
+    addMessage(messageWithDate);
+  }, [addMessage]);
 
   const handleConversationUpdated = useCallback((conversation: PusherConversation) => {
     if (!conversation?.id) return;
@@ -147,4 +139,4 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
       </div>
     </div>
   );
-};
+}

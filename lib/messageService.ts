@@ -43,12 +43,7 @@ export async function broadcastMessageUpdate(conversationId: string) {
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
         formattedConversation
-      ),
-      pusherServer.trigger(
-        `private-conversation-${conversationId}`,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formattedMessage
-      ),
+      )
     ]);
   }
 
