@@ -42,10 +42,12 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 : 'bg-blue-500 text-white'
             }`}
           >
-            <div className="text-sm mb-1">
+            <div className="text-sm mb-1 font-semibold">
               {msg.sender}
             </div>
-            <div className="break-words">{msg.content}</div>
+            <div className="break-words whitespace-pre-wrap text-base">
+              {msg.content}
+            </div>
             <div className="text-xs opacity-75 mt-1">
               {new Date(msg.timestamp).toLocaleTimeString()}
             </div>
