@@ -16,17 +16,17 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
 
   const addMessage = useCallback((newMessage: Message) => {
     setMessages(prev => {
-      // Check if message already exists (including temp messages)
+      // Check if message already exists
       const exists = prev.some(msg => 
         msg.id === newMessage.id || 
         (msg.id.startsWith('temp-') && msg.content === newMessage.content)
       );
       
       if (exists) {
-        // Replace temp message with real message if it exists
+        // Replace temp message with real message
         return prev.map(msg => 
-          msg.id.startsWith('temp-') && msg.content === newMessage.content
-            ? newMessage
+          (msg.id.startsWith('temp-') && msg.content === newMessage.content)
+            ? { ...newMessage, sender: 'BOT' } // Ensure correct sender type
             : msg
         );
       }
@@ -70,7 +70,8 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
       if (message.conversationId === conversationId) {
         addMessage({
           ...message,
-          timestamp: new Date(message.timestamp)
+          timestamp: new Date(message.timestamp),
+          sender: message.sender // Preserve the correct sender type
         });
       }
     };
