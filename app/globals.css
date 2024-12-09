@@ -29,11 +29,11 @@ body {
 }
 
 .message-bubble-user {
-  @apply bg-primary text-primary-foreground rounded-2xl rounded-br-none;
+  @apply bg-primary text-primary-foreground rounded-2xl rounded-bl-none;
 }
 
 .message-bubble-bot {
-  @apply bg-white dark:bg-slate-800 border border-border rounded-2xl rounded-bl-none;
+  @apply bg-white dark:bg-slate-800 border border-border rounded-2xl rounded-br-none;
 }
 
 .typing-indicator span {

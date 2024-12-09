@@ -1,14 +1,15 @@
 "use client";
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { SerializedConversation } from '../types/chat';
 import ConversationList from './ConversationList';
-import { MessageList } from './MessageList';
+import { MessageListWithRef, MessageListHandle } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
 import { TypingIndicator } from './TypingIndicator';
+import { Message } from '@prisma/client';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -22,8 +23,25 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
     sendMessage,
   } = useChat(initialConversations);
 
+  const messageListRef = useRef<MessageListHandle>(null);
+
   const handleSendMessage = async (content: string) => {
     if (selectedConversation) {
+      // Create temporary message
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`,
+        conversationId: selectedConversation.id,
+        content,
+        sender: 'USER',
+        timestamp: new Date(),
+        platform: selectedConversation.platform,
+        externalId: null
+      };
+
+      // Add temporary message to the list
+      messageListRef.current?.addLocalMessage(tempMessage);
+
+      // Send actual message
       await sendMessage(content);
     }
   };
@@ -59,7 +77,10 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
               </div>
             </div>
 
-            <MessageList conversationId={selectedConversation.id} />
+            <MessageListWithRef 
+              ref={messageListRef}
+              conversationId={selectedConversation.id} 
+            />
             <TypingIndicator conversationId={selectedConversation.id} />
             <MessageInput 
               onSend={handleSendMessage}

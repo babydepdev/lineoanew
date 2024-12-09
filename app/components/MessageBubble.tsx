@@ -32,7 +32,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       )}>
         <div className={cn(
           "px-4 py-2.5 text-sm",
-          isUser ? "message-bubble-user" : "message-bubble-bot"
+          isUser ? "message-bubble-user" : "message-bubble-bot",
+          message.id.startsWith('temp-') && "opacity-70"
         )}>
           {message.content}
         </div>

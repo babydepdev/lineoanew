@@ -2,17 +2,36 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Message } from '@prisma/client';
-import { pusherClient, PUSHER_EVENTS} from '@/lib/pusher';
+import { pusherClient, PUSHER_EVENTS } from '@/lib/pusher';
 
-export function useRealtimeMessages(conversationId: string) {
+interface UseRealtimeMessagesResult {
+  messages: Message[];
+  isLoading: boolean;
+  addMessage: (message: Message) => void;
+}
+
+export function useRealtimeMessages(conversationId: string): UseRealtimeMessagesResult {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const addMessage = useCallback((newMessage: Message) => {
     setMessages(prev => {
-      const exists = prev.some(msg => msg.id === newMessage.id);
-      if (exists) return prev;
+      // Check if message already exists (including temp messages)
+      const exists = prev.some(msg => 
+        msg.id === newMessage.id || 
+        (msg.id.startsWith('temp-') && msg.content === newMessage.content)
+      );
       
+      if (exists) {
+        // Replace temp message with real message if it exists
+        return prev.map(msg => 
+          msg.id.startsWith('temp-') && msg.content === newMessage.content
+            ? newMessage
+            : msg
+        );
+      }
+      
+      // Add new message and sort by timestamp
       const updated = [...prev, newMessage].sort(
         (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
       );
@@ -64,5 +83,5 @@ export function useRealtimeMessages(conversationId: string) {
     };
   }, [conversationId, addMessage]);
 
-  return { messages, isLoading };
+  return { messages, isLoading, addMessage };
 }
