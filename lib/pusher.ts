@@ -1,27 +1,25 @@
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
+import { pusherConfig, isPusherConfigured } from './config/pusher';
 
-if (!process.env.NEXT_PUBLIC_PUSHER_KEY || 
-    !process.env.PUSHER_APP_ID || 
-    !process.env.PUSHER_SECRET || 
-    !process.env.NEXT_PUBLIC_PUSHER_CLUSTER) {
+if (!isPusherConfigured()) {
   throw new Error('Missing Pusher configuration');
 }
 
 // Server-side Pusher instance
 export const pusherServer = new Pusher({
-  appId: process.env.PUSHER_APP_ID,
-  key: process.env.NEXT_PUBLIC_PUSHER_KEY,
-  secret: process.env.PUSHER_SECRET,
-  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+  appId: pusherConfig.appId,
+  key: pusherConfig.key,
+  secret: pusherConfig.secret,
+  cluster: pusherConfig.cluster,
   useTLS: true
 });
 
 // Client-side Pusher instance
 export const pusherClient = new PusherClient(
-  process.env.NEXT_PUBLIC_PUSHER_KEY,
+  pusherConfig.key,
   {
-    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+    cluster: pusherConfig.cluster,
     forceTLS: true,
   }
 );

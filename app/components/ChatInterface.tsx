@@ -11,7 +11,7 @@ interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
 }
 
-export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversations }) => {
+export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
   const {
     conversations,
     selectedConversation,
@@ -20,7 +20,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
   } = useChat(initialConversations);
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-[calc(100vh-4rem)]">
       <ConversationList 
         conversations={conversations} 
         onSelect={setSelectedConversation}
@@ -45,4 +45,4 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
       </div>
     </div>
   );
-};
+}
