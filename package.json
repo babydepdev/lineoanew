@@ -26,7 +26,8 @@
     "zustand": "^4.5.0",
     "@types/node": "^20",
     "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/react-dom": "^19",
+    "encoding": "^0.1.13"
   },
   "devDependencies": {
     "eslint": "^8",

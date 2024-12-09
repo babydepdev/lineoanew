@@ -35,9 +35,10 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
 
   // Setup Pusher event handlers
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || !selectedConversation) return;
 
-    const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
+    const mainChannel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
+    const conversationChannel = pusherClient.subscribe(`${PUSHER_CHANNELS.CHAT}-${selectedConversation.id}`);
 
     const handleMessageReceived = (message: PusherMessage) => {
       if (!message?.id || !message?.conversationId) return;
@@ -48,18 +49,6 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
       };
       
       addMessage(updatedMessage);
-
-      if (selectedConversation?.id === message.conversationId) {
-        const updatedMessages = [...selectedConversation.messages, updatedMessage].sort(
-          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-        );
-        const updatedConversation = {
-          ...selectedConversation,
-          messages: updatedMessages,
-          updatedAt: new Date()
-        };
-        setSelectedConversation(updatedConversation);
-      }
     };
 
     const handleConversationUpdated = (pusherConversation: PusherConversation) => {
@@ -100,14 +89,15 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
       setConversations(sortedConversations);
     };
 
-    channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-    channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
-    channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
+    conversationChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+    conversationChannel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+    mainChannel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
 
     return () => {
-      channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-      channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
-      channel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
+      conversationChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+      conversationChannel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+      mainChannel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
+      pusherClient.unsubscribe(`${PUSHER_CHANNELS.CHAT}-${selectedConversation.id}`);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
   }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations]);
