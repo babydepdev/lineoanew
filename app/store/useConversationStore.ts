@@ -23,7 +23,13 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       );
 
       return {
-        conversations: updatedConversations,
+        conversations: updatedConversations.sort((a, b) => {
+          const aLastMessage = a.messages[a.messages.length - 1];
+          const bLastMessage = b.messages[b.messages.length - 1];
+          if (!aLastMessage) return 1;
+          if (!bLastMessage) return -1;
+          return bLastMessage.timestamp.getTime() - aLastMessage.timestamp.getTime();
+        }),
         selectedConversation:
           state.selectedConversation?.id === updatedConversation.id
             ? updatedConversation
@@ -54,6 +60,12 @@ export const useConversationStore = create<ConversationStore>((set) => ({
           };
         }
         return conv;
+      }).sort((a, b) => {
+        const aLastMessage = a.messages[a.messages.length - 1];
+        const bLastMessage = b.messages[b.messages.length - 1];
+        if (!aLastMessage) return 1;
+        if (!bLastMessage) return -1;
+        return bLastMessage.timestamp.getTime() - aLastMessage.timestamp.getTime();
       });
 
       const updatedSelectedConversation = 
