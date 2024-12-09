@@ -62,7 +62,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
             <MessageList conversationId={selectedConversation.id} />
             <TypingIndicator conversationId={selectedConversation.id} />
             <MessageInput 
-              onSend={handleSendMessage} 
+              onSend={handleSendMessage}
               conversationId={selectedConversation.id}
             />
           </>
