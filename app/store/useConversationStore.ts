@@ -22,14 +22,13 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         conv.id === updatedConversation.id ? updatedConversation : conv
       );
 
+      // Sort conversations by updatedAt timestamp
+      const sortedConversations = updatedConversations.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+
       return {
-        conversations: updatedConversations.sort((a, b) => {
-          const aLastMessage = a.messages[a.messages.length - 1];
-          const bLastMessage = b.messages[b.messages.length - 1];
-          if (!aLastMessage) return 1;
-          if (!bLastMessage) return -1;
-          return bLastMessage.timestamp.getTime() - aLastMessage.timestamp.getTime();
-        }),
+        conversations: sortedConversations,
         selectedConversation:
           state.selectedConversation?.id === updatedConversation.id
             ? updatedConversation
@@ -52,34 +51,36 @@ export const useConversationStore = create<ConversationStore>((set) => ({
 
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
+          const updatedMessages = [...conv.messages, message].sort(
+            (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+          );
           return {
             ...conv,
-            messages: [...conv.messages, message].sort((a, b) => 
-              a.timestamp.getTime() - b.timestamp.getTime()
-            ),
+            messages: updatedMessages,
+            updatedAt: message.timestamp
           };
         }
         return conv;
-      }).sort((a, b) => {
-        const aLastMessage = a.messages[a.messages.length - 1];
-        const bLastMessage = b.messages[b.messages.length - 1];
-        if (!aLastMessage) return 1;
-        if (!bLastMessage) return -1;
-        return bLastMessage.timestamp.getTime() - aLastMessage.timestamp.getTime();
       });
+
+      // Sort conversations by updatedAt timestamp
+      const sortedConversations = updatedConversations.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
 
       const updatedSelectedConversation = 
         state.selectedConversation?.id === message.conversationId
           ? {
               ...state.selectedConversation,
-              messages: [...state.selectedConversation.messages, message].sort((a, b) => 
-                a.timestamp.getTime() - b.timestamp.getTime()
+              messages: [...state.selectedConversation.messages, message].sort(
+                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
               ),
+              updatedAt: message.timestamp
             }
           : state.selectedConversation;
 
       return {
-        conversations: updatedConversations,
+        conversations: sortedConversations,
         selectedConversation: updatedSelectedConversation,
       };
     }),

@@ -17,7 +17,10 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
 
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
-      setConversations(initialConversations);
+      const sortedConversations = [...initialConversations].sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+      setConversations(sortedConversations);
     }
   }, [initialConversations, setConversations]);
 
@@ -36,6 +39,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       
       addMessage(updatedMessage);
 
+      // Update selected conversation if it's the current one
       if (selectedConversation?.id === message.conversationId) {
         const updatedMessages = [...selectedConversation.messages, updatedMessage].sort(
           (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
@@ -80,7 +84,12 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
 
-      setConversations(formattedConversations);
+      // Sort conversations by updatedAt
+      const sortedConversations = formattedConversations.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+
+      setConversations(sortedConversations);
     };
 
     channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);

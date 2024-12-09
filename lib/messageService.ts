@@ -28,7 +28,19 @@ export async function broadcastMessageUpdate(conversationId: string) {
     const formattedConversation = formatConversationForPusher(updatedConversation);
     const formattedMessage = formatMessageForPusher(latestMessage);
 
-    // Broadcast both the message and conversation updates
+    // Fetch all conversations sorted by updatedAt
+    const allConversations = await prisma.conversation.findMany({
+      include: {
+        messages: {
+          orderBy: { timestamp: 'asc' },
+        },
+      },
+      orderBy: {
+        updatedAt: 'desc',
+      },
+    });
+
+    // Broadcast all updates simultaneously
     await Promise.all([
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
@@ -40,22 +52,10 @@ export async function broadcastMessageUpdate(conversationId: string) {
         PUSHER_EVENTS.CONVERSATION_UPDATED,
         formattedConversation
       ),
-      // Fetch and broadcast all conversations to update the list
-      prisma.conversation.findMany({
-        include: {
-          messages: {
-            orderBy: { timestamp: 'asc' },
-          },
-        },
-        orderBy: {
-          updatedAt: 'desc',
-        },
-      }).then(conversations => 
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-          conversations.map(formatConversationForPusher)
-        )
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+        allConversations.map(formatConversationForPusher)
       )
     ]);
 
