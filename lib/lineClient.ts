@@ -2,7 +2,7 @@ import { Client } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from './pusher';
 import { formatConversationForPusher, formatMessageForPusher } from './messageFormatter';
-import { LineMessageEvent, LineApiResponse } from '@/app/types/line';
+import { LineMessageEvent } from '@/app/types/line';
 
 const lineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
@@ -135,53 +135,64 @@ export async function handleLineWebhook(event: LineMessageEvent) {
 }
 
 export async function sendLineMessage(userId: string, message: string): Promise<boolean> {
-  if (!userId || !message || !lineConfig.channelAccessToken) {
-    console.error('Missing required parameters for LINE message');
+  if (!userId || !message) {
+    console.error('Missing userId or message');
+    return false;
+  }
+
+  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    console.error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
     return false;
   }
 
   try {
-    console.log('Sending LINE message:', { userId, message });
+    console.log('Attempting to send LINE message:', { userId, message });
 
-    if (!lineClient.config.channelAccessToken) {
-      throw new Error('LINE client not properly configured');
-    }
+    // Create a new LINE client instance for each request to ensure fresh configuration
+    const client = new Client({
+      channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+      channelSecret: process.env.LINE_CHANNEL_SECRET || ''
+    });
 
     let retries = 3;
+    let lastError: Error | null = null;
+
     while (retries > 0) {
       try {
-        const response = await lineClient.pushMessage(userId, {
+        const response = await client.pushMessage(userId, {
           type: 'text',
           text: message
-        }) as LineApiResponse;
+        });
 
         console.log('LINE message sent successfully:', {
           userId,
           message,
-          messageId: response.messageId,
-          timestamp: new Date().toISOString()
+          response
         });
 
         return true;
       } catch (error) {
+        lastError = error as Error;
         console.error(`LINE message send attempt ${4 - retries} failed:`, error);
         retries--;
+        
         if (retries > 0) {
+          console.log(`Retrying in 1 second... (${retries} attempts remaining)`);
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
 
-    throw new Error('Failed to send LINE message after retries');
-  } catch (error) {
-    console.error('Error sending LINE message:', error);
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
+    if (lastError) {
+      console.error('All LINE message send attempts failed:', {
+        error: lastError.message,
+        stack: lastError.stack
       });
     }
+
+    return false;
+  } catch (error) {
+    console.error('Fatal error sending LINE message:', error);
     return false;
   }
 }
