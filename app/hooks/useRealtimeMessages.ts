@@ -23,16 +23,26 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
       );
       
       if (exists) {
-        // Replace temp message with real message
+        // Replace temp message with real message, preserving server timestamp
         return prev.map(msg => 
           (msg.id.startsWith('temp-') && msg.content === newMessage.content)
-            ? { ...newMessage, sender: 'BOT' } // Ensure correct sender type
+            ? { 
+                ...newMessage, 
+                sender: 'BOT',
+                timestamp: new Date() // Use current timestamp for immediate display
+              }
             : msg
         );
       }
       
+      // Add new message with current timestamp
+      const messageWithCurrentTime = {
+        ...newMessage,
+        timestamp: new Date()
+      };
+      
       // Add new message and sort by timestamp
-      const updated = [...prev, newMessage].sort(
+      const updated = [...prev, messageWithCurrentTime].sort(
         (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
       );
       return updated;
@@ -70,8 +80,8 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
       if (message.conversationId === conversationId) {
         addMessage({
           ...message,
-          timestamp: new Date(message.timestamp),
-          sender: message.sender // Preserve the correct sender type
+          timestamp: new Date(), // Use current timestamp for real-time display
+          sender: message.sender
         });
       }
     };

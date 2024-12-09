@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from 'react';
+import { Message, Platform, SenderType } from '@prisma/client';
 import { PusherMessage, PusherConversation } from '../types/chat';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { useChatState } from '../features/chat/useChatState';
@@ -24,10 +25,17 @@ export function usePusherEvents() {
           return;
         }
         
-        addMessage({
-          ...message,
-          timestamp: new Date(message.timestamp)
-        });
+        const processedMessage: Message = {
+          id: message.id,
+          conversationId: message.conversationId,
+          content: message.content,
+          sender: message.sender as SenderType,
+          timestamp: new Date(),
+          platform: message.platform as Platform,
+          externalId: message.externalId
+        };
+
+        addMessage(processedMessage);
       };
 
       const handleConversationUpdated = (conversation: PusherConversation) => {
@@ -36,12 +44,22 @@ export function usePusherEvents() {
           return;
         }
 
+        const processedMessages = conversation.messages.map(msg => ({
+          id: msg.id,
+          conversationId: msg.conversationId,
+          content: msg.content,
+          sender: msg.sender as SenderType,
+          timestamp: new Date(msg.timestamp),
+          platform: msg.platform as Platform,
+          externalId: msg.externalId
+        }));
+
         const updatedConversation = {
-          ...conversation,
-          messages: conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          })),
+          id: conversation.id,
+          platform: conversation.platform as Platform,
+          channelId: conversation.channelId,
+          userId: conversation.userId,
+          messages: processedMessages,
           createdAt: new Date(conversation.createdAt),
           updatedAt: new Date(conversation.updatedAt)
         };
@@ -59,15 +77,25 @@ export function usePusherEvents() {
           return;
         }
 
-        setConversations(conversations.map(conv => ({
-          ...conv,
+        const processedConversations = conversations.map(conv => ({
+          id: conv.id,
+          platform: conv.platform as Platform,
+          channelId: conv.channelId,
+          userId: conv.userId,
           messages: conv.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender as SenderType,
+            timestamp: new Date(msg.timestamp),
+            platform: msg.platform as Platform,
+            externalId: msg.externalId
           })),
           createdAt: new Date(conv.createdAt),
           updatedAt: new Date(conv.updatedAt)
-        })));
+        }));
+
+        setConversations(processedConversations);
       };
 
       channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
