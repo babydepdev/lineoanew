@@ -27,14 +27,14 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
         selectedId={selectedConversation?.id}
       />
 
-      <div className="w-3/4 flex flex-col bg-white shadow-lg">
+      <div className="w-3/4 flex flex-col bg-white">
         {selectedConversation ? (
           <>
             <div className="p-4 bg-blue-500 text-white font-bold">
               {selectedConversation.platform} Chat - {selectedConversation.userId}
             </div>
 
-            <MessageList messages={selectedConversation.messages} />
+            <MessageList conversationId={selectedConversation.id} />
             <MessageInput onSend={sendMessage} />
           </>
         ) : (
