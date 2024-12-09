@@ -43,18 +43,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
         });
       }
 
-      // Check for duplicate message
-      const existingMessage = await tx.message.findFirst({
-        where: {
-          externalId: messageId
-        }
-      });
-
-      if (existingMessage) {
-        console.log('Duplicate message detected, skipping:', messageId);
-        return { conversation, message: existingMessage };
-      }
-
       const newMessage = await tx.message.create({
         data: {
           conversationId: conversation.id,
@@ -74,7 +62,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
       return { conversation, message: newMessage };
     });
 
-    // Get updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
       where: { id: result.conversation.id },
       include: {
@@ -85,14 +72,12 @@ export async function handleLineWebhook(event: LineMessageEvent) {
     });
 
     if (updatedConversation) {
-      // Broadcast updates
       await pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
         formatConversationForPusher(updatedConversation)
       );
 
-      // Broadcast all conversations update
       const allConversations = await prisma.conversation.findMany({
         include: {
           messages: {
@@ -132,24 +117,12 @@ export async function sendLineMessage(userId: string, message: string): Promise<
       channelSecret: process.env.LINE_CHANNEL_SECRET || ''
     });
 
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        await client.pushMessage(userId, {
-          type: 'text',
-          text: message
-        });
-        console.log('LINE message sent successfully');
-        return true;
-      } catch (error) {
-        console.error(`LINE message send attempt failed (${retries} retries left):`, error);
-        retries--;
-        if (retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    }
-    return false;
+    await client.pushMessage(userId, {
+      type: 'text',
+      text: message
+    });
+    console.log('LINE message sent successfully');
+    return true;
   } catch (error) {
     console.error('Error sending LINE message:', error);
     return false;
