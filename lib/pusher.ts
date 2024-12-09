@@ -31,5 +31,5 @@ export const PUSHER_EVENTS = {
 } as const;
 
 export const PUSHER_CHANNELS = {
-  CHAT: 'chat'
+  CHAT: 'private-chat'
 } as const;

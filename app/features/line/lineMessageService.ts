@@ -1,4 +1,4 @@
-import { Client } from '@line/bot-sdk';
+import { Client, ClientConfig } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { formatConversationForPusher } from '@/lib/messageFormatter';
@@ -13,10 +13,12 @@ function getLineClient(): Client {
       throw new Error('LINE credentials not configured');
     }
 
-    lineClient = new Client({
+    const config: ClientConfig = {
       channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
       channelSecret: process.env.LINE_CHANNEL_SECRET
-    });
+    };
+
+    lineClient = new Client(config);
   }
 
   return lineClient;
@@ -54,7 +56,9 @@ export async function handleLineMessageReceived(
         platform: 'LINE'
       },
       include: {
-        messages: true
+        messages: {
+          orderBy: { timestamp: 'asc' }
+        }
       }
     });
 
@@ -66,7 +70,9 @@ export async function handleLineMessageReceived(
           channelId: userId
         },
         include: {
-          messages: true
+          messages: {
+            orderBy: { timestamp: 'asc' }
+          }
         }
       });
     }
@@ -89,7 +95,7 @@ export async function handleLineMessageReceived(
       data: { updatedAt: timestamp }
     });
 
-    // Get updated conversation
+    // Get updated conversation with messages
     const updatedConversation = await prisma.conversation.findUnique({
       where: { id: conversation.id },
       include: {
@@ -101,29 +107,18 @@ export async function handleLineMessageReceived(
 
     if (updatedConversation) {
       // Broadcast updates
-      await pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formatConversationForPusher(updatedConversation)
-      );
-
-      // Broadcast all conversations
-      const allConversations = await prisma.conversation.findMany({
-        include: {
-          messages: {
-            orderBy: { timestamp: 'asc' }
-          }
-        },
-        orderBy: {
-          updatedAt: 'desc'
-        }
-      });
-
-      await pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-        allConversations.map(formatConversationForPusher)
-      );
+      await Promise.all([
+        pusherServer.trigger(
+          PUSHER_CHANNELS.CHAT,
+          PUSHER_EVENTS.MESSAGE_RECEIVED,
+          formatConversationForPusher(updatedConversation)
+        ),
+        pusherServer.trigger(
+          PUSHER_CHANNELS.CHAT,
+          PUSHER_EVENTS.CONVERSATION_UPDATED,
+          formatConversationForPusher(updatedConversation)
+        )
+      ]);
     }
 
     return message;

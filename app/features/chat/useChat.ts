@@ -1,3 +1,5 @@
+"use client";
+
 import { SerializedConversation } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 import { useConversationEvents } from '@/app/hooks/useConversationEvents';

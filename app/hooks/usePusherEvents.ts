@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from 'react';
 import { PusherMessage, PusherConversation } from '../types/chat';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';

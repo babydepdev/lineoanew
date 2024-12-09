@@ -1,12 +1,10 @@
-"use client";
-
 import React, { useState } from 'react';
 
 interface MessageInputProps {
   onSend: (message: string) => void;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
+export function MessageInput({ onSend }: MessageInputProps) {
   const [message, setMessage] = useState('');
 
   const handleSend = () => {
@@ -17,7 +15,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
   };
 
   return (
-    <div className="p-4 border-t flex">
+    <div className="p-4 flex gap-2">
       <input
         type="text"
         value={message}
@@ -25,15 +23,15 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
         onKeyPress={(e) => {
           if (e.key === 'Enter') handleSend();
         }}
-        placeholder="Send a message..."
-        className="flex-grow p-2 border rounded-l"
+        placeholder="Type a message..."
+        className="flex-grow px-4 py-2 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       />
       <button
         onClick={handleSend}
-        className="bg-blue-500 text-white p-2 rounded-r"
+        className="px-6 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
       >
         Send
       </button>
     </div>
   );
-};
+}
