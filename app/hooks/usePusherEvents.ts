@@ -13,58 +13,73 @@ export function usePusherEvents() {
   } = useChatState();
 
   useEffect(() => {
-    const mainChannel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
+    try {
+      const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
 
-    const handleMessageReceived = (message: PusherMessage) => {
-      if (!message?.id || !message?.conversationId) return;
-      
-      addMessage({
-        ...message,
-        timestamp: new Date(message.timestamp)
-      });
-    };
-
-    const handleConversationUpdated = (conversation: PusherConversation) => {
-      if (!conversation?.id) return;
-
-      const updatedConversation = {
-        ...conversation,
-        messages: conversation.messages.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        })),
-        createdAt: new Date(conversation.createdAt),
-        updatedAt: new Date(conversation.updatedAt)
+      const handleMessageReceived = (message: PusherMessage) => {
+        if (!message?.id || !message?.conversationId) {
+          console.warn('Received invalid message:', message);
+          return;
+        }
+        
+        addMessage({
+          ...message,
+          timestamp: new Date(message.timestamp)
+        });
       };
 
-      updateConversation(updatedConversation);
+      const handleConversationUpdated = (conversation: PusherConversation) => {
+        if (!conversation?.id) {
+          console.warn('Received invalid conversation:', conversation);
+          return;
+        }
 
-      if (selectedConversation?.id === conversation.id) {
-        setSelectedConversation(updatedConversation);
-      }
-    };
+        const updatedConversation = {
+          ...conversation,
+          messages: conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
+          createdAt: new Date(conversation.createdAt),
+          updatedAt: new Date(conversation.updatedAt)
+        };
 
-    const handleConversationsUpdated = (conversations: PusherConversation[]) => {
-      setConversations(conversations.map(conv => ({
-        ...conv,
-        messages: conv.messages.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        })),
-        createdAt: new Date(conv.createdAt),
-        updatedAt: new Date(conv.updatedAt)
-      })));
-    };
+        updateConversation(updatedConversation);
 
-    mainChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-    mainChannel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
-    mainChannel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
+        if (selectedConversation?.id === conversation.id) {
+          setSelectedConversation(updatedConversation);
+        }
+      };
 
-    return () => {
-      mainChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-      mainChannel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
-      mainChannel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
-      pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
-    };
+      const handleConversationsUpdated = (conversations: PusherConversation[]) => {
+        if (!Array.isArray(conversations)) {
+          console.warn('Received invalid conversations:', conversations);
+          return;
+        }
+
+        setConversations(conversations.map(conv => ({
+          ...conv,
+          messages: conv.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
+          createdAt: new Date(conv.createdAt),
+          updatedAt: new Date(conv.updatedAt)
+        })));
+      };
+
+      channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+      channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+      channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
+
+      return () => {
+        channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+        channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+        channel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
+        pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
+      };
+    } catch (error) {
+      console.error('Error setting up Pusher events:', error);
+    }
   }, [selectedConversation?.id, addMessage, updateConversation, setSelectedConversation, setConversations]);
 }

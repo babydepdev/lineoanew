@@ -26,7 +26,8 @@ export async function createMessage(
 
 export async function broadcastConversationUpdate(conversationId: string) {
   try {
-    const updatedConversation = await prisma.conversation.findUnique({
+    // Get conversation with messages
+    const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
         messages: {
@@ -35,31 +36,30 @@ export async function broadcastConversationUpdate(conversationId: string) {
       }
     });
 
-    if (!updatedConversation) {
-      console.error('Conversation not found:', conversationId);
-      return;
+    if (!conversation) {
+      throw new Error(`Conversation not found: ${conversationId}`);
     }
 
-    const formattedConversation = formatConversationForPusher(updatedConversation);
-    const latestMessage = updatedConversation.messages[updatedConversation.messages.length - 1];
+    const formattedConversation = formatConversationForPusher(conversation);
 
-    // Broadcast message to conversation-specific channel
-    if (latestMessage) {
-      await pusherServer.trigger(
-        `${PUSHER_CHANNELS.CHAT}-${conversationId}`,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formatMessageForPusher(latestMessage)
-      );
-    }
-
-    // Broadcast conversation update
+    // Broadcast to main channel
     await pusherServer.trigger(
       PUSHER_CHANNELS.CHAT,
       PUSHER_EVENTS.CONVERSATION_UPDATED,
       formattedConversation
     );
 
-    // Broadcast all conversations update
+    // Get and broadcast latest message if exists
+    const latestMessage = conversation.messages[conversation.messages.length - 1];
+    if (latestMessage) {
+      await pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        formatMessageForPusher(latestMessage)
+      );
+    }
+
+    // Get and broadcast all conversations
     const allConversations = await prisma.conversation.findMany({
       include: {
         messages: {

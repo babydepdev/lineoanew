@@ -3,7 +3,7 @@ import PusherClient from 'pusher-js';
 import { pusherConfig, isPusherConfigured } from './config/pusher';
 
 if (!isPusherConfigured()) {
-  throw new Error('Missing Pusher configuration');
+  console.warn('Pusher configuration is missing or incomplete');
 }
 
 // Server-side Pusher instance
@@ -31,6 +31,5 @@ export const PUSHER_EVENTS = {
 } as const;
 
 export const PUSHER_CHANNELS = {
-  CHAT: 'chat',
-  PRIVATE_CHAT: 'private-chat',
+  CHAT: 'chat'
 } as const;
