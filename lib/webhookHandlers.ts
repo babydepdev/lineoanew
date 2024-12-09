@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from './pusher';
-import { formatMessageForPusher, formatConversationForPusher } from './messageFormatter';
+import { broadcastMessage } from './services/chatService';
 
 const prisma = new PrismaClient();
 
@@ -12,6 +11,18 @@ export async function handleIncomingMessage(
   timestamp?: Date
 ) {
   try {
+    // Check if message already exists to prevent duplicates
+    if (messageId) {
+      const existingMessage = await prisma.message.findUnique({
+        where: { externalId: messageId }
+      });
+      
+      if (existingMessage) {
+        console.log('Duplicate message detected, skipping:', messageId);
+        return null;
+      }
+    }
+
     let conversation = await prisma.conversation.findFirst({
       where: {
         userId: userId,
@@ -63,19 +74,8 @@ export async function handleIncomingMessage(
       throw new Error('Failed to fetch updated conversation');
     }
 
-    // Trigger Pusher events immediately
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formatMessageForPusher(newMessage)
-      ),
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formatConversationForPusher(updatedConversation)
-      )
-    ]);
+    // Broadcast message via Pusher
+    await broadcastMessage(newMessage, updatedConversation);
 
     return { conversation: updatedConversation, message: newMessage };
   } catch (error) {

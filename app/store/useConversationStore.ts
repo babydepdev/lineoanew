@@ -18,6 +18,8 @@ export const useConversationStore = create<ConversationStore>((set) => ({
   setSelectedConversation: (conversation) => set({ selectedConversation: conversation }),
   updateConversation: (updatedConversation) =>
     set((state) => {
+      if (!updatedConversation) return state;
+
       const updatedConversations = state.conversations.map((conv) =>
         conv.id === updatedConversation.id ? updatedConversation : conv
       );
@@ -32,17 +34,21 @@ export const useConversationStore = create<ConversationStore>((set) => ({
     }),
   addMessage: (message) =>
     set((state) => {
+      if (!message || !message.conversationId) return state;
+
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
-          const existingMessages = conv.messages || [];
+          const existingMessages = Array.isArray(conv.messages) ? conv.messages : [];
           const messageExists = existingMessages.some(m => m.id === message.id);
           
           if (!messageExists) {
+            const updatedMessages = [...existingMessages, message].sort(
+              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+            );
+            
             return {
               ...conv,
-              messages: [...existingMessages, message].sort(
-                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-              ),
+              messages: updatedMessages,
             };
           }
         }

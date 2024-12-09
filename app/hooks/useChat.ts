@@ -21,6 +21,8 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       ...pusherMessage,
       timestamp: new Date(pusherMessage.timestamp),
     };
+    
+    // Immediately add the message to the store
     addMessage(message);
   }, [addMessage]);
 
@@ -35,6 +37,8 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       createdAt: new Date(pusherConversation.createdAt),
       updatedAt: new Date(pusherConversation.updatedAt),
     };
+    
+    // Update the conversation in the store
     updateConversation(conversation);
   }, [updateConversation]);
 
@@ -42,6 +46,19 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (!selectedConversation) return;
 
     try {
+      // Optimistically add the message locally first
+      const optimisticMessage: Message = {
+        id: `temp-${Date.now()}`,
+        conversationId: selectedConversation.id,
+        content,
+        sender: 'BOT',
+        platform: selectedConversation.platform,
+        timestamp: new Date(),
+        externalId: null,
+      };
+
+      addMessage(optimisticMessage);
+
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -63,7 +80,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  }, [selectedConversation, updateConversation]);
+  }, [selectedConversation, updateConversation, addMessage]);
 
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
