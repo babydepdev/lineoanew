@@ -16,9 +16,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   };
 
   useEffect(() => {
-    if (messages?.length > 0) {
-      scrollToBottom();
-    }
+    scrollToBottom();
   }, [messages]);
 
   if (!messages || messages.length === 0) {
@@ -44,7 +42,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
             }`}
           >
             <div className="text-sm mb-1 font-semibold">
-              {msg.sender}
+              {msg.sender === 'USER' ? 'User' : 'LINE Official Account'}
             </div>
             <div className="break-words whitespace-pre-wrap text-base">
               {msg.content}

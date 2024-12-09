@@ -24,7 +24,7 @@ export const ConversationPreview: React.FC<ConversationPreviewProps> = ({
     >
       <div className="flex justify-between items-start mb-1">
         <div className="font-medium text-gray-900">
-          {conversation.platform} - {conversation.userId}
+          {lastMessage?.sender === 'USER' ? 'User' : 'LINE Official Account'}
         </div>
         {lastMessage && (
           <span className="text-xs text-gray-500">
@@ -38,7 +38,7 @@ export const ConversationPreview: React.FC<ConversationPreviewProps> = ({
           <span className={`text-xs font-medium mr-2 ${
             lastMessage.sender === 'BOT' ? 'text-blue-600' : 'text-green-600'
           }`}>
-            {lastMessage.sender}
+            {lastMessage.sender === 'USER' ? 'User' : 'LINE Official Account'}
           </span>
           <span className="text-sm text-gray-600 truncate">
             {lastMessage.content}

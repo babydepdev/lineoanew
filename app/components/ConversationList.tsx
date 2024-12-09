@@ -16,19 +16,13 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   selectedId 
 }) => {
   const sortedConversations = [...conversations].sort((a, b) => {
-    const aLastMessage = a.messages[a.messages.length - 1];
-    const bLastMessage = b.messages[b.messages.length - 1];
-    
-    if (!aLastMessage) return 1;
-    if (!bLastMessage) return -1;
-    
-    return bLastMessage.timestamp.getTime() - aLastMessage.timestamp.getTime();
+    return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
 
   return (
     <div className="w-1/4 border-r overflow-y-auto bg-white">
       <div className="sticky top-0 bg-gray-50 p-4 border-b">
-        <h2 className="text-lg font-semibold text-gray-900">Conversations</h2>
+        <h2 className="text-lg font-semibold text-gray-900">LINE Official Account</h2>
       </div>
       
       <div className="divide-y">

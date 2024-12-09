@@ -1,16 +1,10 @@
 import { Client } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from './pusher';
-import { formatConversationForPusher, formatMessageForPusher } from './messageFormatter';
+import { formatConversationForPusher } from './messageFormatter';
 import { LineMessageEvent } from '@/app/types/line';
 
-const lineConfig = {
-  channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
-  channelSecret: process.env.LINE_CHANNEL_SECRET || ''
-};
-
 const prisma = new PrismaClient();
-export const lineClient = new Client(lineConfig);
 
 export async function handleLineWebhook(event: LineMessageEvent) {
   if (event.type !== 'message' || event.message.type !== 'text') {
@@ -25,8 +19,8 @@ export async function handleLineWebhook(event: LineMessageEvent) {
   const channelId = event.source.roomId || event.source.groupId || userId;
 
   try {
-    const { conversation, message } = await prisma.$transaction(async (tx) => {
-      let existingConversation = await tx.conversation.findFirst({
+    const result = await prisma.$transaction(async (tx) => {
+      let conversation = await tx.conversation.findFirst({
         where: {
           userId: userId,
           platform: 'LINE'
@@ -36,8 +30,8 @@ export async function handleLineWebhook(event: LineMessageEvent) {
         }
       });
 
-      if (!existingConversation) {
-        existingConversation = await tx.conversation.create({
+      if (!conversation) {
+        conversation = await tx.conversation.create({
           data: {
             userId: userId,
             platform: 'LINE',
@@ -49,28 +43,21 @@ export async function handleLineWebhook(event: LineMessageEvent) {
         });
       }
 
+      // Check for duplicate message
       const existingMessage = await tx.message.findFirst({
         where: {
-          OR: [
-            { externalId: messageId },
-            {
-              conversationId: existingConversation.id,
-              content: text,
-              timestamp: {
-                gte: new Date(Date.now() - 5000)
-              }
-            }
-          ]
+          externalId: messageId
         }
       });
 
       if (existingMessage) {
-        return { conversation: existingConversation, message: existingMessage };
+        console.log('Duplicate message detected, skipping:', messageId);
+        return { conversation, message: existingMessage };
       }
 
       const newMessage = await tx.message.create({
         data: {
-          conversationId: existingConversation.id,
+          conversationId: conversation.id,
           content: text,
           sender: 'USER',
           platform: 'LINE',
@@ -80,15 +67,16 @@ export async function handleLineWebhook(event: LineMessageEvent) {
       });
 
       await tx.conversation.update({
-        where: { id: existingConversation.id },
+        where: { id: conversation.id },
         data: { updatedAt: new Date() }
       });
 
-      return { conversation: existingConversation, message: newMessage };
+      return { conversation, message: newMessage };
     });
 
+    // Get updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
-      where: { id: conversation.id },
+      where: { id: result.conversation.id },
       include: {
         messages: {
           orderBy: { timestamp: 'asc' }
@@ -97,34 +85,30 @@ export async function handleLineWebhook(event: LineMessageEvent) {
     });
 
     if (updatedConversation) {
-      await Promise.all([
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.MESSAGE_RECEIVED,
-          formatMessageForPusher(message)
-        ),
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.CONVERSATION_UPDATED,
-          formatConversationForPusher(updatedConversation)
-        ),
-        prisma.conversation.findMany({
-          include: {
-            messages: {
-              orderBy: { timestamp: 'asc' }
-            }
-          },
-          orderBy: {
-            updatedAt: 'desc'
+      // Broadcast updates
+      await pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        formatConversationForPusher(updatedConversation)
+      );
+
+      // Broadcast all conversations update
+      const allConversations = await prisma.conversation.findMany({
+        include: {
+          messages: {
+            orderBy: { timestamp: 'asc' }
           }
-        }).then(conversations => 
-          pusherServer.trigger(
-            PUSHER_CHANNELS.CHAT,
-            PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-            conversations.map(formatConversationForPusher)
-          )
-        )
-      ]);
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      });
+
+      await pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+        allConversations.map(formatConversationForPusher)
+      );
     }
 
     return updatedConversation;
@@ -135,64 +119,39 @@ export async function handleLineWebhook(event: LineMessageEvent) {
 }
 
 export async function sendLineMessage(userId: string, message: string): Promise<boolean> {
-  if (!userId || !message) {
-    console.error('Missing userId or message');
-    return false;
-  }
-
-  if (!process.env.LINE_CHANNEL_ACCESS_TOKEN) {
-    console.error('LINE_CHANNEL_ACCESS_TOKEN is not configured');
+  if (!userId || !message || !process.env.LINE_CHANNEL_ACCESS_TOKEN) {
+    console.error('Missing required parameters for LINE message');
     return false;
   }
 
   try {
-    console.log('Attempting to send LINE message:', { userId, message });
+    console.log('Sending LINE message:', { userId, message });
 
-    // Create a new LINE client instance for each request to ensure fresh configuration
     const client = new Client({
       channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
       channelSecret: process.env.LINE_CHANNEL_SECRET || ''
     });
 
     let retries = 3;
-    let lastError: Error | null = null;
-
     while (retries > 0) {
       try {
-        const response = await client.pushMessage(userId, {
+        await client.pushMessage(userId, {
           type: 'text',
           text: message
         });
-
-        console.log('LINE message sent successfully:', {
-          userId,
-          message,
-          response
-        });
-
+        console.log('LINE message sent successfully');
         return true;
       } catch (error) {
-        lastError = error as Error;
-        console.error(`LINE message send attempt ${4 - retries} failed:`, error);
+        console.error(`LINE message send attempt failed (${retries} retries left):`, error);
         retries--;
-        
         if (retries > 0) {
-          console.log(`Retrying in 1 second... (${retries} attempts remaining)`);
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     }
-
-    if (lastError) {
-      console.error('All LINE message send attempts failed:', {
-        error: lastError.message,
-        stack: lastError.stack
-      });
-    }
-
     return false;
   } catch (error) {
-    console.error('Fatal error sending LINE message:', error);
+    console.error('Error sending LINE message:', error);
     return false;
   }
 }
