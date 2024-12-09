@@ -1,6 +1,8 @@
-import { APIResponse, MessageResponse } from '@/app/types/api';
-import { ConversationWithMessages } from '@/app/types/chat';
+"use client";
+
 import { useChatState } from './useChatState';
+import { MessageResponse } from '@/app/types/api';
+import { Message } from '@prisma/client';
 
 export function useChatActions() {
   const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
@@ -9,6 +11,12 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
+      console.log('Sending message:', {
+        conversationId: selectedConversation.id,
+        content,
+        platform: selectedConversation.platform
+      });
+
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -25,26 +33,24 @@ export function useChatActions() {
         throw new Error('Failed to send message');
       }
 
-      const data = await response.json() as APIResponse;
+      const data = await response.json() as MessageResponse;
+      
       if (data.conversation) {
-        const updatedConversation: ConversationWithMessages = {
-          id: data.conversation.id,
-          platform: data.conversation.platform,
-          channelId: data.conversation.channelId,
-          userId: data.conversation.userId,
-          messages: data.conversation.messages.map((msg: MessageResponse) => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            content: msg.content,
-            sender: msg.sender,
-            timestamp: new Date(msg.timestamp),
-            platform: msg.platform,
-            externalId: msg.externalId
-          })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+        const updatedConversation = {
+          ...data.conversation,
+          messages: data.conversation.messages.map((msg: Message) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt)
         };
-
+        
+        console.log('Updating conversation with new message:', {
+          conversationId: updatedConversation.id,
+          messageCount: updatedConversation.messages.length
+        });
+        
         updateConversation(updatedConversation);
         setSelectedConversation(updatedConversation);
       }

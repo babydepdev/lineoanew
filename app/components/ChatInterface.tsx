@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { SerializedConversation, deserializeConversation } from '../types/chat';
+import { SerializedConversation } from '../types/chat';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
@@ -12,16 +12,12 @@ interface ChatInterfaceProps {
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversations }) => {
-  const parsedConversations = React.useMemo(() => {
-    return initialConversations.map(deserializeConversation);
-  }, [initialConversations]);
-
   const {
     conversations,
     selectedConversation,
     setSelectedConversation,
     sendMessage,
-  } = useChat(parsedConversations);
+  } = useChat(initialConversations);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -49,4 +45,4 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
       </div>
     </div>
   );
-}
+};

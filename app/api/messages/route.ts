@@ -28,25 +28,29 @@ export async function POST(request: NextRequest) {
     });
 
     if (!conversation) {
-      console.error('Conversation not found:', conversationId);
       return NextResponse.json(
         { error: 'Conversation not found' },
         { status: 404 }
       );
     }
 
+    console.log('Sending message to platform:', {
+      platform,
+      userId: conversation.userId,
+      content,
+      timestamp: new Date().toISOString()
+    });
+
     // Send to platform first
     let messageSent = false;
     if (platform === 'LINE') {
-      console.log('Sending LINE message to:', conversation.userId);
       messageSent = await sendLineMessage(conversation.userId, content);
     } else if (platform === 'FACEBOOK') {
-      console.log('Sending Facebook message to:', conversation.userId);
       messageSent = await sendFacebookMessage(conversation.userId, content);
     }
 
     if (!messageSent) {
-      console.error('Failed to send message to platform:', platform);
+      console.error('Failed to send message to platform');
       return NextResponse.json(
         { error: 'Failed to send message to platform' },
         { status: 500 }
@@ -57,11 +61,17 @@ export async function POST(request: NextRequest) {
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
-        content: content,
+        content,
         sender: 'BOT',
         platform,
         timestamp: new Date(),
       },
+    });
+
+    // Update conversation timestamp
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: { updatedAt: new Date() }
     });
 
     // Broadcast the message update
@@ -77,7 +87,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('Message sent and saved successfully');
+    if (!updatedConversation) {
+      throw new Error('Failed to fetch updated conversation');
+    }
+
     return NextResponse.json({
       message: botMessage,
       conversation: updatedConversation,
