@@ -36,7 +36,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Send message to platform first
+    // Create bot message in database first
+    const newMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        content,
+        sender: 'BOT',
+        platform,
+      },
+    });
+
+    // Get updated conversation
+    const updatedConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        messages: {
+          orderBy: { timestamp: 'asc' },
+        },
+      },
+    });
+
+    if (!updatedConversation) {
+      return NextResponse.json(
+        { error: 'Failed to fetch updated conversation' },
+        { status: 500 }
+      );
+    }
+
+    // Trigger Pusher events immediately
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        formatMessageForPusher(newMessage)
+      ),
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        formatConversationForPusher(updatedConversation)
+      ),
+    ]);
+
+    // Send message to platform after database updates
     let messageSent = false;
     if (platform === 'LINE') {
       messageSent = await sendLineMessage(conversation.userId, content);
@@ -50,36 +91,6 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-
-    // Create bot message in database
-    const newMessage = await prisma.message.create({
-      data: {
-        conversationId,
-        content,
-        sender: 'BOT',
-        platform,
-      },
-    });
-
-    // Get updated conversation
-    const updatedConversation = {
-      ...conversation,
-      messages: [...conversation.messages, newMessage]
-    };
-
-    // Trigger Pusher events
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formatMessageForPusher(newMessage)
-      ),
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formatConversationForPusher(updatedConversation)
-      ),
-    ]);
 
     return NextResponse.json(updatedConversation);
   } catch (error) {
