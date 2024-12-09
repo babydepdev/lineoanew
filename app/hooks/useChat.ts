@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import type { ConversationWithMessages } from '../types/chat';
 import { useConversationStore } from '../store/useConversationStore';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
@@ -14,17 +14,40 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     addMessage,
   } = useConversationStore();
 
+  const messageQueueRef = useRef<Set<string>>(new Set());
+  const processingRef = useRef(false);
+
+  const processMessageQueue = useCallback(async () => {
+    if (processingRef.current || messageQueueRef.current.size === 0) return;
+
+    processingRef.current = true;
+    const messageIds = Array.from(messageQueueRef.current);
+    messageQueueRef.current.clear();
+
+    try {
+      const response = await fetch('/api/messages');
+      if (!response.ok) throw new Error('Failed to fetch messages');
+      
+      const messages = await response.json();
+      
+      for (const message of messages) {
+        if (messageIds.includes(message.id)) {
+          addMessage(message);
+        }
+      }
+    } catch (error) {
+      console.error('Error processing message queue:', error);
+    } finally {
+      processingRef.current = false;
+    }
+  }, [addMessage]);
+
   const handleMessageReceived = useCallback((message: PusherMessage) => {
     if (!message?.id || !message?.conversationId) return;
     
-    // Convert timestamp string to Date object
-    const messageWithDate = {
-      ...message,
-      timestamp: new Date(message.timestamp)
-    };
-    
-    addMessage(messageWithDate);
-  }, [addMessage]);
+    messageQueueRef.current.add(message.id);
+    processMessageQueue();
+  }, [processMessageQueue]);
 
   const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
     if (!pusherConversation?.id) return;

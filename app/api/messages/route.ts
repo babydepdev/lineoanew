@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { sendLineMessage } from '@/lib/lineClient';
 import { sendFacebookMessage } from '@/lib/facebookClient';
-import { broadcastMessage } from '@/lib/services/chatService';
+import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
+import { formatMessageForPusher, formatConversationForPusher } from '@/lib/messageFormatter';
 
 const prisma = new PrismaClient();
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get conversation first to ensure it exists
+    // Get conversation first to ensure it exists and include messages
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Get updated conversation
+    // Get updated conversation with all messages
     const updatedConversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
@@ -77,14 +78,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Broadcast message via Pusher
-    await broadcastMessage(newMessage, updatedConversation);
+    // Trigger Pusher events
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        formatMessageForPusher(newMessage)
+      ),
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        formatConversationForPusher(updatedConversation)
+      ),
+    ]);
 
     return NextResponse.json(updatedConversation);
   } catch (error) {
     console.error('Error handling message:', error);
     return NextResponse.json(
       { error: 'Failed to process message' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const messages = await prisma.message.findMany({
+      orderBy: { timestamp: 'desc' },
+      take: 100,
+      include: {
+        conversation: true,
+      },
+    });
+    
+    return NextResponse.json(messages);
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch messages' },
       { status: 500 }
     );
   }
