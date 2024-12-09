@@ -37,27 +37,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Found conversation:', {
-      id: conversation.id,
-      platform: conversation.platform,
-      userId: conversation.userId
-    });
-
-    // Create user message first
-    const userMessage = await prisma.message.create({
+    // Create bot message first with a slight delay
+    const botMessage = await prisma.message.create({
       data: {
         conversationId,
-        content,
-        sender: 'USER',
+        content: content,
+        sender: 'BOT',
         platform,
-        timestamp: new Date(),
+        timestamp: new Date(Date.now() + 100), // Add small delay to ensure it appears after user message
       },
     });
 
-    // Broadcast the user message immediately
+    // Broadcast the bot message immediately
     await broadcastMessageUpdate(conversationId);
 
-    // Then send to platform and create bot message
+    // Then send to platform
     let messageSent = false;
     if (platform === 'LINE') {
       console.log('Sending LINE message to:', conversation.userId);
@@ -71,24 +65,13 @@ export async function POST(request: NextRequest) {
       console.error('Failed to send message to platform:', platform);
       // Delete the message if sending failed
       await prisma.message.delete({
-        where: { id: userMessage.id }
+        where: { id: botMessage.id }
       });
       return NextResponse.json(
         { error: 'Failed to send message to platform' },
         { status: 500 }
       );
     }
-
-    // Create bot response message
-    const botMessage = await prisma.message.create({
-      data: {
-        conversationId,
-        content: 'Received your message',
-        sender: 'BOT',
-        platform,
-        timestamp: new Date(),
-      },
-    });
 
     // Get final updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
@@ -99,9 +82,6 @@ export async function POST(request: NextRequest) {
         },
       },
     });
-
-    // Broadcast the final state with bot message
-    await broadcastMessageUpdate(conversationId);
 
     console.log('Message sent successfully');
     return NextResponse.json({

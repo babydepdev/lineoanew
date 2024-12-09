@@ -62,6 +62,11 @@ export async function broadcastMessageUpdate(conversationId: string) {
     console.log('Broadcast successful:', {
       conversationId,
       messageCount: updatedConversation.messages.length,
+      latestMessage: {
+        id: latestMessage.id,
+        sender: latestMessage.sender,
+        timestamp: latestMessage.timestamp
+      }
     });
 
     return updatedConversation;
