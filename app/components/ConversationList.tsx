@@ -12,11 +12,11 @@ interface ConversationListProps {
   selectedId?: string;
 }
 
-export const ConversationList: React.FC<ConversationListProps> = ({ 
+export default function ConversationList({ 
   conversations, 
   onSelect,
   selectedId 
-}) => {
+}: ConversationListProps) {
   const sortedConversations = [...conversations].sort((a, b) => {
     return b.updatedAt.getTime() - a.updatedAt.getTime();
   });
@@ -68,4 +68,4 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       </ScrollArea>
     </div>
   );
-};
+}

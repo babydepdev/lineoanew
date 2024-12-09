@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SerializedConversation } from '../types/chat';
-import { ConversationList } from './ConversationList';
+import ConversationList from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
