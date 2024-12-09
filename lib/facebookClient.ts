@@ -1,5 +1,8 @@
 import axios from 'axios';
-import { handleIncomingMessage } from './webhookHandlers';
+import { PrismaClient } from '@prisma/client';
+import { broadcastMessageUpdate } from './messageService';
+
+const prisma = new PrismaClient();
 
 const FACEBOOK_GRAPH_API = 'https://graph.facebook.com/v17.0/me/messages';
 const PAGE_ACCESS_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
@@ -12,8 +15,6 @@ interface FacebookWebhookEntry {
     };
     message: {
       text: string;
-      mid: string;
-      timestamp: number;
     };
   }>;
 }
@@ -27,15 +28,36 @@ export async function handleFacebookWebhook(body: FacebookWebhookBody) {
   if (body.object === 'page') {
     for (const entry of body.entry) {
       const webhookEvent = entry.messaging[0];
-      if (webhookEvent?.message?.text) {
-        await handleIncomingMessage(
-          webhookEvent.sender.id,
-          webhookEvent.message.text,
-          'FACEBOOK',
-          webhookEvent.message.mid,
-          new Date(webhookEvent.message.timestamp)
-        );
+      const senderId = webhookEvent.sender.id;
+      const message = webhookEvent.message.text;
+
+      let conversation = await prisma.conversation.findFirst({
+        where: {
+          userId: senderId,
+          platform: 'FACEBOOK'
+        }
+      });
+
+      if (!conversation) {
+        conversation = await prisma.conversation.create({
+          data: {
+            userId: senderId,
+            platform: 'FACEBOOK',
+            channelId: entry.id
+          }
+        });
       }
+
+      await prisma.message.create({
+        data: {
+          conversationId: conversation.id,
+          content: message,
+          sender: 'USER',
+          platform: 'FACEBOOK'
+        }
+      });
+
+      await broadcastMessageUpdate(conversation.id);
     }
   }
 }
@@ -54,8 +76,12 @@ export async function sendFacebookMessage(recipientId: string, messageText: stri
         message: { text: messageText }
       },
       {
-        params: { access_token: PAGE_ACCESS_TOKEN },
-        headers: { 'Content-Type': 'application/json' }
+        params: {
+          access_token: PAGE_ACCESS_TOKEN
+        },
+        headers: {
+          'Content-Type': 'application/json'
+        }
       }
     );
     return true;
