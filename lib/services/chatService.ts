@@ -5,25 +5,35 @@ import { formatMessageForPusher, formatConversationForPusher } from '../messageF
 
 export async function broadcastMessage(message: Message, conversation: ConversationWithMessages) {
   try {
-    console.log('Broadcasting message:', message);
-    console.log('Broadcasting conversation:', conversation);
+    console.log('Broadcasting message:', {
+      id: message.id,
+      content: message.content,
+      sender: message.sender,
+      timestamp: message.timestamp
+    });
 
-    // Broadcast the message first
-    await pusherServer.trigger(
-      PUSHER_CHANNELS.CHAT,
-      PUSHER_EVENTS.MESSAGE_RECEIVED,
-      formatMessageForPusher(message)
-    );
+    // Format the message and conversation for Pusher
+    const formattedMessage = formatMessageForPusher(message);
+    const formattedConversation = formatConversationForPusher(conversation);
 
-    // Small delay to ensure message is processed first
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Broadcast both events simultaneously
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        formattedMessage
+      ),
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        formattedConversation
+      )
+    ]);
 
-    // Then broadcast the conversation update
-    await pusherServer.trigger(
-      PUSHER_CHANNELS.CHAT,
-      PUSHER_EVENTS.CONVERSATION_UPDATED,
-      formatConversationForPusher(conversation)
-    );
+    console.log('Broadcast complete:', {
+      messageId: message.id,
+      conversationId: conversation.id
+    });
 
     return true;
   } catch (error) {

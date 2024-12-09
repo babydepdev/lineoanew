@@ -11,10 +11,34 @@ export async function handleIncomingMessage(
   timestamp?: Date
 ) {
   try {
+    console.log('Handling incoming message:', {
+      userId,
+      messageText,
+      platform,
+      messageId,
+      timestamp
+    });
+
     // Check if message already exists to prevent duplicates
     if (messageId) {
-      const existingMessage = await prisma.message.findUnique({
-        where: { externalId: messageId }
+      const existingMessage = await prisma.message.findFirst({
+        where: { 
+          OR: [
+            { externalId: messageId },
+            {
+              conversationId: {
+                in: (await prisma.conversation.findMany({
+                  where: { userId, platform },
+                  select: { id: true }
+                })).map(c => c.id)
+              },
+              content: messageText,
+              timestamp: {
+                gte: new Date(Date.now() - 5000) // Messages within last 5 seconds
+              }
+            }
+          ]
+        }
       });
       
       if (existingMessage) {
@@ -48,7 +72,8 @@ export async function handleIncomingMessage(
       });
     }
 
-    // Create user message
+    // Create user message with proper timestamp handling
+    const messageTimestamp = timestamp || new Date();
     const newMessage = await prisma.message.create({
       data: {
         conversationId: conversation.id,
@@ -56,9 +81,11 @@ export async function handleIncomingMessage(
         sender: 'USER',
         platform: platform,
         externalId: messageId,
-        timestamp: timestamp || new Date()
+        timestamp: messageTimestamp
       }
     });
+
+    console.log('Created new message:', newMessage);
 
     // Get updated conversation with the new message
     const updatedConversation = await prisma.conversation.findUnique({
@@ -76,6 +103,7 @@ export async function handleIncomingMessage(
 
     // Broadcast message via Pusher
     await broadcastMessage(newMessage, updatedConversation);
+    console.log('Message broadcast complete');
 
     return { conversation: updatedConversation, message: newMessage };
   } catch (error) {

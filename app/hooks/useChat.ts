@@ -16,29 +16,41 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
   } = useConversationStore();
 
   const messageQueue = useRef<Set<string>>(new Set());
+  const processingMessage = useRef<boolean>(false);
 
-  const handleMessageReceived = useCallback((pusherMessage: PusherMessage) => {
+  const handleMessageReceived = useCallback(async (pusherMessage: PusherMessage) => {
     console.log('Received message:', pusherMessage);
     
+    if (processingMessage.current) {
+      console.log('Message processing in progress, queuing:', pusherMessage.id);
+      return;
+    }
+
     // Prevent duplicate messages
     if (messageQueue.current.has(pusherMessage.id)) {
+      console.log('Duplicate message detected:', pusherMessage.id);
       return;
     }
     
-    messageQueue.current.add(pusherMessage.id);
-    
-    const message: Message = {
-      ...pusherMessage,
-      timestamp: new Date(pusherMessage.timestamp),
-    };
-    
-    // Immediately add the message to the store
-    addMessage(message);
-    
-    // Remove message from queue after a delay
-    setTimeout(() => {
-      messageQueue.current.delete(pusherMessage.id);
-    }, 5000);
+    try {
+      processingMessage.current = true;
+      messageQueue.current.add(pusherMessage.id);
+      
+      const message: Message = {
+        ...pusherMessage,
+        timestamp: new Date(pusherMessage.timestamp),
+      };
+      
+      // Immediately add the message to the store
+      addMessage(message);
+      
+      // Remove message from queue after processing
+      setTimeout(() => {
+        messageQueue.current.delete(pusherMessage.id);
+      }, 5000);
+    } finally {
+      processingMessage.current = false;
+    }
   }, [addMessage]);
 
   const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
@@ -54,7 +66,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       updatedAt: new Date(pusherConversation.updatedAt),
     };
     
-    // Update the conversation in the store
     updateConversation(conversation);
   }, [updateConversation]);
 
@@ -75,7 +86,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         externalId: null,
       };
 
-      // Add to message queue to prevent duplicate
       messageQueue.current.add(tempId);
       addMessage(optimisticMessage);
 
