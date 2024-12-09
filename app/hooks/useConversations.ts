@@ -10,7 +10,16 @@ export function useConversations(initialConversations: ConversationWithMessages[
 
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
-      setConversations(initialConversations);
+      const formattedConversations = initialConversations.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })),
+        createdAt: new Date(conv.createdAt),
+        updatedAt: new Date(conv.updatedAt)
+      }));
+      setConversations(formattedConversations);
     }
   }, [initialConversations, setConversations]);
 
@@ -20,7 +29,7 @@ export function useConversations(initialConversations: ConversationWithMessages[
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
 
     const handleConversationsUpdate = (conversations: ConversationWithMessages[]) => {
-      const updatedConversations = conversations.map(conv => ({
+      const formattedConversations = conversations.map(conv => ({
         ...conv,
         messages: conv.messages.map(msg => ({
           ...msg,
@@ -29,11 +38,11 @@ export function useConversations(initialConversations: ConversationWithMessages[
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)
       }));
-      setConversations(updatedConversations);
+      setConversations(formattedConversations);
     };
 
     const handleConversationUpdate = (conversation: ConversationWithMessages) => {
-      const updatedConversation = {
+      const formattedConversation = {
         ...conversation,
         messages: conversation.messages.map(msg => ({
           ...msg,
@@ -42,7 +51,7 @@ export function useConversations(initialConversations: ConversationWithMessages[
         createdAt: new Date(conversation.createdAt),
         updatedAt: new Date(conversation.updatedAt)
       };
-      updateConversation(updatedConversation);
+      updateConversation(formattedConversation);
     };
 
     channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdate);

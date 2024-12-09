@@ -1,6 +1,7 @@
 import { Client } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
-import { broadcastMessageUpdate } from './messageService';
+import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from './pusher';
+import { formatConversationForPusher } from './messageFormatter';
 
 const lineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
@@ -37,75 +38,105 @@ export async function handleLineWebhook(event: LineMessageEvent) {
   const timestamp = new Date(event.timestamp);
 
   try {
-    // Check for duplicate message
-    const existingMessage = await prisma.message.findFirst({
-      where: {
-        externalId: messageId,
-        platform: 'LINE'
-      }
-    });
-
-    if (existingMessage) {
-      console.log('Duplicate message detected, skipping:', messageId);
-      return;
-    }
-
-    // Find or create conversation
-    let conversation = await prisma.conversation.findFirst({
-      where: {
-        userId: userId,
-        platform: 'LINE'
-      },
-      include: {
-        messages: {
-          orderBy: { timestamp: 'asc' }
-        }
-      }
-    });
-
-    if (!conversation) {
-      conversation = await prisma.conversation.create({
-        data: {
-          userId: userId,
-          platform: 'LINE',
-          channelId: event.source.roomId || event.source.groupId || userId
-        },
-        include: {
-          messages: true
+    // Use transaction to ensure data consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // Check for duplicate message
+      const existingMessage = await tx.message.findFirst({
+        where: {
+          externalId: messageId,
+          platform: 'LINE'
         }
       });
-    }
 
-    // Create new message
-    const newMessage = await prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        content: text,
-        sender: 'USER',
-        platform: 'LINE',
-        externalId: messageId,
-        timestamp
-      },
-      include: {
-        conversation: true
+      if (existingMessage) {
+        console.log('Duplicate message detected, skipping:', messageId);
+        return null;
       }
-    });
 
-    // Get updated conversation with all messages
-    const updatedConversation = await prisma.conversation.findUnique({
-      where: { id: conversation.id },
-      include: {
-        messages: {
-          orderBy: { timestamp: 'asc' }
+      // Find or create conversation
+      let conversation = await tx.conversation.findFirst({
+        where: {
+          userId: userId,
+          platform: 'LINE'
         }
+      });
+
+      if (!conversation) {
+        conversation = await tx.conversation.create({
+          data: {
+            userId: userId,
+            platform: 'LINE',
+            channelId: event.source.roomId || event.source.groupId || userId
+          }
+        });
       }
+
+      // Create new message
+      const newMessage = await tx.message.create({
+        data: {
+          conversationId: conversation.id,
+          content: text,
+          sender: 'USER',
+          platform: 'LINE',
+          externalId: messageId,
+          timestamp
+        }
+      });
+
+      // Update conversation timestamp
+      await tx.conversation.update({
+        where: { id: conversation.id },
+        data: { updatedAt: new Date() }
+      });
+
+      return { message: newMessage, conversationId: conversation.id };
     });
 
-    if (updatedConversation) {
-      await broadcastMessageUpdate(conversation.id);
-    }
+    if (result) {
+      // Fetch updated conversation with all messages
+      const updatedConversation = await prisma.conversation.findUnique({
+        where: { id: result.conversationId },
+        include: {
+          messages: {
+            orderBy: { timestamp: 'asc' }
+          }
+        }
+      });
 
-    return { message: newMessage, conversation: updatedConversation };
+      if (updatedConversation) {
+        // Broadcast both message and conversation updates
+        await Promise.all([
+          pusherServer.trigger(
+            PUSHER_CHANNELS.CHAT,
+            PUSHER_EVENTS.CONVERSATION_UPDATED,
+            formatConversationForPusher(updatedConversation)
+          ),
+          // Also broadcast all conversations to update the list
+          prisma.conversation.findMany({
+            include: {
+              messages: {
+                orderBy: { timestamp: 'asc' }
+              }
+            },
+            orderBy: {
+              updatedAt: 'desc'
+            }
+          }).then(conversations => 
+            pusherServer.trigger(
+              PUSHER_CHANNELS.CHAT,
+              PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+              conversations.map(formatConversationForPusher)
+            )
+          )
+        ]);
+
+        console.log('Successfully processed and broadcast LINE message:', {
+          messageId,
+          conversationId: result.conversationId,
+          timestamp: timestamp.toISOString()
+        });
+      }
+    }
   } catch (error) {
     console.error('Error handling LINE message:', error);
     throw error;

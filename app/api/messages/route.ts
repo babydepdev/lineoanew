@@ -60,20 +60,11 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    const updatedConversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: {
-        messages: {
-          orderBy: { timestamp: 'asc' },
-        },
-      },
-    });
+    const updatedConversation = await broadcastMessageUpdate(conversationId);
 
     if (!updatedConversation) {
-      throw new Error('Failed to fetch updated conversation');
+      throw new Error('Failed to broadcast message update');
     }
-
-    await broadcastMessageUpdate(conversationId);
 
     return NextResponse.json({
       message,
