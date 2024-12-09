@@ -6,12 +6,16 @@ export interface LineMessageEvent {
     id: string;
   };
   source: {
+    type: string;
     userId: string;
     roomId?: string;
     groupId?: string;
   };
   replyToken: string;
   timestamp: number;
+  deliveryContext?: {
+    isRedelivery: boolean;
+  };
 }
 
 export interface LineWebhookBody {

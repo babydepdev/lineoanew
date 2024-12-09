@@ -12,10 +12,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
     }
 
-    const results = await Promise.all(
+    const results = await Promise.allSettled(
       body.events.map(async (event: LineMessageEvent) => {
         if (event.type === 'message' && event.message.type === 'text') {
           try {
+            // Skip redelivered messages
+            if (event.deliveryContext?.isRedelivery) {
+              console.log('Skipping redelivered message:', event.message.id);
+              return null;
+            }
+
             return await handleLineMessageReceived(
               event.source.userId,
               event.message.text,
@@ -31,7 +37,7 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    const successfulEvents = results.filter(Boolean).length;
+    const successfulEvents = results.filter(r => r.status === 'fulfilled' && r.value !== null).length;
     console.log(`Processed ${successfulEvents} of ${body.events.length} LINE events`);
     
     return NextResponse.json({ 
