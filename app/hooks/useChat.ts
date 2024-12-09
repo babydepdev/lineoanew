@@ -109,6 +109,12 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
+
+      const updatedConversation = await response.json();
+      if (updatedConversation) {
+        updateConversation(updatedConversation);
+        setSelectedConversation(updatedConversation);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }

@@ -48,18 +48,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await prisma.message.create({
+    const message = await prisma.message.create({
       data: {
         conversationId,
         content,
         sender: 'BOT',
         platform,
       },
+      include: {
+        conversation: true,
+      },
     });
 
-    const updatedConversation = await broadcastMessageUpdate(conversationId);
+    const updatedConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        messages: {
+          orderBy: { timestamp: 'asc' },
+        },
+      },
+    });
 
-    return NextResponse.json(updatedConversation);
+    if (!updatedConversation) {
+      throw new Error('Failed to fetch updated conversation');
+    }
+
+    await broadcastMessageUpdate(conversationId);
+
+    return NextResponse.json({
+      message,
+      conversation: updatedConversation,
+    });
   } catch (error) {
     console.error('Error handling message:', error);
     return NextResponse.json(
