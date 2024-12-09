@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create bot message first
+    // Create bot message
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -50,10 +50,7 @@ export async function POST(request: NextRequest) {
 
     console.log('Created bot message:', botMessage);
 
-    // Broadcast the message immediately
-    await broadcastMessageUpdate(conversationId);
-
-    // Then send to platform
+    // Send to platform
     let messageSent = false;
     if (platform === 'LINE') {
       console.log('Sending LINE message to:', conversation.userId);
@@ -74,6 +71,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Broadcast message update
+    await broadcastMessageUpdate(conversationId);
 
     // Get final updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
