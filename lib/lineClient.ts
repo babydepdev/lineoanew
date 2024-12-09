@@ -66,8 +66,16 @@ export async function handleLineWebhook(event: LineMessageEvent) {
       // Check for duplicate message
       const existingMessage = await tx.message.findFirst({
         where: {
-          externalId: messageId,
-          platform: 'LINE'
+          OR: [
+            { externalId: messageId },
+            {
+              conversationId: conversation.id,
+              content: text,
+              timestamp: {
+                gte: new Date(Date.now() - 5000) // Within last 5 seconds
+              }
+            }
+          ]
         }
       });
 
@@ -154,21 +162,37 @@ export async function handleLineWebhook(event: LineMessageEvent) {
 }
 
 export async function sendLineMessage(userId: string, message: string): Promise<boolean> {
-  if (!userId || !message) {
-    console.error('Invalid userId or message for LINE');
+  if (!userId || !message || !lineConfig.channelAccessToken) {
+    console.error('Invalid userId, message, or missing LINE channel access token');
     return false;
   }
 
   try {
     console.log('Sending LINE message:', { userId, message });
-    await lineClient.pushMessage(userId, {
+    
+    // Verify the LINE client is properly configured
+    if (!lineClient.config.channelAccessToken) {
+      throw new Error('LINE client not properly configured');
+    }
+
+    // Send the message
+    const result = await lineClient.pushMessage(userId, {
       type: 'text',
       text: message
     });
-    console.log('LINE message sent successfully');
+
+    console.log('LINE message sent successfully:', result);
     return true;
   } catch (error) {
     console.error('Error sending LINE message:', error);
+    // Log more details about the error
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack
+      });
+    }
     return false;
   }
 }
