@@ -25,20 +25,13 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
 
-      const sortedConversations = formattedConversations.sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-      );
-      
-      setConversations(sortedConversations);
+      setConversations(formattedConversations);
     }
   }, [initialConversations, setConversations]);
 
   // Setup Pusher event handlers
   useEffect(() => {
-    if (typeof window === 'undefined' || !selectedConversation) return;
-
     const mainChannel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
-    const conversationChannel = pusherClient.subscribe(`${PUSHER_CHANNELS.CHAT}-${selectedConversation.id}`);
 
     const handleMessageReceived = (message: PusherMessage) => {
       if (!message?.id || !message?.conversationId) return;
@@ -59,7 +52,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
         messages: pusherConversation.messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
-        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+        })),
         createdAt: new Date(pusherConversation.createdAt),
         updatedAt: new Date(pusherConversation.updatedAt)
       } as ConversationWithMessages;
@@ -77,27 +70,24 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
         messages: conv.messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
-        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+        })),
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
 
-      const sortedConversations = formattedConversations.sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-      );
-
-      setConversations(sortedConversations);
+      setConversations(formattedConversations);
     };
 
-    conversationChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-    conversationChannel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+    // Subscribe to events
+    mainChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+    mainChannel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
     mainChannel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
 
+    // Cleanup
     return () => {
-      conversationChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-      conversationChannel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+      mainChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+      mainChannel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
       mainChannel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
-      pusherClient.unsubscribe(`${PUSHER_CHANNELS.CHAT}-${selectedConversation.id}`);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
   }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations]);
