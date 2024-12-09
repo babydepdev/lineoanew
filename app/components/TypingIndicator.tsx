@@ -38,14 +38,11 @@ export function TypingIndicator({ conversationId }: TypingIndicatorProps) {
   if (!isTyping) return null;
 
   return (
-    <div className="px-6 py-2 text-sm text-slate-500">
-      <div className="flex items-center gap-2">
-        <div className="flex gap-1">
-          <span className="animate-bounce">•</span>
-          <span className="animate-bounce" style={{ animationDelay: '0.2s' }}>•</span>
-          <span className="animate-bounce" style={{ animationDelay: '0.4s' }}>•</span>
-        </div>
-        <span>Someone is typing...</span>
+    <div className="px-6 py-2">
+      <div className="typing-indicator flex items-center gap-1 text-muted">
+        <span />
+        <span />
+        <span />
       </div>
     </div>
   );

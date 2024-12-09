@@ -1,5 +1,5 @@
 {
-  "name": "chat-integration11",
+  "name": "chat-integration1",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -16,10 +16,14 @@
     "@radix-ui/react-scroll-area": "^1.0.5",
     "@radix-ui/react-separator": "^1.0.3",
     "@radix-ui/react-slot": "^1.0.2",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
     "@types/socket.io": "^3.0.2",
     "axios": "^1.7.9",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "encoding": "^0.1.13",
     "facebook-nodejs-sdk": "^0.1.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.323.0",
@@ -33,21 +37,18 @@
     "socket.io-client": "^4.8.1",
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
-    "zustand": "^4.5.0",
-    "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
-    "encoding": "^0.1.13"
+    "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.14.202",
     "@typescript-eslint/eslint-plugin": "^6.19.0",
     "@typescript-eslint/parser": "^6.19.0",
-    "@types/lodash": "^4.14.202",
+    "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "14.1.0",
     "eslint-plugin-react": "^7.33.2",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
     "typescript": "^5"
   }
 }

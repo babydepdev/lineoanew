@@ -1,17 +1,61 @@
 "use client";
 
-import { SerializedConversation } from '@/app/types/chat';
+import {  useCallback } from 'react';
+import { SerializedConversation, ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 import { useConversationEvents } from '@/app/hooks/useConversationEvents';
 import { usePusherEvents } from '@/app/hooks/usePusherEvents';
-import { useChatActions } from './useChatActions';
 
 export function useChat(initialConversations: SerializedConversation[]) {
-  const { conversations, selectedConversation, setSelectedConversation } = useChatState();
-  const { sendMessage } = useChatActions();
+  const { 
+    conversations, 
+    selectedConversation, 
+    setSelectedConversation,
+    updateConversation 
+  } = useChatState();
   
   useConversationEvents(initialConversations);
   usePusherEvents();
+
+  const sendMessage = useCallback(async (content: string) => {
+    if (!selectedConversation) return;
+
+    try {
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: selectedConversation.id,
+          content,
+          platform: selectedConversation.platform,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
+      
+      if (data.conversation) {
+        const updatedConversation: ConversationWithMessages = {
+          ...data.conversation,
+          messages: data.conversation.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
+          createdAt: new Date(data.conversation.createdAt),
+          updatedAt: new Date(data.conversation.updatedAt)
+        };
+
+        updateConversation(updatedConversation);
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
+  }, [selectedConversation, updateConversation]);
 
   return {
     conversations,

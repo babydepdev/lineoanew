@@ -1,6 +1,8 @@
 import React from 'react';
 import { ConversationWithMessages } from '../types/chat';
 import { formatTimestamp } from '../utils/dateFormatter';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { cn } from '@/lib/utils';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -8,59 +10,63 @@ interface ConversationPreviewProps {
   onClick: () => void;
 }
 
-export const ConversationPreview: React.FC<ConversationPreviewProps> = ({
+export function ConversationPreview({
   conversation,
   isSelected,
   onClick,
-}) => {
+}: ConversationPreviewProps) {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
   
   return (
     <div
       onClick={onClick}
-      className={`
-        p-4 hover:bg-gray-50 cursor-pointer transition-colors
-        ${isSelected ? 'bg-blue-50 hover:bg-blue-50' : ''}
-      `}
-    >
-      <div className="flex justify-between items-start mb-1">
-        <div className="flex items-center gap-3">
-          <div className={`
-            w-10 h-10 rounded-full flex items-center justify-center
-            ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}
-          `}>
-            {conversation.platform === 'LINE' ? 'L' : 'F'}
-          </div>
-          <div>
-            <div className="font-medium text-gray-900">
-              {conversation.platform} User
-            </div>
-            <div className="text-xs text-gray-500">
-              ID: {conversation.userId.slice(0, 8)}...
-            </div>
-          </div>
-        </div>
-        {lastMessage && (
-          <span className="text-xs text-gray-500">
-            {formatTimestamp(lastMessage.timestamp)}
-          </span>
-        )}
-      </div>
-      
-      {lastMessage && (
-        <div className="ml-13 pl-13">
-          <div className="flex items-center gap-2 text-sm">
-            <span className={`font-medium ${
-              lastMessage.sender === 'BOT' ? 'text-blue-600' : 'text-green-600'
-            }`}>
-              {lastMessage.sender === 'USER' ? 'User' : 'Bot'}
-            </span>
-            <span className="text-gray-600 truncate">
-              {lastMessage.content}
-            </span>
-          </div>
-        </div>
+      className={cn(
+        "p-4 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors",
+        isSelected && "bg-slate-100 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800"
       )}
+    >
+      <div className="flex gap-3">
+        <Avatar className="h-12 w-12">
+          <AvatarFallback className={cn(
+            "text-lg",
+            isSelected 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-slate-100 dark:bg-slate-700 text-muted"
+          )}>
+            {conversation.platform === 'LINE' ? 'L' : 'F'}
+          </AvatarFallback>
+        </Avatar>
+
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start mb-1">
+            <div className="space-y-1">
+              <h3 className="font-medium leading-none">
+                {conversation.platform} Chat
+              </h3>
+              <p className="text-xs text-muted truncate">
+                ID: {conversation.userId.slice(0, 8)}...
+              </p>
+            </div>
+            {lastMessage && (
+              <span className="text-xs text-muted shrink-0 ml-2">
+                {formatTimestamp(lastMessage.timestamp)}
+              </span>
+            )}
+          </div>
+          
+          {lastMessage && (
+            <p className="text-sm text-muted truncate">
+              <span className={cn(
+                "font-medium mr-1",
+                lastMessage.sender === 'USER' ? "text-primary" : "text-muted"
+              )}>
+                {lastMessage.sender === 'USER' ? 'User:' : 'Bot:'}
+              </span>
+              {lastMessage.content}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
-};
+}

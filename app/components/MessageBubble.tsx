@@ -16,39 +16,33 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className={cn(
       "flex items-end gap-2 group",
-      isUser ? "justify-start" : "justify-end"
+      isUser ? "flex-row-reverse" : "flex-row"
     )}>
-      {isUser && (
-        <Avatar className="w-8 h-8">
-          <AvatarFallback className="bg-blue-100 text-blue-600">U</AvatarFallback>
-        </Avatar>
-      )}
-      
-      <div className={cn("max-w-[70%]")}>
-        <div className={cn(
-          "rounded-2xl px-4 py-2 shadow-sm",
-          isUser 
-            ? "bg-white border border-slate-200 rounded-bl-none" 
-            : "bg-blue-500 text-white rounded-br-none"
+      <Avatar className="h-8 w-8 shrink-0">
+        <AvatarFallback className={cn(
+          isUser ? "bg-primary text-primary-foreground" : "bg-muted/10 text-muted"
         )}>
-          <div className="break-words whitespace-pre-wrap text-[15px]">
-            {message.content}
-          </div>
+          {isUser ? 'U' : 'B'}
+        </AvatarFallback>
+      </Avatar>
+      
+      <div className={cn(
+        "max-w-[70%] space-y-1",
+        isUser ? "items-end" : "items-start"
+      )}>
+        <div className={cn(
+          "px-4 py-2.5 text-sm",
+          isUser ? "message-bubble-user" : "message-bubble-bot"
+        )}>
+          {message.content}
         </div>
         <div className={cn(
-          "text-xs mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200",
-          isUser ? "text-left" : "text-right",
-          "text-slate-500"
+          "px-2 text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity",
+          isUser ? "text-right" : "text-left"
         )}>
           {formatTimestamp(message.timestamp)}
         </div>
       </div>
-
-      {!isUser && (
-        <Avatar className="w-8 h-8">
-          <AvatarFallback className="bg-blue-500 text-white">B</AvatarFallback>
-        </Avatar>
-      )}
     </div>
   );
 }

@@ -11,7 +11,7 @@ interface MessageInputProps {
   conversationId: string;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSend, conversationId }) => {
+export function MessageInput({ onSend, conversationId }: MessageInputProps) {
   const [message, setMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -58,7 +58,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, conversation
   }, [message]);
 
   return (
-    <div className="p-4 border-t border-slate-200 bg-white">
+    <div className="p-4 border-t border-border bg-white dark:bg-slate-900">
       <div className="max-w-4xl mx-auto flex gap-2 items-end">
         <textarea
           ref={textareaRef}
@@ -71,26 +71,26 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, conversation
           placeholder="Type a message..."
           className={cn(
             "flex-grow resize-none p-3 rounded-xl",
-            "border border-slate-200",
-            "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent",
-            "min-h-[44px] max-h-[200px]",
-            "placeholder:text-slate-400"
+            "bg-slate-50 dark:bg-slate-800 border border-border",
+            "focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent",
+            "placeholder:text-muted",
+            "min-h-[44px] max-h-[200px]"
           )}
           rows={1}
         />
         <button
           onClick={handleSend}
+          disabled={!message.trim()}
           className={cn(
-            "px-4 py-2 bg-blue-500 text-white rounded-xl",
-            "hover:bg-blue-600 transition-colors",
+            "p-3 rounded-xl bg-primary text-primary-foreground",
+            "hover:bg-primary/90 transition-colors",
             "disabled:opacity-50 disabled:cursor-not-allowed",
             "h-[44px] w-[44px] flex items-center justify-center"
           )}
-          disabled={!message.trim()}
         >
           <Send className="w-5 h-5" />
         </button>
       </div>
     </div>
   );
-};
+}
