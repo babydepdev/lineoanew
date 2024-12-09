@@ -17,9 +17,7 @@ export const useChatState = create<ChatState>((set) => ({
   conversations: [],
   selectedConversation: null,
   setConversations: (conversations) => 
-    set({ 
-      conversations: sortConversations(conversations)
-    }),
+    set({ conversations: sortConversations(conversations) }),
   setSelectedConversation: (conversation) => 
     set({ selectedConversation: conversation }),
   updateConversation: (updatedConversation) =>
