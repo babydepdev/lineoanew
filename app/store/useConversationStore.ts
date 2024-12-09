@@ -38,11 +38,12 @@ export const useConversationStore = create<ConversationStore>((set) => ({
 
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
-          const existingMessages = Array.isArray(conv.messages) ? conv.messages : [];
-          const messageExists = existingMessages.some(m => m.id === message.id);
+          // Create a new Set of message IDs for efficient lookup
+          const messageIds = new Set(conv.messages.map(m => m.id));
           
-          if (!messageExists) {
-            const updatedMessages = [...existingMessages, message].sort(
+          // Only add the message if it doesn't already exist
+          if (!messageIds.has(message.id)) {
+            const updatedMessages = [...conv.messages, message].sort(
               (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
             );
             
@@ -55,11 +56,12 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         return conv;
       });
 
+      // Update selected conversation if needed
       const updatedSelectedConversation = state.selectedConversation?.id === message.conversationId
         ? {
             ...state.selectedConversation,
             messages: [
-              ...(state.selectedConversation.messages || []).filter(m => m.id !== message.id),
+              ...state.selectedConversation.messages.filter(m => m.id !== message.id),
               message
             ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
           }

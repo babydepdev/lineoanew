@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { Message } from '@prisma/client';
 import { ConversationWithMessages } from '../types/chat';
 import { useConversationStore } from '../store/useConversationStore';
@@ -15,8 +15,18 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     addMessage,
   } = useConversationStore();
 
+  const messageQueue = useRef<Set<string>>(new Set());
+
   const handleMessageReceived = useCallback((pusherMessage: PusherMessage) => {
     console.log('Received message:', pusherMessage);
+    
+    // Prevent duplicate messages
+    if (messageQueue.current.has(pusherMessage.id)) {
+      return;
+    }
+    
+    messageQueue.current.add(pusherMessage.id);
+    
     const message: Message = {
       ...pusherMessage,
       timestamp: new Date(pusherMessage.timestamp),
@@ -24,10 +34,16 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     
     // Immediately add the message to the store
     addMessage(message);
+    
+    // Remove message from queue after a delay
+    setTimeout(() => {
+      messageQueue.current.delete(pusherMessage.id);
+    }, 5000);
   }, [addMessage]);
 
   const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
     console.log('Conversation updated:', pusherConversation);
+    
     const conversation: ConversationWithMessages = {
       ...pusherConversation,
       messages: pusherConversation.messages.map(msg => ({
@@ -46,9 +62,11 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (!selectedConversation) return;
 
     try {
+      const tempId = `temp-${Date.now()}`;
+      
       // Optimistically add the message locally first
       const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
+        id: tempId,
         conversationId: selectedConversation.id,
         content,
         sender: 'BOT',
@@ -57,6 +75,8 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         externalId: null,
       };
 
+      // Add to message queue to prevent duplicate
+      messageQueue.current.add(tempId);
       addMessage(optimisticMessage);
 
       const response = await fetch('/api/messages', {
