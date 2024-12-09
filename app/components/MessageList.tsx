@@ -1,6 +1,8 @@
+"use client";
+
 import React, { useEffect, useRef } from 'react';
 import { useLineMessages } from '../hooks/useLineMessages';
-
+import { ScrollArea } from './ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
 
 interface MessageListProps {
@@ -21,15 +23,15 @@ export function MessageList({ conversationId }: MessageListProps) {
 
   if (isLoading) {
     return (
-      <div className="flex-grow flex items-center justify-center bg-gray-50">
-        <div className="animate-pulse text-gray-500">Loading messages...</div>
+      <div className="flex-grow flex items-center justify-center bg-slate-50">
+        <div className="animate-pulse text-slate-500">Loading messages...</div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex-grow flex items-center justify-center bg-gray-50">
+      <div className="flex-grow flex items-center justify-center bg-slate-50">
         <div className="text-red-500">Error loading messages: {error.message}</div>
       </div>
     );
@@ -40,11 +42,13 @@ export function MessageList({ conversationId }: MessageListProps) {
   );
 
   return (
-    <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-gradient-to-b from-gray-50 to-white">
-      {allMessages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} />
-      ))}
-      <div ref={messagesEndRef} />
-    </div>
+    <ScrollArea className="flex-grow">
+      <div className="p-6 space-y-4">
+        {allMessages.map((msg) => (
+          <MessageBubble key={msg.id} message={msg} />
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+    </ScrollArea>
   );
 }

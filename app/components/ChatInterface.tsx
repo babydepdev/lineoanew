@@ -6,6 +6,8 @@ import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { Separator } from './ui/separator';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -20,26 +22,30 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
   } = useChat(initialConversations);
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] rounded-lg overflow-hidden shadow-xl border border-gray-200">
+    <div className="flex h-[calc(100vh-4rem)] rounded-lg overflow-hidden shadow-xl border border-slate-200">
       <ConversationList 
         conversations={conversations} 
         onSelect={setSelectedConversation}
         selectedId={selectedConversation?.id}
       />
 
+      <Separator orientation="vertical" />
+
       <div className="flex-1 flex flex-col bg-white">
         {selectedConversation ? (
           <>
-            <div className="px-6 py-4 border-b bg-white">
+            <div className="px-6 py-4 border-b border-slate-200 bg-white">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                  {selectedConversation.platform === 'LINE' ? 'L' : 'F'}
-                </div>
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    {selectedConversation.platform === 'LINE' ? 'L' : 'F'}
+                  </AvatarFallback>
+                </Avatar>
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
+                  <h2 className="text-lg font-semibold text-slate-900">
                     {selectedConversation.platform} Chat
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-slate-500">
                     User ID: {selectedConversation.userId}
                   </p>
                 </div>
@@ -50,7 +56,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
             <MessageInput onSend={sendMessage} />
           </>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50">
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50">
             <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
               <svg 
                 className="w-8 h-8 text-blue-500"
@@ -66,10 +72,10 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
                 />
               </svg>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-slate-900 mb-2">
               Welcome to Chat Dashboard
             </h3>
-            <p className="text-gray-500 text-center max-w-sm">
+            <p className="text-slate-500 text-center max-w-sm">
               Select a conversation from the list to start chatting
             </p>
           </div>
