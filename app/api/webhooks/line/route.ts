@@ -16,12 +16,6 @@ export async function POST(request: NextRequest) {
       body.events.map(async (event: LineMessageEvent) => {
         if (event.type === 'message' && event.message.type === 'text') {
           try {
-            // Skip redelivered messages
-            if (event.deliveryContext?.isRedelivery) {
-              console.log('Skipping redelivered message:', event.message.id);
-              return null;
-            }
-
             return await handleLineMessageReceived(
               event.source.userId,
               event.message.text,

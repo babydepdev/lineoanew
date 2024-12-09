@@ -1,7 +1,7 @@
 import { Client } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
-import { formatConversationForPusher, formatMessageForPusher } from '@/lib/messageFormatter';
+import { formatConversationForPusher } from '@/lib/messageFormatter';
 
 const prisma = new PrismaClient();
 
@@ -19,12 +19,12 @@ export async function sendLineMessageToUser(userId: string, content: string): Pr
   try {
     console.log('Sending LINE message:', { userId, content });
     
-    await client.pushMessage(userId, {
+    const result = await client.pushMessage(userId, {
       type: 'text',
       text: content
     });
 
-    console.log('LINE message sent successfully');
+    console.log('LINE message sent successfully:', result);
     return true;
   } catch (error) {
     console.error('Error sending LINE message:', error);
@@ -39,21 +39,15 @@ export async function handleLineMessageReceived(
   timestamp: Date
 ) {
   try {
-    // Check for existing message first to avoid transaction if duplicate
-    const existingMessage = await prisma.message.findUnique({
-      where: { externalId: messageId }
-    });
-
-    if (existingMessage) {
-      console.log('Skipping duplicate message:', messageId);
-      return null;
-    }
-
+    // Use transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
       let conversation = await tx.conversation.findFirst({
         where: {
           userId,
           platform: 'LINE'
+        },
+        include: {
+          messages: true
         }
       });
 
@@ -63,8 +57,32 @@ export async function handleLineMessageReceived(
             userId,
             platform: 'LINE',
             channelId: userId
+          },
+          include: {
+            messages: true
           }
         });
+      }
+
+      // Check for duplicate message
+      const existingMessage = await tx.message.findFirst({
+        where: {
+          OR: [
+            { externalId: messageId },
+            {
+              conversationId: conversation.id,
+              content,
+              timestamp: {
+                gte: new Date(timestamp.getTime() - 5000)
+              }
+            }
+          ]
+        }
+      });
+
+      if (existingMessage) {
+        console.log('Duplicate message detected, skipping:', messageId);
+        return { conversation, message: existingMessage };
       }
 
       const message = await tx.message.create({
@@ -83,13 +101,12 @@ export async function handleLineMessageReceived(
         data: { updatedAt: timestamp }
       });
 
-      return { message, conversationId: conversation.id };
+      return { conversation, message };
     });
 
-    if (!result) return null;
-
+    // Get updated conversation with all messages
     const updatedConversation = await prisma.conversation.findUnique({
-      where: { id: result.conversationId },
+      where: { id: result.conversation.id },
       include: {
         messages: {
           orderBy: { timestamp: 'asc' }
@@ -98,18 +115,30 @@ export async function handleLineMessageReceived(
     });
 
     if (updatedConversation) {
-      await Promise.all([
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.MESSAGE_RECEIVED,
-          formatMessageForPusher(result.message)
-        ),
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.CONVERSATION_UPDATED,
-          formatConversationForPusher(updatedConversation)
-        )
-      ]);
+      // Broadcast updates
+      await pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        formatConversationForPusher(updatedConversation)
+      );
+
+      // Broadcast all conversations update
+      const allConversations = await prisma.conversation.findMany({
+        include: {
+          messages: {
+            orderBy: { timestamp: 'asc' }
+          }
+        },
+        orderBy: {
+          updatedAt: 'desc'
+        }
+      });
+
+      await pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+        allConversations.map(formatConversationForPusher)
+      );
     }
 
     return result.message;
