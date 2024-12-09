@@ -8,6 +8,7 @@ import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { Separator } from './ui/separator';
+import { TypingIndicator } from './TypingIndicator';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -20,6 +21,12 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
     setSelectedConversation,
     sendMessage,
   } = useChat(initialConversations);
+
+  const handleSendMessage = async (content: string) => {
+    if (selectedConversation) {
+      await sendMessage(content);
+    }
+  };
 
   return (
     <div className="flex h-[calc(100vh-4rem)] rounded-lg overflow-hidden shadow-xl border border-slate-200">
@@ -53,7 +60,11 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
             </div>
 
             <MessageList conversationId={selectedConversation.id} />
-            <MessageInput onSend={sendMessage} />
+            <TypingIndicator conversationId={selectedConversation.id} />
+            <MessageInput 
+              onSend={handleSendMessage} 
+              conversationId={selectedConversation.id}
+            />
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50">

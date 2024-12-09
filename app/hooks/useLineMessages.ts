@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Message } from '@prisma/client';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 
@@ -15,10 +15,25 @@ export function useLineMessages(conversationId: string): UseLineMessagesResult {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  const handleNewMessage = useCallback((message: Message) => {
+    if (message.conversationId !== conversationId) return;
+    
+    const newMessage = {
+      ...message,
+      timestamp: new Date(message.timestamp)
+    };
+
+    if (message.sender === 'BOT') {
+      setBotMessages(prev => [...prev, newMessage]);
+    } else {
+      setUserMessages(prev => [...prev, newMessage]);
+    }
+  }, [conversationId]);
+
   useEffect(() => {
     let mounted = true;
 
-    async function fetchMessages() {
+    const fetchMessages = async () => {
       try {
         const response = await fetch(`/api/messages/line/${conversationId}`);
         if (!response.ok) throw new Error('Failed to fetch messages');
@@ -42,35 +57,24 @@ export function useLineMessages(conversationId: string): UseLineMessagesResult {
           setIsLoading(false);
         }
       }
-    }
+    };
 
     fetchMessages();
 
-    const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
-    
-    const handleNewMessage = (message: Message) => {
-      if (!mounted || message.conversationId !== conversationId) return;
-      
-      const newMessage = {
-        ...message,
-        timestamp: new Date(message.timestamp)
-      };
-
-      if (message.sender === 'BOT') {
-        setBotMessages(prev => [...prev, newMessage]);
-      } else {
-        setUserMessages(prev => [...prev, newMessage]);
-      }
-    };
-
+    // Subscribe to real-time updates
+    const channel = pusherClient.subscribe(`${PUSHER_CHANNELS.CHAT}-${conversationId}`);
     channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+    
+    // Subscribe to conversation-specific events
+    pusherClient.subscribe(`private-conversation-${conversationId}`);
 
     return () => {
       mounted = false;
       channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
-      pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
+      pusherClient.unsubscribe(`${PUSHER_CHANNELS.CHAT}-${conversationId}`);
+      pusherClient.unsubscribe(`private-conversation-${conversationId}`);
     };
-  }, [conversationId]);
+  }, [conversationId, handleNewMessage]);
 
   return { botMessages, userMessages, isLoading, error };
 }

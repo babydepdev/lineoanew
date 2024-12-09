@@ -3,19 +3,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Send } from 'lucide-react';
+import { PUSHER_EVENTS, triggerClientEvent } from '@/lib/pusher';
+import { debounce } from 'lodash';
 
 interface MessageInputProps {
   onSend: (message: string) => void;
+  conversationId: string;
 }
 
-export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
+export const MessageInput: React.FC<MessageInputProps> = ({ onSend, conversationId }) => {
   const [message, setMessage] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
     if (message.trim()) {
       onSend(message);
       setMessage('');
+      setIsTyping(false);
     }
   };
 
@@ -24,6 +29,25 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const debouncedTypingEnd = debounce(() => {
+    setIsTyping(false);
+    triggerClientEvent(PUSHER_EVENTS.CLIENT_TYPING, {
+      conversationId,
+      isTyping: false
+    });
+  }, 1000);
+
+  const handleTyping = () => {
+    if (!isTyping) {
+      setIsTyping(true);
+      triggerClientEvent(PUSHER_EVENTS.CLIENT_TYPING, {
+        conversationId,
+        isTyping: true
+      });
+    }
+    debouncedTypingEnd();
   };
 
   useEffect(() => {
@@ -39,7 +63,10 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend }) => {
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value);
+            handleTyping();
+          }}
           onKeyDown={handleKeyPress}
           placeholder="Type a message..."
           className={cn(
