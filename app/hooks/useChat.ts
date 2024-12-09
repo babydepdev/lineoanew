@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { ConversationWithMessages } from '../types/chat';
+import type { APIResponse, MessageResponse } from '../types/api';
 import { useConversationStore } from '../store/useConversationStore';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import type { PusherMessage, PusherConversation } from '../types/chat';
@@ -102,17 +103,25 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         throw new Error('Failed to send message');
       }
 
-      const data = await response.json();
+      const data = await response.json() as APIResponse;
       if (data.conversation) {
-        const updatedConversation = {
-          ...data.conversation,
-          messages: data.conversation.messages.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
+        const updatedConversation: ConversationWithMessages = {
+          id: data.conversation.id,
+          platform: data.conversation.platform,
+          channelId: data.conversation.channelId,
+          userId: data.conversation.userId,
+          messages: data.conversation.messages.map((msg: MessageResponse) => ({
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender,
+            timestamp: new Date(msg.timestamp),
+            platform: msg.platform,
+            externalId: msg.externalId
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt)
-        } as ConversationWithMessages;
+        };
 
         updateConversation(updatedConversation);
         setSelectedConversation(updatedConversation);
