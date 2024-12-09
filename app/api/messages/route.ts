@@ -11,6 +11,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { conversationId, content, platform } = body;
 
+    console.log('Received message request:', { conversationId, content, platform });
+
     if (!conversationId || !content || !platform) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -28,54 +30,65 @@ export async function POST(request: NextRequest) {
     });
 
     if (!conversation) {
+      console.error('Conversation not found:', conversationId);
       return NextResponse.json(
         { error: 'Conversation not found' },
         { status: 404 }
       );
     }
 
-    console.log('Sending message to platform:', {
-      platform,
-      userId: conversation.userId,
-      content,
-      timestamp: new Date().toISOString()
+    console.log('Found conversation:', {
+      id: conversation.id,
+      platform: conversation.platform,
+      userId: conversation.userId
     });
 
-    // Send to platform first
+    // Create user message first
+    const userMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        content,
+        sender: 'USER',
+        platform,
+        timestamp: new Date(),
+      },
+    });
+
+    // Broadcast the user message immediately
+    await broadcastMessageUpdate(conversationId);
+
+    // Then send to platform and create bot message
     let messageSent = false;
     if (platform === 'LINE') {
+      console.log('Sending LINE message to:', conversation.userId);
       messageSent = await sendLineMessage(conversation.userId, content);
     } else if (platform === 'FACEBOOK') {
+      console.log('Sending Facebook message to:', conversation.userId);
       messageSent = await sendFacebookMessage(conversation.userId, content);
     }
 
     if (!messageSent) {
-      console.error('Failed to send message to platform');
+      console.error('Failed to send message to platform:', platform);
+      // Delete the message if sending failed
+      await prisma.message.delete({
+        where: { id: userMessage.id }
+      });
       return NextResponse.json(
         { error: 'Failed to send message to platform' },
         { status: 500 }
       );
     }
 
-    // Create bot message after successful platform delivery
+    // Create bot response message
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
-        content,
+        content: 'Received your message',
         sender: 'BOT',
         platform,
         timestamp: new Date(),
       },
     });
-
-    // Update conversation timestamp
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() }
-    });
-
-    // Broadcast the message update
-    await broadcastMessageUpdate(conversationId);
 
     // Get final updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
@@ -87,6 +100,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Broadcast the final state with bot message
+    await broadcastMessageUpdate(conversationId);
+
+    console.log('Message sent successfully');
     return NextResponse.json({
       message: botMessage,
       conversation: updatedConversation,

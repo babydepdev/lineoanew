@@ -34,12 +34,12 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         timestamp: new Date(message.timestamp)
       };
       
-      // Immediately add the message to the store
       addMessage(updatedMessage);
 
-      // Update the conversation's messages if it's the selected one
       if (selectedConversation?.id === message.conversationId) {
-        const updatedMessages = [...selectedConversation.messages, updatedMessage];
+        const updatedMessages = [...selectedConversation.messages, updatedMessage].sort(
+          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+        );
         const updatedConversation = {
           ...selectedConversation,
           messages: updatedMessages,
@@ -57,7 +57,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         messages: pusherConversation.messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
-        })),
+        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
         createdAt: new Date(pusherConversation.createdAt),
         updatedAt: new Date(pusherConversation.updatedAt)
       } as ConversationWithMessages;
@@ -75,7 +75,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         messages: conv.messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp)
-        })),
+        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
@@ -99,26 +99,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (!selectedConversation) return;
 
     try {
-      // Optimistically add the message locally first
-      const optimisticMessage = {
-        id: `temp-${Date.now()}`,
-        conversationId: selectedConversation.id,
-        content,
-        sender: 'USER' as const,
-        timestamp: new Date(),
-        platform: selectedConversation.platform,
-        externalId: null
-      };
-
-      // Update local state immediately
-      const updatedMessages = [...selectedConversation.messages, optimisticMessage];
-      const optimisticConversation = {
-        ...selectedConversation,
-        messages: updatedMessages,
-        updatedAt: new Date()
-      };
-      setSelectedConversation(optimisticConversation);
-
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -150,7 +130,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
             timestamp: new Date(msg.timestamp),
             platform: msg.platform,
             externalId: msg.externalId
-          })),
+          })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt)
         };
