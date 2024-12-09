@@ -18,8 +18,6 @@ export const useConversationStore = create<ConversationStore>((set) => ({
   setSelectedConversation: (conversation) => set({ selectedConversation: conversation }),
   updateConversation: (updatedConversation) =>
     set((state) => {
-      if (!updatedConversation) return state;
-
       const updatedConversations = state.conversations.map((conv) =>
         conv.id === updatedConversation.id ? updatedConversation : conv
       );
@@ -34,36 +32,20 @@ export const useConversationStore = create<ConversationStore>((set) => ({
     }),
   addMessage: (message) =>
     set((state) => {
-      if (!message || !message.conversationId) return state;
-
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
-          // Create a new Set of message IDs for efficient lookup
-          const messageIds = new Set(conv.messages.map(m => m.id));
-          
-          // Only add the message if it doesn't already exist
-          if (!messageIds.has(message.id)) {
-            const updatedMessages = [...conv.messages, message].sort(
-              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-            );
-            
-            return {
-              ...conv,
-              messages: updatedMessages,
-            };
-          }
+          return {
+            ...conv,
+            messages: [...conv.messages, message],
+          };
         }
         return conv;
       });
 
-      // Update selected conversation if needed
       const updatedSelectedConversation = state.selectedConversation?.id === message.conversationId
         ? {
             ...state.selectedConversation,
-            messages: [
-              ...state.selectedConversation.messages.filter(m => m.id !== message.id),
-              message
-            ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+            messages: [...state.selectedConversation.messages, message],
           }
         : state.selectedConversation;
 

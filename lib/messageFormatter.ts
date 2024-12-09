@@ -1,15 +1,5 @@
 import { Message, Conversation } from '@prisma/client';
-import type { ConversationWithMessages } from '@/app/types/chat';
-
-export interface PusherMessage extends Omit<Message, 'timestamp'> {
-  timestamp: string;
-}
-
-export interface PusherConversation extends Omit<ConversationWithMessages, 'messages' | 'createdAt' | 'updatedAt'> {
-  messages: PusherMessage[];
-  createdAt: string;
-  updatedAt: string;
-}
+import type { ConversationWithMessages, PusherMessage, PusherConversation } from '@/app/types/chat';
 
 export function formatMessageForPusher(message: Message): PusherMessage {
   return {
