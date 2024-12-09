@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from './pusher';
-import { formatConversationForPusher } from './messageFormatter';
+import { formatConversationForPusher, formatMessageForPusher } from './messageFormatter';
 
 const prisma = new PrismaClient();
 
@@ -21,15 +21,26 @@ export async function broadcastMessageUpdate(conversationId: string) {
       return;
     }
 
-    // Format the conversation for Pusher
-    const formattedConversation = formatConversationForPusher(updatedConversation);
+    // Get the latest message
+    const latestMessage = updatedConversation.messages[updatedConversation.messages.length - 1];
 
-    // Broadcast the conversation update
-    await pusherServer.trigger(
-      PUSHER_CHANNELS.CHAT,
-      PUSHER_EVENTS.CONVERSATION_UPDATED,
-      formattedConversation
-    );
+    // Format the conversation and message for Pusher
+    const formattedConversation = formatConversationForPusher(updatedConversation);
+    const formattedMessage = formatMessageForPusher(latestMessage);
+
+    // Broadcast both the message and conversation updates
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        formattedMessage
+      ),
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        formattedConversation
+      )
+    ]);
 
     // Fetch and broadcast all conversations to update the list
     const allConversations = await prisma.conversation.findMany({

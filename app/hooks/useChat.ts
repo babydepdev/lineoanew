@@ -14,61 +14,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     addMessage,
   } = useConversationStore();
 
-  const messageQueueRef = useRef<Set<string>>(new Set());
-  const processingRef = useRef(false);
-
-  const processMessageQueue = useCallback(async () => {
-    if (processingRef.current || messageQueueRef.current.size === 0) return;
-
-    processingRef.current = true;
-    const messageIds = Array.from(messageQueueRef.current);
-    messageQueueRef.current.clear();
-
-    try {
-      const response = await fetch('/api/messages');
-      if (!response.ok) throw new Error('Failed to fetch messages');
-      
-      const messages = await response.json();
-      
-      for (const message of messages) {
-        if (messageIds.includes(message.id)) {
-          addMessage(message);
-        }
-      }
-    } catch (error) {
-      console.error('Error processing message queue:', error);
-    } finally {
-      processingRef.current = false;
-    }
-  }, [addMessage]);
-
-  const handleMessageReceived = useCallback((message: PusherMessage) => {
-    if (!message?.id || !message?.conversationId) return;
-    
-    messageQueueRef.current.add(message.id);
-    processMessageQueue();
-  }, [processMessageQueue]);
-
-  const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
-    if (!pusherConversation?.id) return;
-
-    const updatedConversation = {
-      ...pusherConversation,
-      messages: pusherConversation.messages.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      })),
-      createdAt: new Date(pusherConversation.createdAt),
-      updatedAt: new Date(pusherConversation.updatedAt)
-    } as ConversationWithMessages;
-
-    updateConversation(updatedConversation);
-
-    if (selectedConversation?.id === pusherConversation.id) {
-      setSelectedConversation(updatedConversation);
-    }
-  }, [selectedConversation, updateConversation, setSelectedConversation]);
-
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
       setConversations(initialConversations);
@@ -79,16 +24,63 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (typeof window === 'undefined') return;
 
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
-    
+
+    const handleMessageReceived = (message: PusherMessage) => {
+      if (!message?.id || !message?.conversationId) return;
+      
+      const updatedMessage = {
+        ...message,
+        timestamp: new Date(message.timestamp)
+      };
+      
+      addMessage(updatedMessage);
+    };
+
+    const handleConversationUpdated = (pusherConversation: PusherConversation) => {
+      if (!pusherConversation?.id) return;
+
+      const updatedConversation = {
+        ...pusherConversation,
+        messages: pusherConversation.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })),
+        createdAt: new Date(pusherConversation.createdAt),
+        updatedAt: new Date(pusherConversation.updatedAt)
+      } as ConversationWithMessages;
+
+      updateConversation(updatedConversation);
+
+      if (selectedConversation?.id === pusherConversation.id) {
+        setSelectedConversation(updatedConversation);
+      }
+    };
+
+    const handleConversationsUpdated = (conversations: PusherConversation[]) => {
+      const formattedConversations = conversations.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })),
+        createdAt: new Date(conv.createdAt),
+        updatedAt: new Date(conv.updatedAt)
+      })) as ConversationWithMessages[];
+
+      setConversations(formattedConversations);
+    };
+
     channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
     channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+    channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
 
     return () => {
       channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
       channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+      channel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
-  }, [handleMessageReceived, handleConversationUpdated]);
+  }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations]);
 
   const sendMessage = async (content: string) => {
     if (!selectedConversation) return;
@@ -108,12 +100,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
 
       if (!response.ok) {
         throw new Error('Failed to send message');
-      }
-
-      const updatedConversation = await response.json();
-      if (updatedConversation) {
-        updateConversation(updatedConversation);
-        setSelectedConversation(updatedConversation);
       }
     } catch (error) {
       console.error('Error sending message:', error);
