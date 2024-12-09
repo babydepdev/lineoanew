@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Message } from '@prisma/client';
-import { ConversationWithMessages } from '../types/chat';
+import type { ConversationWithMessages } from '../types/chat';
 import { useConversationStore } from '../store/useConversationStore';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import type { PusherMessage, PusherConversation } from '../types/chat';
@@ -21,7 +20,8 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (processingMessage.current || messageQueue.current.size === 0) return;
 
     processingMessage.current = true;
-    const messageId = Array.from(messageQueue.current)[0];
+    const currentMessageQueue = new Set(messageQueue.current);
+    const messageId = Array.from(currentMessageQueue)[0];
 
     try {
       const response = await fetch(`/api/messages/${messageId}`);
@@ -41,7 +41,8 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     } catch (error) {
       console.error('Error processing message:', error);
     } finally {
-      messageQueue.current.delete(messageId);
+      currentMessageQueue.delete(messageId);
+      messageQueue.current = currentMessageQueue;
       processingMessage.current = false;
       // Process next message if any
       if (messageQueue.current.size > 0) {
@@ -90,12 +91,13 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (typeof window === 'undefined') return;
 
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
+    const currentMessageQueue = messageQueue.current;
     
     channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
     channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
 
     return () => {
-      messageQueue.current.clear();
+      currentMessageQueue.clear();
       channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
       channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);

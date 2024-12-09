@@ -1,4 +1,4 @@
-import { Message, Conversation } from '@prisma/client';
+import type { Message } from '@prisma/client';
 import type { ConversationWithMessages, PusherMessage, PusherConversation } from '@/app/types/chat';
 
 export function formatMessageForPusher(message: Message): PusherMessage {

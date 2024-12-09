@@ -1,4 +1,4 @@
-import { Conversation as PrismaConversation, Message as PrismaMessage, Platform, SenderType } from '@prisma/client';
+import { Conversation as PrismaConversation, Message as PrismaMessage, Platform } from '@prisma/client';
 
 export type ConversationWithMessages = PrismaConversation & {
   messages: PrismaMessage[];
