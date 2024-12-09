@@ -28,6 +28,7 @@ export const pusherClient = new PusherClient(
 export const PUSHER_EVENTS = {
   MESSAGE_RECEIVED: 'message-received',
   CONVERSATION_UPDATED: 'conversation-updated',
+  CONVERSATIONS_UPDATED: 'conversations-updated',
 } as const;
 
 export const PUSHER_CHANNELS = {

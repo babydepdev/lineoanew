@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useCallback } from 'react';
-import { ConversationWithMessages, PusherMessage, PusherConversation } from '../types/chat';
-import { MessageResponse } from '../types/api';
+import React from 'react';
+import { ConversationWithMessages } from '../types/chat';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
-import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { useConversationStore } from '../store/useConversationStore';
+import { useConversations } from '../hooks/useConversations';
+import { MessageResponse } from '../types/api';
 import { Message } from '@prisma/client';
 
 interface ChatInterfaceProps {
@@ -18,63 +18,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
   const {
     conversations,
     selectedConversation,
-    setConversations,
     setSelectedConversation,
     updateConversation,
-    addMessage,
   } = useConversationStore();
 
-  const handleMessageReceived = useCallback((message: PusherMessage) => {
-    if (!message?.conversationId) return;
-    
-    const messageWithDate = {
-      ...message,
-      timestamp: new Date(message.timestamp)
-    } as Message;
-    
-    addMessage(messageWithDate);
-  }, [addMessage]);
-
-  const handleConversationUpdated = useCallback((conversation: PusherConversation) => {
-    if (!conversation?.id) return;
-    
-    const updatedConversation = {
-      ...conversation,
-      messages: conversation.messages.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      })),
-      createdAt: new Date(conversation.createdAt),
-      updatedAt: new Date(conversation.updatedAt)
-    } as ConversationWithMessages;
-    
-    updateConversation(updatedConversation);
-    
-    if (selectedConversation?.id === conversation.id) {
-      setSelectedConversation(updatedConversation);
-    }
-  }, [selectedConversation, updateConversation, setSelectedConversation]);
-
-  useEffect(() => {
-    if (Array.isArray(initialConversations)) {
-      setConversations(initialConversations);
-    }
-  }, [initialConversations, setConversations]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
-    
-    channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-    channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
-
-    return () => {
-      channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
-      channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
-      pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
-    };
-  }, [handleMessageReceived, handleConversationUpdated]);
+  useConversations(initialConversations);
 
   const handleSendMessage = async (content: string) => {
     if (!selectedConversation) return;
@@ -100,11 +48,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
       if (data.conversation) {
         const updatedConversation = {
           ...data.conversation,
-          messages: data.conversation.messages.map(msg => ({
+          messages: data.conversation.messages.map((msg: Message) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
-          }))
-        } as ConversationWithMessages;
+          })),
+          createdAt: new Date(data.conversation.createdAt),
+          updatedAt: new Date(data.conversation.updatedAt)
+        };
         updateConversation(updatedConversation);
         setSelectedConversation(updatedConversation);
       }
@@ -116,7 +66,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
   return (
     <div className="flex h-screen bg-gray-100">
       <ConversationList 
-        conversations={conversations || []} 
+        conversations={conversations} 
         onSelect={setSelectedConversation}
         selectedId={selectedConversation?.id}
       />
@@ -128,7 +78,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
               {selectedConversation.platform} Chat - {selectedConversation.userId}
             </div>
 
-            <MessageList messages={selectedConversation.messages || []} />
+            <MessageList messages={selectedConversation.messages} />
             <MessageInput onSend={handleSendMessage} />
           </>
         ) : (
@@ -139,4 +89,4 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
       </div>
     </div>
   );
-}
+};

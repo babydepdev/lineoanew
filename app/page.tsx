@@ -9,6 +9,9 @@ async function getConversations() {
       messages: {
         orderBy: { timestamp: 'asc' }
       }
+    },
+    orderBy: {
+      updatedAt: 'desc'
     }
   });
   return conversations;

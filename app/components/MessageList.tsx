@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Message } from '@prisma/client';
+import { formatTimestamp } from '../utils/dateFormatter';
 
 interface MessageListProps {
   messages: Message[];
@@ -27,14 +28,6 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       </div>
     );
   }
-
-  const formatTimestamp = (timestamp: Date) => {
-    return new Date(timestamp).toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-  };
 
   return (
     <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
@@ -65,4 +58,4 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       <div ref={messagesEndRef} />
     </div>
   );
-}
+};
