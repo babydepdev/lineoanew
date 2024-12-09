@@ -19,6 +19,6 @@ export interface LineWebhookBody {
   events: LineMessageEvent[];
 }
 
-export interface LineMessageResponse {
-  requestId: string;
+export interface LineApiResponse {
+  messageId: string;
 }
