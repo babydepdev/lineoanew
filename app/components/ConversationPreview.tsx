@@ -18,13 +18,27 @@ export const ConversationPreview: React.FC<ConversationPreviewProps> = ({
   return (
     <div
       onClick={onClick}
-      className={`p-4 border-b hover:bg-gray-100 cursor-pointer transition-colors ${
-        isSelected ? 'bg-blue-50' : ''
-      }`}
+      className={`
+        p-4 hover:bg-gray-50 cursor-pointer transition-colors
+        ${isSelected ? 'bg-blue-50 hover:bg-blue-50' : ''}
+      `}
     >
       <div className="flex justify-between items-start mb-1">
-        <div className="font-medium text-gray-900">
-          {lastMessage?.sender === 'USER' ? 'User' : 'LINE Official Account'}
+        <div className="flex items-center gap-3">
+          <div className={`
+            w-10 h-10 rounded-full flex items-center justify-center
+            ${isSelected ? 'bg-blue-100 text-blue-600' : 'bg-gray-100 text-gray-600'}
+          `}>
+            {conversation.platform === 'LINE' ? 'L' : 'F'}
+          </div>
+          <div>
+            <div className="font-medium text-gray-900">
+              {conversation.platform} User
+            </div>
+            <div className="text-xs text-gray-500">
+              ID: {conversation.userId.slice(0, 8)}...
+            </div>
+          </div>
         </div>
         {lastMessage && (
           <span className="text-xs text-gray-500">
@@ -34,15 +48,17 @@ export const ConversationPreview: React.FC<ConversationPreviewProps> = ({
       </div>
       
       {lastMessage && (
-        <div className="flex items-center">
-          <span className={`text-xs font-medium mr-2 ${
-            lastMessage.sender === 'BOT' ? 'text-blue-600' : 'text-green-600'
-          }`}>
-            {lastMessage.sender === 'USER' ? 'User' : 'LINE Official Account'}
-          </span>
-          <span className="text-sm text-gray-600 truncate">
-            {lastMessage.content}
-          </span>
+        <div className="ml-13 pl-13">
+          <div className="flex items-center gap-2 text-sm">
+            <span className={`font-medium ${
+              lastMessage.sender === 'BOT' ? 'text-blue-600' : 'text-green-600'
+            }`}>
+              {lastMessage.sender === 'USER' ? 'User' : 'Bot'}
+            </span>
+            <span className="text-gray-600 truncate">
+              {lastMessage.content}
+            </span>
+          </div>
         </div>
       )}
     </div>
