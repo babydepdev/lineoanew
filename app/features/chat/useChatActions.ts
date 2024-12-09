@@ -1,8 +1,6 @@
-"use client";
-
+import { APIResponse } from '@/app/types/api';
+import { ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
-import { MessageResponse } from '@/app/types/api';
-import { Message } from '@prisma/client';
 
 export function useChatActions() {
   const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
@@ -11,12 +9,6 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      console.log('Sending message:', {
-        conversationId: selectedConversation.id,
-        content,
-        platform: selectedConversation.platform
-      });
-
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
@@ -33,24 +25,18 @@ export function useChatActions() {
         throw new Error('Failed to send message');
       }
 
-      const data = await response.json() as MessageResponse;
-      
+      const data = await response.json() as APIResponse;
       if (data.conversation) {
-        const updatedConversation = {
+        const updatedConversation: ConversationWithMessages = {
           ...data.conversation,
-          messages: data.conversation.messages.map((msg: Message) => ({
+          messages: data.conversation.messages.map(msg => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt)
         };
-        
-        console.log('Updating conversation with new message:', {
-          conversationId: updatedConversation.id,
-          messageCount: updatedConversation.messages.length
-        });
-        
+
         updateConversation(updatedConversation);
         setSelectedConversation(updatedConversation);
       }

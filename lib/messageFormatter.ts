@@ -1,16 +1,14 @@
 import type { Message } from '@prisma/client';
-import type { ConversationWithMessages, PusherMessage, PusherConversation } from '@/app/types/chat';
+import type { ConversationWithMessages } from '@/app/types/chat';
 
-export function formatMessageForPusher(message: Message): PusherMessage {
+export function formatMessageForPusher(message: Message) {
   return {
     ...message,
     timestamp: message.timestamp.toISOString(),
   };
 }
 
-export function formatConversationForPusher(
-  conversation: ConversationWithMessages
-): PusherConversation {
+export function formatConversationForPusher(conversation: ConversationWithMessages) {
   return {
     ...conversation,
     messages: conversation.messages.map(formatMessageForPusher),

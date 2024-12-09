@@ -1,31 +1,44 @@
-import { Conversation, Message, Platform } from '@prisma/client';
+import { Conversation as PrismaConversation, Message as PrismaMessage, Platform } from '@prisma/client';
 
-export type SerializedConversation = Omit<Conversation, 'createdAt' | 'updatedAt'> & {
-  createdAt: string;
-  updatedAt: string;
-  messages: SerializedMessage[];
+// Base types from Prisma
+export type ConversationWithMessages = PrismaConversation & {
+  messages: PrismaMessage[];
 };
 
-export type SerializedMessage = Omit<Message, 'timestamp'> & {
-  timestamp: string;
-};
-
-export type ConversationWithMessages = Conversation & {
-  messages: Message[];
-};
-
-export interface SendMessageRequest {
+// Serialized types for API/JSON
+export interface SerializedMessage {
+  id: string;
   conversationId: string;
   content: string;
-  platform: Platform;
-}
-
-export interface PusherMessage extends Omit<Message, 'timestamp'> {
+  sender: 'USER' | 'BOT';
   timestamp: string;
+  platform: Platform;
+  externalId: string | null;
 }
 
-export interface PusherConversation extends Omit<ConversationWithMessages, 'messages' | 'createdAt' | 'updatedAt'> {
-  messages: PusherMessage[];
+export interface SerializedConversation {
+  id: string;
+  platform: Platform;
+  channelId: string;
+  userId: string;
+  messages: SerializedMessage[];
   createdAt: string;
   updatedAt: string;
 }
+
+// Helper function to convert serialized to full types
+export function deserializeConversation(conv: SerializedConversation): ConversationWithMessages {
+  return {
+    ...conv,
+    messages: conv.messages.map(msg => ({
+      ...msg,
+      timestamp: new Date(msg.timestamp)
+    })),
+    createdAt: new Date(conv.createdAt),
+    updatedAt: new Date(conv.updatedAt)
+  };
+}
+
+// Type aliases for Pusher events
+export type PusherMessage = SerializedMessage;
+export type PusherConversation = SerializedConversation;

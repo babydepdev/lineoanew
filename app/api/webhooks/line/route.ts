@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleLineMessageReceived } from '@/app/features/line/ineMessageService';
+import { handleLineMessageReceived } from '@/app/features/line/lineMessageService';
 import { LineMessageEvent, LineWebhookBody } from '@/app/types/line';
 
 export async function POST(request: NextRequest) {

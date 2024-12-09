@@ -18,16 +18,22 @@ export async function GET() {
       }
     });
     
-    // Broadcast all conversations to connected clients
+    // Format conversations for Pusher
+    const formattedConversations = conversations.map(formatConversationForPusher);
+    
+    // Broadcast conversations update
     await pusherServer.trigger(
       PUSHER_CHANNELS.CHAT,
       PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-      conversations.map(formatConversationForPusher)
+      formattedConversations
     );
     
-    return NextResponse.json(conversations);
+    return NextResponse.json(formattedConversations);
   } catch (error) {
     console.error('Failed to fetch conversations:', error);
-    return NextResponse.json({ error: 'Failed to fetch conversations' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch conversations' }, 
+      { status: 500 }
+    );
   }
 }

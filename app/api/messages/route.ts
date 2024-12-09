@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { sendLineMessageToUser } from '@/app/features/line/ineMessageService';
+import { sendLineMessageToUser } from '@/app/features/line/lineMessageService';
 import { sendFacebookMessage } from '@/lib/facebookClient';
 import { broadcastMessageUpdate } from '@/lib/messageService';
 

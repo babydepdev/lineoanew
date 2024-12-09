@@ -19,46 +19,37 @@ export async function sendLineMessageToUser(userId: string, content: string): Pr
   try {
     console.log('Sending LINE message:', { userId, content });
     
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        await client.pushMessage(userId, {
-          type: 'text',
-          text: content
-        });
-        console.log('LINE message sent successfully');
-        return true;
-      } catch (error) {
-        console.error(`LINE message send attempt failed (${retries} retries left):`, error);
-        retries--;
-        if (retries > 0) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-    }
-    return false;
+    await client.pushMessage(userId, {
+      type: 'text',
+      text: content
+    });
+
+    console.log('LINE message sent successfully');
+    return true;
   } catch (error) {
     console.error('Error sending LINE message:', error);
     return false;
   }
 }
 
-export async function handleLineMessageReceived(userId: string, content: string, messageId: string, timestamp: Date) {
+export async function handleLineMessageReceived(
+  userId: string, 
+  content: string, 
+  messageId: string, 
+  timestamp: Date
+) {
   try {
-    // Use transaction to ensure data consistency
+    // Check for existing message first to avoid transaction if duplicate
+    const existingMessage = await prisma.message.findUnique({
+      where: { externalId: messageId }
+    });
+
+    if (existingMessage) {
+      console.log('Skipping duplicate message:', messageId);
+      return null;
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      // Check for existing message first
-      const existingMessage = await tx.message.findFirst({
-        where: {
-          externalId: messageId
-        }
-      });
-
-      if (existingMessage) {
-        console.log('Duplicate message detected, skipping:', messageId);
-        return { message: existingMessage };
-      }
-
       let conversation = await tx.conversation.findFirst({
         where: {
           userId,
@@ -89,18 +80,14 @@ export async function handleLineMessageReceived(userId: string, content: string,
 
       await tx.conversation.update({
         where: { id: conversation.id },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: timestamp }
       });
 
       return { message, conversationId: conversation.id };
     });
 
-    if (!result.message) {
-      console.log('No message created (likely duplicate)');
-      return null;
-    }
+    if (!result) return null;
 
-    // Get updated conversation with all messages
     const updatedConversation = await prisma.conversation.findUnique({
       where: { id: result.conversationId },
       include: {
@@ -111,7 +98,6 @@ export async function handleLineMessageReceived(userId: string, content: string,
     });
 
     if (updatedConversation) {
-      // Broadcast all updates
       await Promise.all([
         pusherServer.trigger(
           PUSHER_CHANNELS.CHAT,
@@ -122,18 +108,6 @@ export async function handleLineMessageReceived(userId: string, content: string,
           PUSHER_CHANNELS.CHAT,
           PUSHER_EVENTS.CONVERSATION_UPDATED,
           formatConversationForPusher(updatedConversation)
-        ),
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-          (await prisma.conversation.findMany({
-            include: {
-              messages: {
-                orderBy: { timestamp: 'asc' }
-              }
-            },
-            orderBy: { updatedAt: 'desc' }
-          })).map(formatConversationForPusher)
         )
       ]);
     }

@@ -1,58 +1,114 @@
-"use client";
-
 import { useEffect } from 'react';
+import { SerializedConversation, ConversationWithMessages, PusherMessage, PusherConversation } from '@/app/types/chat';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
-import { SerializedConversation, ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 
-function deserializeConversation(conv: SerializedConversation): ConversationWithMessages {
-  return {
-    ...conv,
-    messages: conv.messages.map(msg => ({
-      ...msg,
-      timestamp: new Date(msg.timestamp)
-    })),
-    createdAt: new Date(conv.createdAt),
-    updatedAt: new Date(conv.updatedAt)
-  };
-}
-
 export function useChatEvents(initialConversations: SerializedConversation[]) {
-  const { setConversations, updateConversation } = useChatState();
+  const {
+    selectedConversation,
+    setConversations,
+    setSelectedConversation,
+    updateConversation,
+    addMessage,
+  } = useChatState();
 
   // Initialize conversations
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
-      const formattedConversations = initialConversations.map(deserializeConversation);
-      setConversations(formattedConversations);
+      const formattedConversations = initialConversations.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })),
+        createdAt: new Date(conv.createdAt),
+        updatedAt: new Date(conv.updatedAt)
+      })) as ConversationWithMessages[];
+
+      const sortedConversations = formattedConversations.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+      
+      setConversations(sortedConversations);
     }
   }, [initialConversations, setConversations]);
 
-  // Subscribe to Pusher events
+  // Setup Pusher event handlers
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
 
-    const handleConversationsUpdate = (conversations: SerializedConversation[]) => {
-      console.log('Received conversations update:', conversations.length);
-      const formattedConversations = conversations.map(deserializeConversation);
-      setConversations(formattedConversations);
+    const handleMessageReceived = (message: PusherMessage) => {
+      if (!message?.id || !message?.conversationId) return;
+      
+      const updatedMessage = {
+        ...message,
+        timestamp: new Date(message.timestamp)
+      };
+      
+      addMessage(updatedMessage);
+
+      if (selectedConversation?.id === message.conversationId) {
+        const updatedMessages = [...selectedConversation.messages, updatedMessage].sort(
+          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+        );
+        const updatedConversation = {
+          ...selectedConversation,
+          messages: updatedMessages,
+          updatedAt: new Date()
+        };
+        setSelectedConversation(updatedConversation);
+      }
     };
 
-    const handleConversationUpdate = (conversation: SerializedConversation) => {
-      console.log('Received conversation update:', conversation.id);
-      const formattedConversation = deserializeConversation(conversation);
-      updateConversation(formattedConversation);
+    const handleConversationUpdated = (pusherConversation: PusherConversation) => {
+      if (!pusherConversation?.id) return;
+
+      const updatedConversation = {
+        ...pusherConversation,
+        messages: pusherConversation.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+        createdAt: new Date(pusherConversation.createdAt),
+        updatedAt: new Date(pusherConversation.updatedAt)
+      } as ConversationWithMessages;
+
+      updateConversation(updatedConversation);
+
+      if (selectedConversation?.id === pusherConversation.id) {
+        setSelectedConversation(updatedConversation);
+      }
     };
 
-    channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdate);
-    channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdate);
+    const handleConversationsUpdated = (conversations: PusherConversation[]) => {
+      const formattedConversations = conversations.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+        createdAt: new Date(conv.createdAt),
+        updatedAt: new Date(conv.updatedAt)
+      })) as ConversationWithMessages[];
+
+      const sortedConversations = formattedConversations.sort(
+        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
+      );
+
+      setConversations(sortedConversations);
+    };
+
+    channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+    channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+    channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
 
     return () => {
-      channel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdate);
-      channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdate);
+      channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
+      channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
+      channel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
-  }, [setConversations, updateConversation]);
+  }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations]);
 }
