@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { sendLineMessage } from '@/lib/lineClient';
 import { sendFacebookMessage } from '@/lib/facebookClient';
-import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
-import { formatMessageForPusher, formatConversationForPusher } from '@/lib/messageFormatter';
+import { broadcastMessage } from '@/lib/services/chatService';
 
 const prisma = new PrismaClient();
 
@@ -63,21 +62,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Trigger Pusher events immediately
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formatMessageForPusher(newMessage)
-      ),
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formatConversationForPusher(updatedConversation)
-      ),
-    ]);
+    // Broadcast message via Pusher
+    await broadcastMessage(newMessage, updatedConversation);
 
-    // Send message to platform after database updates
+    // Send message to platform after database updates and broadcasting
     let messageSent = false;
     if (platform === 'LINE') {
       messageSent = await sendLineMessage(conversation.userId, content);
