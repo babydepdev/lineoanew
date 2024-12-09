@@ -15,7 +15,7 @@ export const pusherServer = new Pusher({
   useTLS: true,
 });
 
-// Client-side Pusher instance with proper typing
+// Client-side Pusher instance
 export const pusherClient = new PusherClient(
   pusherConfig.key,
   {
@@ -25,12 +25,9 @@ export const pusherClient = new PusherClient(
     channelAuthorization: {
       endpoint: '/api/pusher/auth',
       transport: 'ajax',
-    },
+    }
   }
 );
-
-// Create a client channel for sending events
-const clientChannel = pusherClient.subscribe('private-client-events');
 
 export const PUSHER_EVENTS = {
   MESSAGE_RECEIVED: 'message-received',
@@ -47,9 +44,10 @@ export const PUSHER_CHANNELS = {
   CLIENT: 'private-client-events',
 } as const;
 
-// Type-safe client event trigger
+// Helper function to trigger client events
 export const triggerClientEvent = (eventName: string, data: any) => {
-  if (clientChannel) {
-    return (clientChannel as any).trigger(eventName, data);
+  const channel = pusherClient.channel(PUSHER_CHANNELS.CLIENT);
+  if (channel && channel.subscribed) {
+    return channel.trigger(eventName, data);
   }
 };

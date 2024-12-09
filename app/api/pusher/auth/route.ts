@@ -3,25 +3,27 @@ import { pusherServer } from '@/lib/pusher';
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    const socketId = data.socket_id;
-    const channel = data.channel_name;
-    
-    // Add your authentication logic here
-    const presenceData = {
-      user_id: 'user_' + Math.random().toString(36).substr(2, 9),
-      user_info: {
-        name: 'Anonymous User'
-      }
-    };
+    const formData = await request.formData();
+    const socketId = formData.get('socket_id') as string;
+    const channel = formData.get('channel_name') as string;
 
-    // Authorize the channel with proper typing
-    const authResponse = pusherServer.authorizeChannel(socketId, channel, presenceData);
-    
+    if (!socketId || !channel) {
+      return NextResponse.json(
+        { error: 'Missing socket_id or channel_name' },
+        { status: 400 }
+      );
+    }
+
+    // Generate auth signature
+    const authResponse = pusherServer.authorizeChannel(socketId, channel);
+
     return NextResponse.json(authResponse);
   } catch (error) {
     console.error('Pusher auth error:', error);
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    return NextResponse.json(
+      { error: 'Failed to authorize channel' },
+      { status: 401 }
+    );
   }
 }
 
@@ -30,7 +32,7 @@ export async function OPTIONS() {
     status: 200,
     headers: {
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      'Access-Control-Allow-Headers': 'Content-Type',
       'Access-Control-Allow-Origin': '*',
     },
   });
