@@ -39,31 +39,29 @@ export async function broadcastMessageUpdate(conversationId: string) {
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
         formattedConversation
+      ),
+      // Fetch and broadcast all conversations to update the list
+      prisma.conversation.findMany({
+        include: {
+          messages: {
+            orderBy: { timestamp: 'asc' },
+          },
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      }).then(conversations => 
+        pusherServer.trigger(
+          PUSHER_CHANNELS.CHAT,
+          PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+          conversations.map(formatConversationForPusher)
+        )
       )
     ]);
-
-    // Fetch and broadcast all conversations to update the list
-    const allConversations = await prisma.conversation.findMany({
-      include: {
-        messages: {
-          orderBy: { timestamp: 'asc' },
-        },
-      },
-      orderBy: {
-        updatedAt: 'desc',
-      },
-    });
-
-    await pusherServer.trigger(
-      PUSHER_CHANNELS.CHAT,
-      PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-      allConversations.map(formatConversationForPusher)
-    );
 
     console.log('Broadcast successful:', {
       conversationId,
       messageCount: updatedConversation.messages.length,
-      totalConversations: allConversations.length
     });
 
     return updatedConversation;

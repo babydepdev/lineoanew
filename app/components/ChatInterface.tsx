@@ -5,58 +5,24 @@ import { SerializedConversation, deserializeConversation } from '../types/chat';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
-import { useConversationStore } from '../store/useConversationStore';
-import { useConversations } from '../hooks/useConversations';
+import { useChat } from '../hooks/useChat';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversations }) => {
-  const {
-    conversations,
-    selectedConversation,
-    setSelectedConversation,
-    updateConversation,
-  } = useConversationStore();
-
   // Convert serialized conversations to full types with proper dates
   const parsedConversations = React.useMemo(() => {
     return initialConversations.map(deserializeConversation);
   }, [initialConversations]);
 
-  useConversations(parsedConversations);
-
-  const handleSendMessage = async (content: string) => {
-    if (!selectedConversation) return;
-
-    try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          content,
-          platform: selectedConversation.platform,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json();
-      if (data.conversation) {
-        const updatedConversation = deserializeConversation(data.conversation);
-        updateConversation(updatedConversation);
-        setSelectedConversation(updatedConversation);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
+  const {
+    conversations,
+    selectedConversation,
+    setSelectedConversation,
+    sendMessage,
+  } = useChat(parsedConversations);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -74,7 +40,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
             </div>
 
             <MessageList messages={selectedConversation.messages} />
-            <MessageInput onSend={handleSendMessage} />
+            <MessageInput onSend={sendMessage} />
           </>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">

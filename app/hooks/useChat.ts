@@ -101,6 +101,22 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
+
+      const data = await response.json();
+      if (data.conversation) {
+        const updatedConversation = {
+          ...data.conversation,
+          messages: data.conversation.messages.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          })),
+          createdAt: new Date(data.conversation.createdAt),
+          updatedAt: new Date(data.conversation.updatedAt)
+        } as ConversationWithMessages;
+
+        updateConversation(updatedConversation);
+        setSelectedConversation(updatedConversation);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
     }
