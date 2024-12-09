@@ -34,6 +34,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Create bot message first
+    const botMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        content,
+        sender: 'BOT',
+        platform,
+        timestamp: new Date(),
+      },
+    });
+
+    // Broadcast the message immediately
+    await broadcastMessageUpdate(conversationId);
+
+    // Then send to platform
     let messageSent = false;
     if (platform === 'LINE') {
       messageSent = await sendLineMessage(conversation.userId, content);
@@ -42,32 +57,28 @@ export async function POST(request: NextRequest) {
     }
 
     if (!messageSent) {
+      // Delete the message if sending failed
+      await prisma.message.delete({
+        where: { id: botMessage.id }
+      });
       return NextResponse.json(
         { error: 'Failed to send message to platform' },
         { status: 500 }
       );
     }
 
-    const message = await prisma.message.create({
-      data: {
-        conversationId,
-        content,
-        sender: 'BOT',
-        platform,
-      },
+    // Get final updated conversation
+    const updatedConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
       include: {
-        conversation: true,
+        messages: {
+          orderBy: { timestamp: 'asc' },
+        },
       },
     });
 
-    const updatedConversation = await broadcastMessageUpdate(conversationId);
-
-    if (!updatedConversation) {
-      throw new Error('Failed to broadcast message update');
-    }
-
     return NextResponse.json({
-      message,
+      message: botMessage,
       conversation: updatedConversation,
     });
   } catch (error) {
