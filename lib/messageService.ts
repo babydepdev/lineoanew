@@ -16,36 +16,47 @@ export async function fetchLatestMessages(conversationId: string) {
 }
 
 export async function broadcastMessageUpdate(conversationId: string) {
-  const updatedConversation = await prisma.conversation.findUnique({
-    where: { id: conversationId },
-    include: {
-      messages: {
-        orderBy: { timestamp: 'asc' },
+  try {
+    const updatedConversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      include: {
+        messages: {
+          orderBy: { timestamp: 'asc' },
+        },
       },
-    },
-  });
+    });
 
-  if (!updatedConversation) return;
+    if (!updatedConversation) return;
 
-  const formattedConversation = formatConversationForPusher(updatedConversation);
-  const latestMessage = updatedConversation.messages[updatedConversation.messages.length - 1];
-  
-  if (latestMessage) {
-    const formattedMessage = formatMessageForPusher(latestMessage);
+    const formattedConversation = formatConversationForPusher(updatedConversation);
+    const latestMessage = updatedConversation.messages[updatedConversation.messages.length - 1];
     
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formattedMessage
-      ),
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formattedConversation
-      )
-    ]);
-  }
+    if (latestMessage) {
+      const formattedMessage = formatMessageForPusher(latestMessage);
+      
+      await Promise.all([
+        pusherServer.trigger(
+          PUSHER_CHANNELS.CHAT,
+          PUSHER_EVENTS.MESSAGE_RECEIVED,
+          formattedMessage
+        ),
+        pusherServer.trigger(
+          PUSHER_CHANNELS.CHAT,
+          PUSHER_EVENTS.CONVERSATION_UPDATED,
+          formattedConversation
+        )
+      ]);
 
-  return updatedConversation;
+      console.log('Broadcast successful:', {
+        messageId: latestMessage.id,
+        sender: latestMessage.sender,
+        conversationId
+      });
+    }
+
+    return updatedConversation;
+  } catch (error) {
+    console.error('Error broadcasting message update:', error);
+    throw error;
+  }
 }
