@@ -24,27 +24,37 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
     addMessage,
   } = useConversationStore();
 
-  const handleMessageReceived = useCallback((message: PusherMessage) => {
-    if (message?.conversationId) {
-      addMessage(message as Message);
-    }
+  const handleMessageReceived = useCallback((pusherMessage: PusherMessage) => {
+    const message: Message = {
+      ...pusherMessage,
+      timestamp: new Date(pusherMessage.timestamp),
+    };
+    addMessage(message);
   }, [addMessage]);
 
-  const handleConversationUpdated = useCallback((conversation: PusherConversation) => {
-    if (conversation?.id) {
-      updateConversation(conversation as ConversationWithMessages);
-    }
+  const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
+    const conversation: ConversationWithMessages = {
+      ...pusherConversation,
+      messages: pusherConversation.messages.map(msg => ({
+        ...msg,
+        timestamp: new Date(msg.timestamp),
+      })),
+      createdAt: new Date(pusherConversation.createdAt),
+      updatedAt: new Date(pusherConversation.updatedAt),
+    };
+    updateConversation(conversation);
   }, [updateConversation]);
 
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
       setConversations(initialConversations);
+      if (initialConversations.length > 0 && !selectedConversation) {
+        setSelectedConversation(initialConversations[0]);
+      }
     }
-  }, [initialConversations, setConversations]);
+  }, [initialConversations, setConversations, setSelectedConversation, selectedConversation]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
     
     channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);

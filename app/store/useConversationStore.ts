@@ -18,8 +18,6 @@ export const useConversationStore = create<ConversationStore>((set) => ({
   setSelectedConversation: (conversation) => set({ selectedConversation: conversation }),
   updateConversation: (updatedConversation) =>
     set((state) => {
-      if (!updatedConversation) return state;
-
       const updatedConversations = state.conversations.map((conv) =>
         conv.id === updatedConversation.id ? updatedConversation : conv
       );
@@ -34,28 +32,26 @@ export const useConversationStore = create<ConversationStore>((set) => ({
     }),
   addMessage: (message) =>
     set((state) => {
-      if (!message || !message.conversationId) return state;
-
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
-          const messages = Array.isArray(conv.messages) ? [...conv.messages] : [];
-          if (!messages.some(m => m.id === message.id)) {
-            messages.push(message);
-          }
-          return { ...conv, messages };
+          return {
+            ...conv,
+            messages: [...conv.messages.filter(m => m.id !== message.id), message].sort(
+              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+            ),
+          };
         }
         return conv;
       });
 
-      const updatedSelectedConversation = state.selectedConversation && 
-        state.selectedConversation.id === message.conversationId
-          ? {
-              ...state.selectedConversation,
-              messages: Array.isArray(state.selectedConversation.messages)
-                ? [...state.selectedConversation.messages, message]
-                : [message],
-            }
-          : state.selectedConversation;
+      const updatedSelectedConversation = state.selectedConversation?.id === message.conversationId
+        ? {
+            ...state.selectedConversation,
+            messages: [...state.selectedConversation.messages.filter(m => m.id !== message.id), message].sort(
+              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+            ),
+          }
+        : state.selectedConversation;
 
       return {
         conversations: updatedConversations,

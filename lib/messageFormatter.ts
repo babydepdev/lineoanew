@@ -1,30 +1,20 @@
 import { Message, Conversation } from '@prisma/client';
 import type { ConversationWithMessages } from '@/app/types/chat';
 
-export interface PusherMessage {
-  id: string;
-  conversationId: string;
-  content: string;
-  sender: string;
-  timestamp: Date;
-  platform: string;
+export interface PusherMessage extends Omit<Message, 'timestamp'> {
+  timestamp: string;
 }
 
-export interface PusherConversation {
-  id: string;
-  platform: string;
-  userId: string;
+export interface PusherConversation extends Omit<ConversationWithMessages, 'messages' | 'createdAt' | 'updatedAt'> {
   messages: PusherMessage[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function formatMessageForPusher(message: Message): PusherMessage {
   return {
-    id: message.id,
-    conversationId: message.conversationId,
-    content: message.content,
-    sender: message.sender,
-    timestamp: message.timestamp,
-    platform: message.platform,
+    ...message,
+    timestamp: message.timestamp.toISOString(),
   };
 }
 
@@ -32,9 +22,9 @@ export function formatConversationForPusher(
   conversation: ConversationWithMessages
 ): PusherConversation {
   return {
-    id: conversation.id,
-    platform: conversation.platform,
-    userId: conversation.userId,
+    ...conversation,
     messages: conversation.messages.map(formatMessageForPusher),
+    createdAt: conversation.createdAt.toISOString(),
+    updatedAt: conversation.updatedAt.toISOString(),
   };
 }
