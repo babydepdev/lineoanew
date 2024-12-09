@@ -9,16 +9,6 @@
     "@typescript-eslint/no-empty-interface": ["error", {
       "allowSingleExtends": true
     }],
-    "no-var": ["error", {
-      "allowInDeclarationFiles": true
-    }]
-  },
-  "overrides": [
-    {
-      "files": ["*.d.ts"],
-      "rules": {
-        "no-var": "off"
-      }
-    }
-  ]
+    "no-var": "error"
+  }
 }

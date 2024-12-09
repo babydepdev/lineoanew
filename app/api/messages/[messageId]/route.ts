@@ -3,13 +3,16 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { messageId: string } }
-) {
+type RouteParams = {
+  params: {
+    messageId: string;
+  };
+};
+
+export async function GET(request: NextRequest, context: RouteParams) {
   try {
     const message = await prisma.message.findUnique({
-      where: { id: params.messageId },
+      where: { id: context.params.messageId },
     });
 
     if (!message) {
