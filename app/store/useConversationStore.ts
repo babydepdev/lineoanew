@@ -32,6 +32,21 @@ export const useConversationStore = create<ConversationStore>((set) => ({
     }),
   addMessage: (message) =>
     set((state) => {
+      // Check if message already exists in conversation
+      const conversationToUpdate = state.conversations.find(
+        (conv) => conv.id === message.conversationId
+      );
+
+      if (!conversationToUpdate) return state;
+
+      // Check if message already exists
+      const messageExists = conversationToUpdate.messages.some(
+        (msg) => msg.id === message.id
+      );
+
+      if (messageExists) return state;
+
+      // Update conversations with new message
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
           return {
@@ -42,12 +57,14 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         return conv;
       });
 
-      const updatedSelectedConversation = state.selectedConversation?.id === message.conversationId
-        ? {
-            ...state.selectedConversation,
-            messages: [...state.selectedConversation.messages, message],
-          }
-        : state.selectedConversation;
+      // Update selected conversation if needed
+      const updatedSelectedConversation = 
+        state.selectedConversation?.id === message.conversationId
+          ? {
+              ...state.selectedConversation,
+              messages: [...state.selectedConversation.messages, message],
+            }
+          : state.selectedConversation;
 
       return {
         conversations: updatedConversations,

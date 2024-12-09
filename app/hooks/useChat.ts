@@ -11,55 +11,20 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     setConversations,
     setSelectedConversation,
     updateConversation,
+    addMessage,
   } = useConversationStore();
-
-  const messageQueue = useRef<Set<string>>(new Set());
-  const processingMessage = useRef<boolean>(false);
-
-  const processMessageQueue = useCallback(async () => {
-    if (processingMessage.current || messageQueue.current.size === 0) return;
-
-    processingMessage.current = true;
-    const currentMessageQueue = new Set(messageQueue.current);
-    const messageId = Array.from(currentMessageQueue)[0];
-
-    try {
-      const response = await fetch(`/api/messages/${messageId}`);
-      if (response.ok) {
-        const message = await response.json();
-        if (message) {
-          const conversation = conversations.find(c => c.id === message.conversationId);
-          if (conversation) {
-            const updatedConversation = {
-              ...conversation,
-              messages: [...conversation.messages, message],
-            };
-            updateConversation(updatedConversation);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error processing message:', error);
-    } finally {
-      currentMessageQueue.delete(messageId);
-      messageQueue.current = currentMessageQueue;
-      processingMessage.current = false;
-      // Process next message if any
-      if (messageQueue.current.size > 0) {
-        processMessageQueue();
-      }
-    }
-  }, [conversations, updateConversation]);
 
   const handleMessageReceived = useCallback((message: PusherMessage) => {
     if (!message?.id || !message?.conversationId) return;
     
-    // Add message to queue if not already present
-    if (!messageQueue.current.has(message.id)) {
-      messageQueue.current.add(message.id);
-      processMessageQueue();
-    }
-  }, [processMessageQueue]);
+    // Convert timestamp string to Date object
+    const messageWithDate = {
+      ...message,
+      timestamp: new Date(message.timestamp)
+    };
+    
+    addMessage(messageWithDate);
+  }, [addMessage]);
 
   const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
     if (!pusherConversation?.id) return;
@@ -91,13 +56,11 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     if (typeof window === 'undefined') return;
 
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
-    const currentMessageQueue = messageQueue.current;
     
     channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
     channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
 
     return () => {
-      currentMessageQueue.clear();
       channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
       channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
