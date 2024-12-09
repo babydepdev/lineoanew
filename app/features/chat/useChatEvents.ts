@@ -1,20 +1,18 @@
 import { useEffect } from 'react';
-import type { ConversationWithMessages } from '../types/chat';
-import type { APIResponse, MessageResponse } from '../types/api';
-import { useConversationStore } from '../store/useConversationStore';
+import { ConversationWithMessages, PusherMessage, PusherConversation } from '@/app/types/chat';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
-import type { PusherMessage, PusherConversation } from '../types/chat';
+import { useChatState } from './useChatState';
 
-export function useChat(initialConversations: ConversationWithMessages[]) {
+export function useChatEvents(initialConversations: ConversationWithMessages[]) {
   const {
-    conversations,
     selectedConversation,
     setConversations,
     setSelectedConversation,
     updateConversation,
     addMessage,
-  } = useConversationStore();
+  } = useChatState();
 
+  // Initialize conversations
   useEffect(() => {
     if (Array.isArray(initialConversations)) {
       const sortedConversations = [...initialConversations].sort(
@@ -24,6 +22,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
     }
   }, [initialConversations, setConversations]);
 
+  // Setup Pusher event handlers
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -39,7 +38,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       
       addMessage(updatedMessage);
 
-      // Update selected conversation if it's the current one
       if (selectedConversation?.id === message.conversationId) {
         const updatedMessages = [...selectedConversation.messages, updatedMessage].sort(
           (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
@@ -84,7 +82,6 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
 
-      // Sort conversations by updatedAt
       const sortedConversations = formattedConversations.sort(
         (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
       );
@@ -103,59 +100,4 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
   }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations]);
-
-  const sendMessage = async (content: string) => {
-    if (!selectedConversation) return;
-
-    try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          content,
-          platform: selectedConversation.platform,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json() as APIResponse;
-      if (data.conversation) {
-        const updatedConversation: ConversationWithMessages = {
-          id: data.conversation.id,
-          platform: data.conversation.platform,
-          channelId: data.conversation.channelId,
-          userId: data.conversation.userId,
-          messages: data.conversation.messages.map((msg: MessageResponse) => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            content: msg.content,
-            sender: msg.sender,
-            timestamp: new Date(msg.timestamp),
-            platform: msg.platform,
-            externalId: msg.externalId
-          })).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-          createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt)
-        };
-
-        updateConversation(updatedConversation);
-        setSelectedConversation(updatedConversation);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  };
-
-  return {
-    conversations,
-    selectedConversation,
-    setSelectedConversation,
-    sendMessage,
-  };
 }

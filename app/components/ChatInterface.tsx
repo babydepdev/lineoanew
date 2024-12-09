@@ -5,14 +5,13 @@ import { SerializedConversation, deserializeConversation } from '../types/chat';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
-import { useChat } from '../hooks/useChat';
+import { useChat } from '../features/chat/useChat';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversations }) => {
-  // Convert serialized conversations to full types with proper dates
   const parsedConversations = React.useMemo(() => {
     return initialConversations.map(deserializeConversation);
   }, [initialConversations]);
