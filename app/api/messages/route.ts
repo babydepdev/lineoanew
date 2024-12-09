@@ -11,8 +11,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { conversationId, content, platform } = body;
 
-    console.log('Received message request:', { conversationId, content, platform });
-
     if (!conversationId || !content || !platform) {
       return NextResponse.json(
         { error: 'Missing required fields' },
@@ -37,21 +35,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create bot message first with a slight delay
-    const botMessage = await prisma.message.create({
-      data: {
-        conversationId,
-        content: content,
-        sender: 'BOT',
-        platform,
-        timestamp: new Date(Date.now() + 100), // Add small delay to ensure it appears after user message
-      },
-    });
-
-    // Broadcast the bot message immediately
-    await broadcastMessageUpdate(conversationId);
-
-    // Then send to platform
+    // Send to platform first
     let messageSent = false;
     if (platform === 'LINE') {
       console.log('Sending LINE message to:', conversation.userId);
@@ -63,15 +47,25 @@ export async function POST(request: NextRequest) {
 
     if (!messageSent) {
       console.error('Failed to send message to platform:', platform);
-      // Delete the message if sending failed
-      await prisma.message.delete({
-        where: { id: botMessage.id }
-      });
       return NextResponse.json(
         { error: 'Failed to send message to platform' },
         { status: 500 }
       );
     }
+
+    // Create bot message after successful platform delivery
+    const botMessage = await prisma.message.create({
+      data: {
+        conversationId,
+        content: content,
+        sender: 'BOT',
+        platform,
+        timestamp: new Date(),
+      },
+    });
+
+    // Broadcast the message update
+    await broadcastMessageUpdate(conversationId);
 
     // Get final updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
@@ -83,7 +77,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log('Message sent successfully');
+    console.log('Message sent and saved successfully');
     return NextResponse.json({
       message: botMessage,
       conversation: updatedConversation,

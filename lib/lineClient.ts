@@ -2,7 +2,7 @@ import { Client } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from './pusher';
 import { formatConversationForPusher } from './messageFormatter';
-import { LineMessageEvent, LineMessageResponse } from '@/app/types/line';
+import { LineMessageEvent } from '@/app/types/line';
 
 const lineConfig = {
   channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN || '',
@@ -27,18 +27,8 @@ export async function handleLineWebhook(event: LineMessageEvent) {
   const channelId = event.source.roomId || event.source.groupId || userId;
 
   try {
-    // First, verify if we can get user profile
-    try {
-      const profile = await lineClient.getProfile(userId);
-      console.log('LINE user profile:', profile);
-    } catch (error) {
-      console.error('Error fetching LINE user profile:', error);
-      // Continue anyway as this is not critical
-    }
-
     // Use transaction to ensure data consistency
     const result = await prisma.$transaction(async (tx) => {
-      // Find or create conversation first
       let conversation = await tx.conversation.findFirst({
         where: {
           userId: userId,
@@ -50,7 +40,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
       });
 
       if (!conversation) {
-        console.log('Creating new LINE conversation for user:', userId);
         conversation = await tx.conversation.create({
           data: {
             userId: userId,
@@ -72,7 +61,7 @@ export async function handleLineWebhook(event: LineMessageEvent) {
               conversationId: conversation.id,
               content: text,
               timestamp: {
-                gte: new Date(Date.now() - 5000) // Within last 5 seconds
+                gte: new Date(Date.now() - 5000)
               }
             }
           ]
@@ -83,13 +72,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
         console.log('Duplicate LINE message detected, skipping:', messageId);
         return { conversation, message: existingMessage };
       }
-
-      // Create new message
-      console.log('Creating new LINE message:', {
-        conversationId: conversation.id,
-        content: text,
-        messageId
-      });
 
       const newMessage = await tx.message.create({
         data: {
@@ -102,7 +84,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
         }
       });
 
-      // Update conversation timestamp
       await tx.conversation.update({
         where: { id: conversation.id },
         data: { updatedAt: new Date() }
@@ -111,7 +92,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
       return { conversation, message: newMessage };
     });
 
-    // Fetch the complete updated conversation
     const updatedConversation = await prisma.conversation.findUnique({
       where: { id: result.conversation.id },
       include: {
@@ -122,7 +102,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
     });
 
     if (updatedConversation) {
-      // Broadcast updates
       await Promise.all([
         pusherServer.trigger(
           PUSHER_CHANNELS.CHAT,
@@ -146,12 +125,6 @@ export async function handleLineWebhook(event: LineMessageEvent) {
           )
         )
       ]);
-
-      console.log('Successfully processed and broadcast LINE message:', {
-        messageId,
-        conversationId: updatedConversation.id,
-        timestamp: timestamp.toISOString()
-      });
     }
 
     return updatedConversation;
@@ -173,7 +146,7 @@ export async function sendLineMessage(userId: string, message: string): Promise<
   }
 
   try {
-    console.log('Sending LINE message:', { userId, message });
+    console.log('Attempting to send LINE message:', { userId, message });
 
     // Ensure LINE client is properly configured
     if (!lineClient.config.channelAccessToken) {
@@ -187,11 +160,12 @@ export async function sendLineMessage(userId: string, message: string): Promise<
         const result = await lineClient.pushMessage(userId, {
           type: 'text',
           text: message
-        }) as LineMessageResponse;
+        });
 
         console.log('LINE message sent successfully:', {
           userId,
-          requestId: result.requestId,
+          message,
+          result,
           timestamp: new Date().toISOString()
         });
 
