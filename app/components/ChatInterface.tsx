@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback } from 'react';
 import { ConversationWithMessages, PusherMessage, PusherConversation } from '../types/chat';
+import { MessageResponse } from '../types/api';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
@@ -101,6 +102,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
 
       if (!response.ok) {
         throw new Error('Failed to send message');
+      }
+
+      const data = await response.json() as MessageResponse;
+      if (data.conversation) {
+        const updatedConversation = {
+          ...data.conversation,
+          messages: data.conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        } as ConversationWithMessages;
+        updateConversation(updatedConversation);
+        setSelectedConversation(updatedConversation);
       }
     } catch (error) {
       console.error('Error sending message:', error);

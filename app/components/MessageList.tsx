@@ -28,6 +28,14 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     );
   }
 
+  const formatTimestamp = (timestamp: Date) => {
+    return new Date(timestamp).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  };
+
   return (
     <div className="flex-grow overflow-y-auto p-4 space-y-4 bg-gray-50">
       {messages.map((msg) => (
@@ -49,7 +57,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               {msg.content}
             </div>
             <div className="text-xs opacity-75 mt-1">
-              {new Date(msg.timestamp).toLocaleTimeString()}
+              {formatTimestamp(msg.timestamp)}
             </div>
           </div>
         </div>
@@ -57,4 +65,4 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
       <div ref={messagesEndRef} />
     </div>
   );
-};
+}
