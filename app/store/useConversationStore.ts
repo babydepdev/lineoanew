@@ -34,12 +34,17 @@ export const useConversationStore = create<ConversationStore>((set) => ({
     set((state) => {
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
-          return {
-            ...conv,
-            messages: [...conv.messages.filter(m => m.id !== message.id), message].sort(
-              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-            ),
-          };
+          const existingMessages = conv.messages || [];
+          const messageExists = existingMessages.some(m => m.id === message.id);
+          
+          if (!messageExists) {
+            return {
+              ...conv,
+              messages: [...existingMessages, message].sort(
+                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
+              ),
+            };
+          }
         }
         return conv;
       });
@@ -47,9 +52,10 @@ export const useConversationStore = create<ConversationStore>((set) => ({
       const updatedSelectedConversation = state.selectedConversation?.id === message.conversationId
         ? {
             ...state.selectedConversation,
-            messages: [...state.selectedConversation.messages.filter(m => m.id !== message.id), message].sort(
-              (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-            ),
+            messages: [
+              ...(state.selectedConversation.messages || []).filter(m => m.id !== message.id),
+              message
+            ].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
           }
         : state.selectedConversation;
 

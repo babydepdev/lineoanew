@@ -16,6 +16,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
   } = useConversationStore();
 
   const handleMessageReceived = useCallback((pusherMessage: PusherMessage) => {
+    console.log('Received message:', pusherMessage);
     const message: Message = {
       ...pusherMessage,
       timestamp: new Date(pusherMessage.timestamp),
@@ -24,6 +25,7 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
   }, [addMessage]);
 
   const handleConversationUpdated = useCallback((pusherConversation: PusherConversation) => {
+    console.log('Conversation updated:', pusherConversation);
     const conversation: ConversationWithMessages = {
       ...pusherConversation,
       messages: pusherConversation.messages.map(msg => ({
@@ -55,10 +57,13 @@ export function useChat(initialConversations: ConversationWithMessages[]) {
       if (!response.ok) {
         throw new Error('Failed to send message');
       }
+
+      const updatedConversation = await response.json();
+      updateConversation(updatedConversation);
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  }, [selectedConversation]);
+  }, [selectedConversation, updateConversation]);
 
   useEffect(() => {
     if (Array.isArray(initialConversations)) {

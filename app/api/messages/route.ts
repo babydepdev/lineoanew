@@ -35,7 +35,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create bot message in database first
+    // Send message to platform first
+    let messageSent = false;
+    if (platform === 'LINE') {
+      messageSent = await sendLineMessage(conversation.userId, content);
+    } else if (platform === 'FACEBOOK') {
+      messageSent = await sendFacebookMessage(conversation.userId, content);
+    }
+
+    if (!messageSent) {
+      return NextResponse.json(
+        { error: 'Failed to send message to platform' },
+        { status: 500 }
+      );
+    }
+
+    // Create bot message in database
     const newMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -64,21 +79,6 @@ export async function POST(request: NextRequest) {
 
     // Broadcast message via Pusher
     await broadcastMessage(newMessage, updatedConversation);
-
-    // Send message to platform after database updates and broadcasting
-    let messageSent = false;
-    if (platform === 'LINE') {
-      messageSent = await sendLineMessage(conversation.userId, content);
-    } else if (platform === 'FACEBOOK') {
-      messageSent = await sendFacebookMessage(conversation.userId, content);
-    }
-
-    if (!messageSent) {
-      return NextResponse.json(
-        { error: 'Failed to send message to platform' },
-        { status: 500 }
-      );
-    }
 
     return NextResponse.json(updatedConversation);
   } catch (error) {
