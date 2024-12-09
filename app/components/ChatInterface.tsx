@@ -1,17 +1,15 @@
 "use client";
 
 import React from 'react';
-import { ConversationWithMessages } from '../types/chat';
+import { SerializedConversation, deserializeConversation } from '../types/chat';
 import { ConversationList } from './ConversationList';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useConversationStore } from '../store/useConversationStore';
 import { useConversations } from '../hooks/useConversations';
-import { MessageResponse } from '../types/api';
-import { Message } from '@prisma/client';
 
 interface ChatInterfaceProps {
-  initialConversations: ConversationWithMessages[];
+  initialConversations: SerializedConversation[];
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversations }) => {
@@ -22,7 +20,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
     updateConversation,
   } = useConversationStore();
 
-  useConversations(initialConversations);
+  // Convert serialized conversations to full types with proper dates
+  const parsedConversations = React.useMemo(() => {
+    return initialConversations.map(deserializeConversation);
+  }, [initialConversations]);
+
+  useConversations(parsedConversations);
 
   const handleSendMessage = async (content: string) => {
     if (!selectedConversation) return;
@@ -44,17 +47,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
         throw new Error('Failed to send message');
       }
 
-      const data = await response.json() as MessageResponse;
+      const data = await response.json();
       if (data.conversation) {
-        const updatedConversation = {
-          ...data.conversation,
-          messages: data.conversation.messages.map((msg: Message) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          })),
-          createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt)
-        };
+        const updatedConversation = deserializeConversation(data.conversation);
         updateConversation(updatedConversation);
         setSelectedConversation(updatedConversation);
       }
@@ -89,4 +84,4 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({ initialConversatio
       </div>
     </div>
   );
-};
+}
