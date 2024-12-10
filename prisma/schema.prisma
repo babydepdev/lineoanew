@@ -28,6 +28,18 @@ model Message {
   externalId     String?     @unique
 }
 
+model UserProfile {
+  userId        String
+  platform      Platform
+  displayName   String
+  pictureUrl    String?
+  statusMessage String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@id([userId, platform])
+}
+
 enum Platform {
   LINE
   FACEBOOK

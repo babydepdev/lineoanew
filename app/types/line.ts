@@ -1,3 +1,5 @@
+import { Platform } from '@prisma/client';
+
 export interface LineMessageEvent {
   type: string;
   message: {
@@ -21,6 +23,14 @@ export interface LineMessageEvent {
 export interface LineWebhookBody {
   destination: string;
   events: LineMessageEvent[];
+}
+
+export interface LineUserProfile {
+  userId: string;
+  displayName: string;
+  pictureUrl?: string;
+  statusMessage?: string;
+  platform: Platform;
 }
 
 export interface LineApiResponse {
