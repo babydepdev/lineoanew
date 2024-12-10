@@ -1,15 +1,20 @@
+"use client";
+
 import React from 'react';
 import { Message } from '@prisma/client';
 import { formatTimestamp } from '../utils/dateFormatter';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { ProfileAvatar } from './ProfileAvatar';
+import { useChatState } from '../features/chat/useChatState';
 
 interface MessageBubbleProps {
   message: Message;
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
+  const { conversations } = useChatState();
+  const conversation = conversations.find(conv => conv.id === message.conversationId);
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
@@ -21,7 +26,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     )}>
       {displayAsUser ? (
         <ProfileAvatar 
-          userId={message.conversationId} 
+          userId={conversation?.userId || ''} 
           platform={message.platform}
         />
       ) : (

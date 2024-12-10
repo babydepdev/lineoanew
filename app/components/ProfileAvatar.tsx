@@ -1,3 +1,5 @@
+"use client";
+
 import React from 'react';
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar';
 import { useLineProfile } from '../hooks/useLineProfile';
@@ -16,7 +18,11 @@ export function ProfileAvatar({ userId, platform, className }: ProfileAvatarProp
   return (
     <Avatar className={cn("h-8 w-8 shrink-0", className)}>
       {profile?.pictureUrl ? (
-        <AvatarImage src={profile.pictureUrl} alt={profile.displayName || 'User'} />
+        <AvatarImage 
+          src={profile.pictureUrl} 
+          alt={profile.displayName || 'User'}
+          className="object-cover"
+        />
       ) : (
         <AvatarFallback className={cn(
           platform === 'LINE' ? "bg-primary text-primary-foreground" : "bg-muted/10 text-muted"
