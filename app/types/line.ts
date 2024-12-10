@@ -18,6 +18,12 @@ export interface LineMessageEvent {
   deliveryContext?: {
     isRedelivery: boolean;
   };
+  delivered?: {
+    id: string;
+    userId: string;
+    content: string;
+    timestamp: number;
+  };
 }
 
 export interface LineWebhookBody {

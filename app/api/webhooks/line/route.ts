@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleLineMessageReceived } from '@/app/features/line/lineMessageService';
+import { handleLineMessageEvent } from '@/lib/services/lineMessageService';
 import { LineMessageEvent, LineWebhookBody } from '@/app/types/line';
 
 export async function POST(request: NextRequest) {
@@ -14,20 +14,16 @@ export async function POST(request: NextRequest) {
 
     const results = await Promise.allSettled(
       body.events.map(async (event: LineMessageEvent) => {
-        if (event.type === 'message' && event.message.type === 'text') {
-          try {
-            return await handleLineMessageReceived(
-              event.source.userId,
-              event.message.text,
-              event.message.id,
-              new Date(event.timestamp)
-            );
-          } catch (error) {
-            console.error('Error processing LINE message event:', error);
-            return null;
+        try {
+          // Handle both user messages and delivery events
+          if (event.type === 'message') {
+            return await handleLineMessageEvent(event);
           }
+          return null;
+        } catch (error) {
+          console.error('Error processing LINE event:', error);
+          return null;
         }
-        return null;
       })
     );
 
