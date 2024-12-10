@@ -1,10 +1,9 @@
-"use client";
-
 import React from 'react';
 import { Message } from '@prisma/client';
 import { formatTimestamp } from '../utils/dateFormatter';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
+import { ProfileAvatar } from './ProfileAvatar';
 
 interface MessageBubbleProps {
   message: Message;
@@ -20,13 +19,18 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       "flex items-end gap-2 group",
       displayAsUser ? "flex-row-reverse" : "flex-row"
     )}>
-      <Avatar className="h-8 w-8 shrink-0">
-        <AvatarFallback className={cn(
-          displayAsUser ? "bg-primary text-primary-foreground" : "bg-muted/10 text-muted"
-        )}>
-          {displayAsUser ? 'U' : 'B'}
-        </AvatarFallback>
-      </Avatar>
+      {displayAsUser ? (
+        <ProfileAvatar 
+          userId={message.conversationId} 
+          platform={message.platform}
+        />
+      ) : (
+        <Avatar className="h-8 w-8 shrink-0">
+          <AvatarFallback className="bg-muted/10 text-muted">
+            B
+          </AvatarFallback>
+        </Avatar>
+      )}
       
       <div className={cn(
         "max-w-[70%] space-y-1",
