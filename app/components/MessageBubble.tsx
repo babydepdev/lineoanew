@@ -11,11 +11,8 @@ interface MessageBubbleProps {
 }
 
 export function MessageBubble({ message }: MessageBubbleProps) {
-  // Ensure correct sender identification
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
-
-  // Don't show temporary bot messages as user messages
   const displayAsUser = isUser && !isTempMessage;
 
   return (
@@ -25,7 +22,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     )}>
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarFallback className={cn(
-          displayAsUser ? "bg-primary text-primary-foreground" : "bg-muted text-muted"
+          displayAsUser ? "bg-primary text-primary-foreground" : "bg-muted/10 text-muted"
         )}>
           {displayAsUser ? 'U' : 'B'}
         </AvatarFallback>
@@ -36,8 +33,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         displayAsUser ? "items-end" : "items-start"
       )}>
         <div className={cn(
-          "px-4 py-2.5 text-sm",
-          displayAsUser ? "message-bubble-user" : "message-bubble-bot",
+          "px-4 py-2.5 text-sm rounded-2xl",
+          displayAsUser 
+            ? "bg-primary text-primary-foreground rounded-br-none" 
+            : "bg-slate-800 text-white rounded-bl-none",
           isTempMessage && "opacity-70"
         )}>
           {message.content}
