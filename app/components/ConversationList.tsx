@@ -5,6 +5,7 @@ import { ConversationWithMessages } from '../types/chat';
 import { ConversationPreview } from './ConversationPreview';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
+import { MessageCircle } from 'lucide-react';
 
 interface ConversationListProps {
   conversations: ConversationWithMessages[];
@@ -22,15 +23,18 @@ export default function ConversationList({
   });
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      <div className="sticky top-0 z-10 bg-white border-b border-slate-200 p-4">
-        <h2 className="text-lg font-semibold text-slate-900">Conversations</h2>
-        <p className="text-sm text-slate-500 mt-1">
-          {conversations.length} total
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-white">
+      <div className="flex-none p-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-primary" />
+          <h2 className="text-lg font-semibold text-slate-900">Conversations</h2>
+        </div>
+        <p className="text-sm text-slate-500 mt-1 ml-7">
+          {conversations.length} {conversations.length === 1 ? 'conversation' : 'conversations'}
         </p>
       </div>
       
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 w-full">
         <div className="divide-y divide-slate-200">
           {sortedConversations.map((conversation) => (
             <React.Fragment key={conversation.id}>
@@ -39,27 +43,17 @@ export default function ConversationList({
                 isSelected={selectedId === conversation.id}
                 onClick={() => onSelect(conversation)}
               />
-              <Separator />
+              <Separator className="last:hidden" />
             </React.Fragment>
           ))}
           
           {sortedConversations.length === 0 && (
-            <div className="p-8 text-center text-slate-500">
-              <svg 
-                className="mx-auto h-12 w-12 text-slate-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                />
-              </svg>
-              <p className="mt-4 text-sm font-medium">No conversations yet</p>
-              <p className="mt-1 text-sm text-slate-400">
+            <div className="p-8 text-center">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 mb-4">
+                <MessageCircle className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-sm font-medium text-slate-900">No conversations yet</p>
+              <p className="mt-1 text-sm text-slate-500">
                 Start chatting to see your conversations here
               </p>
             </div>
