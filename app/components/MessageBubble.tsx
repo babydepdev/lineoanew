@@ -25,7 +25,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
     )}>
       <Avatar className="h-8 w-8 shrink-0">
         <AvatarFallback className={cn(
-          displayAsUser ? "bg-primary text-primary-foreground" : "bg-muted/10 text-muted"
+          displayAsUser ? "bg-primary text-primary-foreground" : "bg-muted text-muted"
         )}>
           {displayAsUser ? 'U' : 'B'}
         </AvatarFallback>
