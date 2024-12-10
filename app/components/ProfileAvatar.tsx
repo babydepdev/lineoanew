@@ -11,7 +11,7 @@ interface ProfileAvatarProps {
 }
 
 export function ProfileAvatar({ userId, platform, className }: ProfileAvatarProps) {
-  const { profile, isLoading } = useLineProfile(platform === 'LINE' ? userId : null);
+  const { profile } = useLineProfile(platform === 'LINE' ? userId : null);
 
   return (
     <Avatar className={cn("h-8 w-8 shrink-0", className)}>
