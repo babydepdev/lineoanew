@@ -13,6 +13,7 @@ interface ProfileAvatarProps {
 }
 
 export function ProfileAvatar({ userId, platform, className }: ProfileAvatarProps) {
+  // Only pass userId if platform is LINE
   const { profile } = useLineProfile(platform === 'LINE' ? userId : null);
 
   return (

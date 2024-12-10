@@ -15,6 +15,10 @@ const CACHE_STALE_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 const BATCH_SIZE = 10; // Maximum number of profiles to fetch at once
 
 export async function getLineUserProfile(userId: string): Promise<LineUserProfile | null> {
+  if (!userId) {
+    throw new Error('userId is required');
+  }
+
   try {
     const profile = await getProfileFromCache(userId);
     if (profile) return profile;
@@ -27,7 +31,7 @@ export async function getLineUserProfile(userId: string): Promise<LineUserProfil
 }
 
 export async function prefetchProfiles(userIds: string[]): Promise<Map<string, LineUserProfile>> {
-  const uniqueIds = [...new Set(userIds)];
+  const uniqueIds = [...new Set(userIds)].filter(Boolean);
   const results = new Map<string, LineUserProfile>();
   const idsToFetch: string[] = [];
 
@@ -65,7 +69,7 @@ async function getProfileFromCache(userId: string): Promise<LineUserProfile | nu
 
   if (cachedData && (now - cachedData.timestamp) < CACHE_DURATION) {
     if ((now - cachedData.timestamp) >= CACHE_STALE_DURATION) {
-      refreshProfileInBackground(userId);
+      void refreshProfileInBackground(userId);
     }
     return cachedData.profile;
   }
