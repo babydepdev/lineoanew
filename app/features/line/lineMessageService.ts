@@ -1,7 +1,8 @@
 import { Client, ClientConfig } from '@line/bot-sdk';
 import { PrismaClient } from '@prisma/client';
-import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
-import { formatConversationForPusher } from '@/lib/messageFormatter';
+import { pusherServer } from '@/lib/pusher';
+import { PUSHER_EVENTS, PUSHER_CHANNELS } from '@/app/constants/pusher';
+import { formatMessageForPusher } from '@/lib/messageFormatter';
 
 const prisma = new PrismaClient();
 
@@ -89,6 +90,23 @@ export async function handleLineMessageReceived(
       }
     });
 
+    // Format message for Pusher
+    const formattedMessage = formatMessageForPusher(message);
+
+    // Broadcast message to conversation-specific channel
+    await pusherServer.trigger(
+      `private-conversation-${conversation.id}`,
+      PUSHER_EVENTS.MESSAGE_RECEIVED,
+      formattedMessage
+    );
+
+    // Broadcast to main chat channel
+    await pusherServer.trigger(
+      PUSHER_CHANNELS.CHAT,
+      PUSHER_EVENTS.MESSAGE_RECEIVED,
+      formattedMessage
+    );
+
     // Update conversation timestamp
     await prisma.conversation.update({
       where: { id: conversation.id },
@@ -106,19 +124,12 @@ export async function handleLineMessageReceived(
     });
 
     if (updatedConversation) {
-      // Broadcast updates
-      await Promise.all([
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.MESSAGE_RECEIVED,
-          formatConversationForPusher(updatedConversation)
-        ),
-        pusherServer.trigger(
-          PUSHER_CHANNELS.CHAT,
-          PUSHER_EVENTS.CONVERSATION_UPDATED,
-          formatConversationForPusher(updatedConversation)
-        )
-      ]);
+      // Broadcast conversation update
+      await pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATION_UPDATED,
+        updatedConversation
+      );
     }
 
     return message;

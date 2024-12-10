@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Message } from '@prisma/client';
-import { pusherClient, PUSHER_EVENTS } from '@/lib/pusher';
+
+import { usePusherSubscription } from './usePusherSubscription';
+import { useMessageStore } from './useMessageStore';
 
 interface UseRealtimeMessagesResult {
   messages: Message[];
@@ -11,43 +13,11 @@ interface UseRealtimeMessagesResult {
 }
 
 export function useRealtimeMessages(conversationId: string): UseRealtimeMessagesResult {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { messages, setMessages, addMessage } = useMessageStore();
   const [isLoading, setIsLoading] = useState(true);
 
-  const addMessage = useCallback((newMessage: Message) => {
-    setMessages(prev => {
-      // Check if message already exists
-      const exists = prev.some(msg => 
-        msg.id === newMessage.id || 
-        (msg.id.startsWith('temp-') && msg.content === newMessage.content)
-      );
-      
-      if (exists) {
-        // Replace temp message with real message, preserving server timestamp
-        return prev.map(msg => 
-          (msg.id.startsWith('temp-') && msg.content === newMessage.content)
-            ? { 
-                ...newMessage, 
-                sender: 'BOT',
-                timestamp: new Date() // Use current timestamp for immediate display
-              }
-            : msg
-        );
-      }
-      
-      // Add new message with current timestamp
-      const messageWithCurrentTime = {
-        ...newMessage,
-        timestamp: new Date()
-      };
-      
-      // Add new message and sort by timestamp
-      const updated = [...prev, messageWithCurrentTime].sort(
-        (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-      );
-      return updated;
-    });
-  }, []);
+  // Subscribe to Pusher channels
+  usePusherSubscription(conversationId, addMessage);
 
   useEffect(() => {
     const fetchMessages = async () => {
@@ -72,27 +42,7 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
     };
 
     fetchMessages();
-
-    // Subscribe to real-time updates
-    const channel = pusherClient.subscribe(`private-conversation-${conversationId}`);
-    
-    const handleNewMessage = (message: any) => {
-      if (message.conversationId === conversationId) {
-        addMessage({
-          ...message,
-          timestamp: new Date(), // Use current timestamp for real-time display
-          sender: message.sender
-        });
-      }
-    };
-
-    channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
-
-    return () => {
-      channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
-      pusherClient.unsubscribe(`private-conversation-${conversationId}`);
-    };
-  }, [conversationId, addMessage]);
+  }, [conversationId, setMessages]);
 
   return { messages, isLoading, addMessage };
 }
