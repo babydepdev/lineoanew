@@ -1,6 +1,7 @@
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
 import { pusherConfig, isPusherConfigured } from './config/pusher';
+import { PusherClientEvent } from '@/app/types/pusher';
 
 if (!isPusherConfigured()) {
   console.warn('Pusher configuration is missing or incomplete');
@@ -45,7 +46,7 @@ export const PUSHER_CHANNELS = {
 } as const;
 
 // Helper function to trigger client events
-export const triggerClientEvent = (eventName: string, data: any) => {
+export const triggerClientEvent = (eventName: string, data: PusherClientEvent) => {
   const channel = pusherClient.channel(PUSHER_CHANNELS.CLIENT);
   if (channel && channel.subscribed) {
     return channel.trigger(eventName, data);

@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Message } from '@prisma/client';
-
 import { usePusherSubscription } from './usePusherSubscription';
 import { useMessageStore } from './useMessageStore';
+import { SerializedMessage } from '../types/chat';
 
 interface UseRealtimeMessagesResult {
   messages: Message[];
@@ -27,7 +27,7 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
         
         const data = await response.json();
         const allMessages = [...data.botMessages, ...data.userMessages]
-          .map((msg: any) => ({
+          .map((msg: SerializedMessage) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           }))

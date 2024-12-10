@@ -1,10 +1,11 @@
 "use client";
 
-import {  useCallback } from 'react';
+import { useCallback } from 'react';
 import { SerializedConversation, ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 import { useConversationEvents } from '@/app/hooks/useConversationEvents';
 import { usePusherEvents } from '@/app/hooks/usePusherEvents';
+import { APIResponse } from '@/app/types/api';
 
 export function useChat(initialConversations: SerializedConversation[]) {
   const { 
@@ -37,12 +38,12 @@ export function useChat(initialConversations: SerializedConversation[]) {
         throw new Error('Failed to send message');
       }
 
-      const data = await response.json();
+      const data = await response.json() as APIResponse;
       
       if (data.conversation) {
         const updatedConversation: ConversationWithMessages = {
           ...data.conversation,
-          messages: data.conversation.messages.map((msg: any) => ({
+          messages: data.conversation.messages.map((msg) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           })),

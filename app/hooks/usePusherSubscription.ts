@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { Message } from '@prisma/client';
 import { pusherClient } from '@/lib/pusher';
 import { PUSHER_EVENTS, PUSHER_CHANNELS } from '@/app/constants/pusher';
+import { PusherMessage } from '../types/chat';
 
 export function usePusherSubscription(
   conversationId: string,
@@ -13,7 +14,7 @@ export function usePusherSubscription(
     const mainChannel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
     const conversationChannel = pusherClient.subscribe(`private-conversation-${conversationId}`);
     
-    const handleNewMessage = (message: any) => {
+    const handleNewMessage = (message: PusherMessage) => {
       if (message.conversationId === conversationId) {
         onNewMessage({
           ...message,

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Send } from 'lucide-react';
 import { PUSHER_EVENTS, triggerClientEvent } from '@/lib/pusher';
 import { debounce } from 'lodash';
+import { PusherTypingEvent } from '../types/pusher';
 
 interface MessageInputProps {
   onSend: (message: string) => void;
@@ -33,19 +34,21 @@ export function MessageInput({ onSend, conversationId }: MessageInputProps) {
 
   const debouncedTypingEnd = debounce(() => {
     setIsTyping(false);
-    triggerClientEvent(PUSHER_EVENTS.CLIENT_TYPING, {
+    const typingEvent: PusherTypingEvent = {
       conversationId,
       isTyping: false
-    });
+    };
+    triggerClientEvent(PUSHER_EVENTS.CLIENT_TYPING, typingEvent);
   }, 1000);
 
   const handleTyping = () => {
     if (!isTyping) {
       setIsTyping(true);
-      triggerClientEvent(PUSHER_EVENTS.CLIENT_TYPING, {
+      const typingEvent: PusherTypingEvent = {
         conversationId,
         isTyping: true
-      });
+      };
+      triggerClientEvent(PUSHER_EVENTS.CLIENT_TYPING, typingEvent);
     }
     debouncedTypingEnd();
   };

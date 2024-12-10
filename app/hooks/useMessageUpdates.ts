@@ -3,13 +3,14 @@
 import { useEffect, useCallback } from 'react';
 import { Message } from '@prisma/client';
 import { pusherClient, PUSHER_EVENTS } from '@/lib/pusher';
+import { PusherMessage } from '../types/chat';
 
 export function useMessageUpdates(
   conversationId: string,
   onNewMessage: (message: Message) => void
 ) {
   const handleNewMessage = useCallback(
-    (message: any) => {
+    (message: PusherMessage) => {
       if (message.conversationId === conversationId) {
         onNewMessage({
           ...message,
@@ -21,17 +22,14 @@ export function useMessageUpdates(
   );
 
   useEffect(() => {
-    // Subscribe to conversation-specific channel
-    const conversationChannel = pusherClient.subscribe(
+    const channel = pusherClient.subscribe(
       `private-conversation-${conversationId}`
     );
 
-    // Bind message handlers
-    conversationChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+    channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
 
     return () => {
-      // Cleanup subscriptions
-      conversationChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
       pusherClient.unsubscribe(`private-conversation-${conversationId}`);
     };
   }, [conversationId, handleNewMessage]);

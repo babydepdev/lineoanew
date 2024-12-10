@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
@@ -29,13 +29,13 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
       }
     }, [messages]);
 
-    const addLocalMessage = (message: Message) => {
+    const addLocalMessage = useCallback((message: Message) => {
       addMessage(message);
-    };
+    }, [addMessage]);
 
     useImperativeHandle(ref, () => ({
       addLocalMessage
-    }), [addMessage]);
+    }), [addLocalMessage]);
 
     if (isLoading) {
       return (
