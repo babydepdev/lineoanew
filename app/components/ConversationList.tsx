@@ -22,7 +22,7 @@ export default function ConversationList({
   });
 
   return (
-    <div className="w-80 border-r border-slate-200 flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-white">
       <div className="sticky top-0 z-10 bg-white border-b border-slate-200 p-4">
         <h2 className="text-lg font-semibold text-slate-900">Conversations</h2>
         <p className="text-sm text-slate-500 mt-1">

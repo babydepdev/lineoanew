@@ -21,7 +21,6 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-      // Auto-scroll to bottom when messages change
       if (scrollAreaRef.current) {
         const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
         if (scrollContainer) {
@@ -30,27 +29,27 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
       }
     }, [messages]);
 
-    // Function to add temporary user message
     const addLocalMessage = (message: Message) => {
       addMessage(message);
     };
 
-    // Expose the addLocalMessage function to parent components
     useImperativeHandle(ref, () => ({
       addLocalMessage
     }), [addMessage]);
 
     if (isLoading) {
       return (
-        <div className="flex-grow flex items-center justify-center bg-slate-50">
-          <div className="animate-pulse text-slate-500">Loading messages...</div>
+        <div className="flex-1 flex items-center justify-center bg-slate-50">
+          <div className="animate-pulse text-sm sm:text-base text-slate-500">
+            Loading messages...
+          </div>
         </div>
       );
     }
 
     return (
-      <ScrollArea className="flex-grow" ref={scrollAreaRef}>
-        <div className="p-6 space-y-4">
+      <ScrollArea className="flex-1" ref={scrollAreaRef}>
+        <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
