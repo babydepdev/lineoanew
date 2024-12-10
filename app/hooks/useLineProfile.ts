@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { LineUserProfile } from '../types/line';
-import { getLineUserProfile } from '@/lib/services/lineProfileService';
 
 export function useLineProfile(userId: string | null) {
   const [profile, setProfile] = useState<LineUserProfile | null>(null);
@@ -22,15 +21,17 @@ export function useLineProfile(userId: string | null) {
 
     async function fetchProfile() {
       try {
-        if (!userId) return; // Additional type guard
-        const fetchedProfile = await getLineUserProfile(userId);
+        const response = await fetch(`/api/line/profile/${userId}`);
+        if (!response.ok) throw new Error('Failed to fetch profile');
         
+        const data = await response.json();
         if (!mounted) return;
-        setProfile(fetchedProfile);
+        
+        setProfile(data);
         setError(null);
-      } catch (error: unknown) {
+      } catch (err) {
         if (!mounted) return;
-        setError(error instanceof Error ? error : new Error('Unknown error'));
+        setError(err instanceof Error ? err : new Error('Unknown error'));
         setProfile(null);
       } finally {
         if (mounted) {
@@ -39,7 +40,7 @@ export function useLineProfile(userId: string | null) {
       }
     }
 
-    void fetchProfile();
+    fetchProfile();
 
     return () => {
       mounted = false;

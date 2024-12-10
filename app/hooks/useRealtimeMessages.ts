@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Message } from '@prisma/client';
+
 import { usePusherSubscription } from './usePusherSubscription';
 import { useMessageStore } from './useMessageStore';
-import { prefetchProfiles } from '@/lib/services/lineProfileService';
 
 interface UseRealtimeMessagesResult {
   messages: Message[];
@@ -34,15 +34,6 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
           .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         
         setMessages(allMessages);
-
-        // Prefetch profiles for all LINE user messages
-        const userIds = allMessages
-          .filter(msg => msg.platform === 'LINE' && msg.sender === 'USER')
-          .map(msg => msg.conversationId);
-
-        if (userIds.length > 0) {
-          await prefetchProfiles(userIds);
-        }
       } catch (error) {
         console.error('Error fetching messages:', error);
       } finally {
