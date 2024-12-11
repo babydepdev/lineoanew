@@ -2,13 +2,21 @@ import { PrismaClient } from '@prisma/client';
 import { LineMessageEvent } from '@/app/types/line';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../pusher';
 import { formatMessageForPusher, formatConversationForPusher } from '../messageFormatter';
+import { findLineAccountBySecret } from './lineAccountService';
 
 const prisma = new PrismaClient();
 
-export async function handleLineWebhookEvent(event: LineMessageEvent) {
+export async function handleLineWebhookEvent(event: LineMessageEvent, signature: string) {
   try {
     if (event.type !== 'message' || event.message.type !== 'text') {
       console.log('Skipping non-text message event');
+      return null;
+    }
+
+    // Find the corresponding LINE account using the signature
+    const lineAccount = await findLineAccountBySecret(signature);
+    if (!lineAccount) {
+      console.error('No LINE account found for signature');
       return null;
     }
 
@@ -34,7 +42,8 @@ export async function handleLineWebhookEvent(event: LineMessageEvent) {
       let conversation = await tx.conversation.findFirst({
         where: {
           userId: userId,
-          platform: 'LINE'
+          platform: 'LINE',
+          lineAccountId: lineAccount.id
         },
         include: {
           messages: {
@@ -48,7 +57,8 @@ export async function handleLineWebhookEvent(event: LineMessageEvent) {
           data: {
             userId: userId,
             platform: 'LINE',
-            channelId: channelId
+            channelId: channelId,
+            lineAccountId: lineAccount.id
           },
           include: {
             messages: {

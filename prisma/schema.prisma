@@ -7,14 +7,29 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model LineAccount {
+  id                 String         @id @default(cuid())
+  name               String
+  channelAccessToken String
+  channelSecret      String
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  conversations      Conversation[]
+  active            Boolean        @default(true)
+
+  @@unique([channelAccessToken])
+}
+
 model Conversation {
-  id        String    @id @default(cuid())
-  platform  Platform
-  channelId String
-  userId    String
-  messages  Message[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String      @id @default(cuid())
+  platform     Platform
+  channelId    String
+  userId       String
+  messages     Message[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  lineAccount  LineAccount? @relation(fields: [lineAccountId], references: [id])
+  lineAccountId String?
 }
 
 model Message {

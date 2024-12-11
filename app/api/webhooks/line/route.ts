@@ -7,6 +7,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json() as LineWebhookBody;
     console.log('Received LINE webhook:', JSON.stringify(body, null, 2));
 
+    // Get LINE signature from header
+    const signature = request.headers.get('x-line-signature');
+    if (!signature) {
+      console.error('Missing LINE signature');
+      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+    }
+
     if (!body.events || !Array.isArray(body.events)) {
       console.error('Invalid LINE webhook format:', body);
       return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
@@ -15,7 +22,7 @@ export async function POST(request: NextRequest) {
     const results = await Promise.allSettled(
       body.events.map(async (event: LineMessageEvent) => {
         try {
-          return await handleLineWebhookEvent(event);
+          return await handleLineWebhookEvent(event, signature);
         } catch (error) {
           console.error('Error processing LINE message event:', error);
           return null;
