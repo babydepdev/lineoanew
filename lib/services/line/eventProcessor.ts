@@ -20,7 +20,7 @@ export async function processLineMessageEvent(
       };
     }
 
-    // Process valid message with source information
+    // Process valid message
     const result = await createLineMessage({
       userId: event.source.userId,
       text: validation.text,
@@ -29,7 +29,7 @@ export async function processLineMessageEvent(
       channelId: event.source.roomId || event.source.groupId || event.source.userId,
       platform: 'LINE',
       lineAccountId: account.id,
-      source: event.source // Pass source information
+      source: event.source
     });
 
     return {

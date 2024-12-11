@@ -1,8 +1,8 @@
 import { LineMessageParams, LineMessageResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
-import { createMessage, broadcastMessageUpdate } from '../../message';
+import { createMessage } from '../../message';
+import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
-import { MessageCreateParams } from '../../message/types';
 
 export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
   try {
@@ -12,18 +12,8 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
       messageId, 
       timestamp, 
       lineAccountId,
-      source,
-      botId // Add botId parameter
+      source 
     } = params;
-
-    // Validate text content
-    const trimmedText = text.trim();
-    if (!trimmedText) {
-      return {
-        success: false,
-        error: 'Message text is required'
-      };
-    }
 
     // Get chat identifier based on source type
     const { chatId, chatType } = getChatIdentifier(source);
@@ -36,21 +26,17 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
       lineAccountId
     );
 
-    // Create message params
-    const messageParams: MessageCreateParams = {
+    // Check for existing message
+    const message = await createMessage({
       conversationId: conversation.id,
-      content: trimmedText,
+      content: text,
       sender: 'USER',
       platform: 'LINE',
       externalId: messageId,
       timestamp,
       chatType,
-      chatId,
-      botId // Pass the botId
-    };
-
-    // Create message
-    const message = await createMessage(messageParams);
+      chatId
+    });
 
     // Broadcast update
     await broadcastMessageUpdate(conversation.id);
