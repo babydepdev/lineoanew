@@ -17,6 +17,7 @@ export interface ConversationResponse {
   userId: string;
   createdAt: string;
   updatedAt: string;
+  lineAccountId?: string | null;
   messages: MessageResponse[];
 }
 

@@ -42,13 +42,17 @@ export function useChat(initialConversations: SerializedConversation[]) {
       
       if (data.conversation) {
         const updatedConversation: ConversationWithMessages = {
-          ...data.conversation,
+          id: data.conversation.id,
+          platform: data.conversation.platform,
+          channelId: data.conversation.channelId,
+          userId: data.conversation.userId,
           messages: data.conversation.messages.map((msg) => ({
             ...msg,
             timestamp: new Date(msg.timestamp)
           })),
           createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt)
+          updatedAt: new Date(data.conversation.updatedAt),
+          lineAccountId: data.conversation.lineAccountId || null
         };
 
         updateConversation(updatedConversation);

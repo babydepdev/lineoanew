@@ -1,8 +1,9 @@
 import { Conversation as PrismaConversation, Message as PrismaMessage, Platform } from '@prisma/client';
 
 // Base types from Prisma
-export type ConversationWithMessages = PrismaConversation & {
+export type ConversationWithMessages = Omit<PrismaConversation, 'lineAccountId'> & {
   messages: PrismaMessage[];
+  lineAccountId?: string | null;
 };
 
 // Serialized types for API/JSON
@@ -24,6 +25,7 @@ export interface SerializedConversation {
   messages: SerializedMessage[];
   createdAt: string;
   updatedAt: string;
+  lineAccountId?: string | null;
 }
 
 // Helper function to convert serialized to full types
@@ -35,7 +37,8 @@ export function deserializeConversation(conv: SerializedConversation): Conversat
       timestamp: new Date(msg.timestamp)
     })),
     createdAt: new Date(conv.createdAt),
-    updatedAt: new Date(conv.updatedAt)
+    updatedAt: new Date(conv.updatedAt),
+    lineAccountId: conv.lineAccountId || null
   };
 }
 
