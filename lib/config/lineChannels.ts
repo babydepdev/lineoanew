@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 export interface LineChannelConfig {
   id: string;
+  channelId: string;
   name: string;
   accessToken: string;
   secret: string;
@@ -25,6 +26,7 @@ export async function getLineChannels(): Promise<LineChannelConfig[]> {
     const channels = await prisma.lineChannel.findMany({
       select: {
         id: true,
+        channelId: true,
         name: true,
         accessToken: true,
         secret: true
@@ -40,19 +42,20 @@ export async function getLineChannels(): Promise<LineChannelConfig[]> {
   }
 }
 
-export async function getLineChannelById(channelId: string): Promise<LineChannelConfig | null> {
+export async function getLineChannelByChannelId(channelId: string): Promise<LineChannelConfig | null> {
   try {
     // Try to find in cache first
     if (channelsCache) {
-      const cachedChannel = channelsCache.find(ch => ch.id === channelId);
+      const cachedChannel = channelsCache.find(ch => ch.channelId === channelId);
       if (cachedChannel) return cachedChannel;
     }
 
     // If not in cache or cache is invalid, fetch from database
     const channel = await prisma.lineChannel.findUnique({
-      where: { id: channelId },
+      where: { channelId },
       select: {
         id: true,
+        channelId: true,
         name: true,
         accessToken: true,
         secret: true

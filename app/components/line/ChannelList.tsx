@@ -34,7 +34,7 @@ export function ChannelList({ channels }: ChannelListProps) {
                 <span className="font-medium">Channel ID:</span>
                 <br />
                 <code className="text-xs bg-gray-50 px-2 py-1 rounded">
-                  {channel.id}
+                  {channel.channelId}
                 </code>
               </p>
               <p className="text-sm text-gray-500">

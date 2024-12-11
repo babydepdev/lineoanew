@@ -1,23 +1,17 @@
 import { LineWebhookBody } from '@/app/types/line';
 import crypto from 'crypto';
-import { getLineChannelById } from '@/lib/config/lineChannels';
+import { LineChannelConfig } from '@/lib/config/lineChannels';
 
 export async function validateLineWebhook(
   body: LineWebhookBody,
-  channelId: string,
+  channel: LineChannelConfig,
   signature: string
 ) {
   if (!body.events || !Array.isArray(body.events)) {
     throw new Error('Invalid webhook format: events array is missing or invalid');
   }
 
-  // Get channel configuration
-  const channel = await getLineChannelById(channelId);
-  if (!channel) {
-    throw new Error(`LINE channel not found: ${channelId}`);
-  }
-
-  // Verify webhook signature
+  // Verify webhook signature using channel secret
   const bodyString = JSON.stringify(body);
   const expectedSignature = crypto
     .createHmac('SHA256', channel.secret)
@@ -29,8 +23,7 @@ export async function validateLineWebhook(
   }
 
   return {
-    channelId: channel.id,
-    events: body.events,
-    channel
+    channel,
+    events: body.events
   };
 }

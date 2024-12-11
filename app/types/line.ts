@@ -40,6 +40,7 @@ export interface LineApiResponse {
 
 export interface LineChannel {
   id: string;
+  channelId: string;
   name: string;
   accessToken: string;
   secret: string;
@@ -53,6 +54,7 @@ export interface LineChannel {
 
 export interface SerializedLineChannel {
   id: string;
+  channelId: string;
   name: string;
   accessToken: string;
   secret: string;

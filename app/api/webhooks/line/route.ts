@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { handleLineWebhookEvent } from '@/lib/services/lineWebhookService';
 import { LineWebhookBody } from '@/app/types/line';
 import { validateLineWebhook } from '@/lib/services/lineWebhookValidator';
-import { getLineChannelById } from '@/lib/config/lineChannels';
+import { getLineChannelByChannelId } from '@/lib/config/lineChannels';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json() as LineWebhookBody;
     
-    // Get destination from webhook body
+    // Get destination from webhook body (this is the LINE Channel ID)
     const { destination } = body;
     if (!destination) {
       console.error('Missing destination in webhook body');
@@ -28,8 +28,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Find channel by destination
-    const channel = await getLineChannelById(destination);
+    // Find channel by LINE Channel ID
+    const channel = await getLineChannelByChannelId(destination);
     if (!channel) {
       console.error('LINE channel not found for destination:', destination);
       return NextResponse.json(
@@ -39,19 +39,19 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Received LINE webhook:', {
-      channelId: channel.id,
+      channelId: channel.channelId,
       channelName: channel.name,
-      body: JSON.stringify(body, null, 2)
+      events: body.events?.length || 0
     });
 
     // Validate webhook with channel credentials
-    const validatedData = await validateLineWebhook(body, channel.id, signature);
+    const validatedData = await validateLineWebhook(body, channel, signature);
 
     // Process each event
     const results = await Promise.allSettled(
       validatedData.events.map(async (event) => {
         try {
-          return await handleLineWebhookEvent(event, validatedData.channelId);
+          return await handleLineWebhookEvent(event, validatedData.channel.id);
         } catch (error) {
           console.error('Error processing LINE message event:', error);
           return null;
