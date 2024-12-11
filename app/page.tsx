@@ -24,7 +24,8 @@ async function getConversations(): Promise<SerializedConversation[]> {
         timestamp: msg.timestamp.toISOString()
       })),
       createdAt: conv.createdAt.toISOString(),
-      updatedAt: conv.updatedAt.toISOString()
+      updatedAt: conv.updatedAt.toISOString(),
+      lineAccountId: conv.lineAccountId || null
     }));
   } catch (error) {
     console.error('Error fetching conversations:', error);

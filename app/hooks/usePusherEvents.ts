@@ -32,7 +32,9 @@ export function usePusherEvents() {
           sender: message.sender as SenderType,
           timestamp: new Date(),
           platform: message.platform as Platform,
-          externalId: message.externalId
+          externalId: message.externalId,
+          chatType: message.chatType || null,
+          chatId: message.chatId || null
         };
 
         addMessage(processedMessage);
@@ -51,7 +53,9 @@ export function usePusherEvents() {
           sender: msg.sender as SenderType,
           timestamp: new Date(msg.timestamp),
           platform: msg.platform as Platform,
-          externalId: msg.externalId
+          externalId: msg.externalId,
+          chatType: msg.chatType || null,
+          chatId: msg.chatId || null
         }));
 
         const updatedConversation = {
@@ -61,7 +65,8 @@ export function usePusherEvents() {
           userId: conversation.userId,
           messages: processedMessages,
           createdAt: new Date(conversation.createdAt),
-          updatedAt: new Date(conversation.updatedAt)
+          updatedAt: new Date(conversation.updatedAt),
+          lineAccountId: conversation.lineAccountId || null
         };
 
         updateConversation(updatedConversation);
@@ -89,10 +94,13 @@ export function usePusherEvents() {
             sender: msg.sender as SenderType,
             timestamp: new Date(msg.timestamp),
             platform: msg.platform as Platform,
-            externalId: msg.externalId
+            externalId: msg.externalId,
+            chatType: msg.chatType || null,
+            chatId: msg.chatId || null
           })),
           createdAt: new Date(conv.createdAt),
-          updatedAt: new Date(conv.updatedAt)
+          updatedAt: new Date(conv.updatedAt),
+          lineAccountId: conv.lineAccountId || null
         }));
 
         setConversations(processedConversations);

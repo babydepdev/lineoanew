@@ -1,3 +1,5 @@
+"use client";
+
 import { APIResponse } from '@/app/types/api';
 import { ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
@@ -10,7 +12,7 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message with current timestamp
+      // Create temporary message with all required fields
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
@@ -18,7 +20,9 @@ export function useChatActions() {
         sender: 'BOT' as SenderType,
         timestamp: new Date(),
         platform: selectedConversation.platform as Platform,
-        externalId: null
+        externalId: null,
+        chatType: null,
+        chatId: null
       };
 
       // Update conversation with temporary message
@@ -51,13 +55,24 @@ export function useChatActions() {
       const data = await response.json() as APIResponse;
       if (data.conversation) {
         const finalConversation: ConversationWithMessages = {
-          ...data.conversation,
+          id: data.conversation.id,
+          platform: data.conversation.platform,
+          channelId: data.conversation.channelId,
+          userId: data.conversation.userId,
           messages: data.conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender,
+            timestamp: new Date(msg.timestamp),
+            platform: msg.platform,
+            externalId: msg.externalId,
+            chatType: msg.chatType,
+            chatId: msg.chatId
           })),
           createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt)
+          updatedAt: new Date(data.conversation.updatedAt),
+          lineAccountId: data.conversation.lineAccountId
         };
 
         updateConversation(finalConversation);

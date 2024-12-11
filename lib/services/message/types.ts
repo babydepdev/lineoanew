@@ -2,11 +2,13 @@ import { Platform, SenderType } from '@prisma/client';
 
 export interface MessageCreateParams {
   conversationId: string;
-  content: string; // Make this required
+  content: string;
   sender: SenderType;
   platform: Platform;
   externalId?: string | null;
   timestamp?: Date;
+  chatType?: string;  // Add optional chatType
+  chatId?: string;    // Add optional chatId
 }
 
 export interface MessageBroadcastResult {

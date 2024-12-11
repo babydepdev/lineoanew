@@ -1,4 +1,8 @@
-import { LineMessageEvent, LineAccount, LineWebhookEventResult } from '@/app/types/line';
+import { 
+  LineMessageEvent, 
+  LineAccount, 
+  LineWebhookEventResult 
+} from '@/app/types/line';
 import { createLineMessage } from './message/create';
 import { validateLineMessage } from './message/validate';
 
@@ -16,15 +20,16 @@ export async function processLineMessageEvent(
       };
     }
 
-    // Process valid message
+    // Process valid message with source information
     const result = await createLineMessage({
       userId: event.source.userId,
-      text: validation.text, // Now guaranteed to be non-empty string
+      text: validation.text,
       messageId: event.message.id,
       timestamp: new Date(event.timestamp),
       channelId: event.source.roomId || event.source.groupId || event.source.userId,
       platform: 'LINE',
-      lineAccountId: account.id
+      lineAccountId: account.id,
+      source: event.source // Pass source information
     });
 
     return {

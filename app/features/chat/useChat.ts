@@ -47,12 +47,19 @@ export function useChat(initialConversations: SerializedConversation[]) {
           channelId: data.conversation.channelId,
           userId: data.conversation.userId,
           messages: data.conversation.messages.map((msg) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender,
+            timestamp: new Date(msg.timestamp),
+            platform: msg.platform,
+            externalId: msg.externalId,
+            chatType: msg.chatType,
+            chatId: msg.chatId
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt),
-          lineAccountId: data.conversation.lineAccountId || null
+          lineAccountId: data.conversation.lineAccountId
         };
 
         updateConversation(updatedConversation);

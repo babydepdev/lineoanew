@@ -8,6 +8,8 @@ export interface MessageResponse {
   timestamp: string;
   platform: Platform;
   externalId: string | null;
+  chatType: string | null;
+  chatId: string | null;
 }
 
 export interface ConversationResponse {
@@ -17,7 +19,7 @@ export interface ConversationResponse {
   userId: string;
   createdAt: string;
   updatedAt: string;
-  lineAccountId?: string | null;
+  lineAccountId: string | null;
   messages: MessageResponse[];
 }
 

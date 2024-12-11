@@ -1,48 +1,65 @@
+// Database configuration
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+// Prisma Client generator
 generator client {
   provider = "prisma-client-js"
 }
 
+// LINE Account model
 model LineAccount {
   id                 String         @id @default(cuid())
   name               String
-  channelAccessToken String
+  channelAccessToken String         @unique
   channelSecret      String
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
-  conversations      Conversation[]
   active            Boolean        @default(true)
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  conversations     Conversation[]
 
-  @@unique([channelAccessToken])
+  @@index([active])
 }
 
+// Conversation model
 model Conversation {
-  id           String      @id @default(cuid())
-  platform     Platform
-  channelId    String
-  userId       String
-  messages     Message[]
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  lineAccount  LineAccount? @relation(fields: [lineAccountId], references: [id])
+  id            String       @id @default(cuid())
+  platform      Platform
+  channelId     String      // Stores chat identifier (user/room/group)
+  userId        String      // User who initiated the conversation
+  messages      Message[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id])
   lineAccountId String?
+
+  // Changed unique constraint to include lineAccountId
+  @@unique([userId, platform, channelId, lineAccountId])
+  @@index([platform, updatedAt])
+  @@index([userId, platform])
 }
 
+// Message model
 model Message {
   id             String       @id @default(cuid())
   conversationId String
   conversation   Conversation @relation(fields: [conversationId], references: [id])
-  content        String
+  content        String       @db.Text
   sender         SenderType
   timestamp      DateTime     @default(now())
   platform       Platform
-  externalId     String?     @unique
+  externalId     String?      @unique
+  chatType       String?      // Type of chat: 'user', 'group', 'room'
+  chatId         String?      // Specific chat identifier
+
+  @@index([conversationId, timestamp])
+  @@index([platform, timestamp])
+  @@index([externalId])
 }
 
+// User Profile model
 model UserProfile {
   userId        String
   platform      Platform
@@ -53,6 +70,7 @@ model UserProfile {
   updatedAt     DateTime @updatedAt
 
   @@id([userId, platform])
+  @@index([platform, updatedAt])
 }
 
 enum Platform {
