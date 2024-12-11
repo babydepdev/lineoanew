@@ -4,12 +4,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Prisma Client generator
 generator client {
   provider = "prisma-client-js"
 }
 
-// LINE Account model
 model LineAccount {
   id                 String         @id @default(cuid())
   name               String
@@ -23,7 +21,6 @@ model LineAccount {
   @@index([active])
 }
 
-// Conversation model
 model Conversation {
   id            String       @id @default(cuid())
   platform      Platform
@@ -35,13 +32,12 @@ model Conversation {
   lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id])
   lineAccountId String?
 
-  // Changed unique constraint to include lineAccountId
+  // Unique constraint for preventing duplicate conversations
   @@unique([userId, platform, channelId, lineAccountId])
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
 
-// Message model
 model Message {
   id             String       @id @default(cuid())
   conversationId String
@@ -53,15 +49,12 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
-  botId          String?      // Add botId field to track which bot sent the message
 
   @@index([conversationId, timestamp])
   @@index([platform, timestamp])
   @@index([externalId])
-  @@index([botId])
 }
 
-// User Profile model
 model UserProfile {
   userId        String
   platform      Platform

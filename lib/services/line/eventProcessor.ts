@@ -26,10 +26,10 @@ export async function processLineMessageEvent(
       text: validation.text,
       messageId: event.message.id,
       timestamp: new Date(event.timestamp),
-      channelId: event.source.roomId || event.source.groupId || event.source.userId,
-      platform: 'LINE',
       lineAccountId: account.id,
-      source: event.source
+      platform: 'LINE',
+      source: event.source,
+      channelId: event.source.roomId || event.source.groupId || event.source.userId
     });
 
     return {

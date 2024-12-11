@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { ProfileAvatar } from './ProfileAvatar';
 import { useChatState } from '../features/chat/useChatState';
+import { getBotName, getBotAvatar } from '@/lib/utils/botUtils';
 
 interface MessageBubbleProps {
   message: Message;
@@ -18,18 +19,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
-
-  // Get bot name based on botId
-  const getBotName = (botId: string | null) => {
-    switch (botId) {
-      case 'ThenextCrm':
-        return 'TNC';
-      case 'nextcrm2':
-        return 'NC2';
-      default:
-        return 'BOT';
-    }
-  };
 
   return (
     <div className={cn(
@@ -43,8 +32,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         />
       ) : (
         <Avatar className="h-8 w-8 shrink-0">
-          <AvatarFallback className="bg-muted/10 text-muted">
-            {getBotName(message.botId)}
+          <AvatarFallback className={cn(
+            "text-sm font-medium",
+            message.platform === 'LINE' 
+              ? "bg-primary text-primary-foreground" 
+              : "bg-muted/10 text-muted"
+          )}>
+            {getBotAvatar(message)}
           </AvatarFallback>
         </Avatar>
       )}
@@ -53,6 +47,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         "max-w-[70%] space-y-1",
         displayAsUser ? "items-end" : "items-start"
       )}>
+        {!displayAsUser && (
+          <div className="px-2 text-xs text-muted">
+            {getBotName(message)}
+          </div>
+        )}
         <div className={cn(
           "px-4 py-2.5 text-sm rounded-2xl",
           displayAsUser 
@@ -67,9 +66,9 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           displayAsUser ? "text-right" : "text-left"
         )}>
           {formatTimestamp(message.timestamp)}
-          {!displayAsUser && message.botId && (
-            <span className="ml-1 text-xs opacity-75">
-              • {getBotName(message.botId)}
+          {message.chatType && (
+            <span className="ml-2 opacity-60">
+              via {message.chatType}
             </span>
           )}
         </div>

@@ -1,26 +1,36 @@
 "use client";
 
-import { APIResponse } from '@/app/types/api';
-import { ConversationWithMessages } from '@/app/types/chat';
-import { createTempMessage } from '@/app/types/message';
+import { Message, Platform, SenderType } from '@prisma/client';
 import { useChatState } from './useChatState';
+import { APIResponse } from '@/app/types/api';
+import { deserializeConversation } from '@/lib/utils/messageMapper';
 
 export function useChatActions() {
-  const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
+  const { 
+    selectedConversation, 
+    updateConversation, 
+    setSelectedConversation 
+  } = useChatState();
 
   const sendMessage = async (content: string) => {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message using the helper function
-      const tempMessage = createTempMessage(
-        selectedConversation.id,
+      // Create temporary message
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`,
+        conversationId: selectedConversation.id,
         content,
-        selectedConversation.platform
-      );
+        sender: 'BOT' as SenderType,
+        timestamp: new Date(),
+        platform: selectedConversation.platform as Platform,
+        externalId: null,
+        chatType: null,
+        chatId: null
+      };
 
-      // Update conversation with temporary message
-      const updatedConversation: ConversationWithMessages = {
+      // Update conversation with temp message
+      const updatedConversation = {
         ...selectedConversation,
         messages: [...selectedConversation.messages, tempMessage].sort(
           (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
@@ -30,11 +40,10 @@ export function useChatActions() {
 
       updateConversation(updatedConversation);
 
+      // Send message to API
       const response = await fetch('/api/messages', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           conversationId: selectedConversation.id,
           content,
@@ -47,22 +56,9 @@ export function useChatActions() {
       }
 
       const data = await response.json() as APIResponse;
+      
       if (data.conversation) {
-        const finalConversation: ConversationWithMessages = {
-          id: data.conversation.id,
-          platform: data.conversation.platform,
-          channelId: data.conversation.channelId,
-          userId: data.conversation.userId,
-          messages: data.conversation.messages.map(msg => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-            botId: msg.botId || null
-          })),
-          createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt),
-          lineAccountId: data.conversation.lineAccountId
-        };
-
+        const finalConversation = deserializeConversation(data.conversation);
         updateConversation(finalConversation);
         setSelectedConversation(finalConversation);
       }

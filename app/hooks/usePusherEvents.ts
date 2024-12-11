@@ -1,9 +1,11 @@
+"use client";
+
 import { useEffect } from 'react';
-import {  Platform } from '@prisma/client';
-import { PusherMessage, PusherConversation } from '@/app/types/pusher';
+
+import { PusherMessage, PusherConversation } from '../types/chat';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { useChatState } from '../features/chat/useChatState';
-import { mapApiMessageToMessage } from '@/app/utils/messageMapper';
+import { mapApiMessageToMessage } from '@/lib/utils/messageMapper';
 
 export function usePusherEvents() {
   const {
@@ -34,12 +36,11 @@ export function usePusherEvents() {
           return;
         }
 
+        const processedMessages = conversation.messages.map(mapApiMessageToMessage);
+
         const updatedConversation = {
-          id: conversation.id,
-          platform: conversation.platform as Platform,
-          channelId: conversation.channelId,
-          userId: conversation.userId,
-          messages: conversation.messages.map(mapApiMessageToMessage),
+          ...conversation,
+          messages: processedMessages,
           createdAt: new Date(conversation.createdAt),
           updatedAt: new Date(conversation.updatedAt),
           lineAccountId: conversation.lineAccountId || null
@@ -59,10 +60,7 @@ export function usePusherEvents() {
         }
 
         const processedConversations = conversations.map(conv => ({
-          id: conv.id,
-          platform: conv.platform as Platform,
-          channelId: conv.channelId,
-          userId: conv.userId,
+          ...conv,
           messages: conv.messages.map(mapApiMessageToMessage),
           createdAt: new Date(conv.createdAt),
           updatedAt: new Date(conv.updatedAt),

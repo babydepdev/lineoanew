@@ -1,15 +1,15 @@
 "use client";
 
 import React from 'react';
-import { ConversationWithMessages } from '../types/chat';
+import { RuntimeConversation } from '@/app/types/conversation';
 import { ConversationPreview } from './ConversationPreview';
 import { ScrollArea } from './ui/scroll-area';
 import { Separator } from './ui/separator';
 import { MessageCircle } from 'lucide-react';
 
 interface ConversationListProps {
-  conversations: ConversationWithMessages[];
-  onSelect: (conversation: ConversationWithMessages) => void;
+  conversations: RuntimeConversation[];
+  onSelect: (conversation: RuntimeConversation) => void;
   selectedId?: string;
 }
 

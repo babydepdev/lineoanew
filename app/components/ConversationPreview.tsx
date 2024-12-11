@@ -1,5 +1,7 @@
+"use client";
+
 import React from 'react';
-import { ConversationWithMessages } from '../types/chat';
+import { RuntimeConversation } from '@/app/types/conversation';
 import { formatTimestamp } from '../utils/dateFormatter';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
@@ -7,7 +9,7 @@ import { useLineProfile } from '../hooks/useLineProfile';
 import { motion } from 'framer-motion';
 
 interface ConversationPreviewProps {
-  conversation: ConversationWithMessages;
+  conversation: RuntimeConversation;
   isSelected: boolean;
   onClick: () => void;
 }

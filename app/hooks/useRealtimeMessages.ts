@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Message } from '@prisma/client';
 import { useMessageStore } from './useMessageStore';
 import { SerializedMessage } from '../types/chat';
+import { mapApiMessageToMessage } from '@/lib/utils/messageMapper';
+import { usePusherSubscription } from './usePusherSubscription';
 
 interface UseRealtimeMessagesResult {
   messages: Message[];
@@ -15,6 +17,10 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
   const { messages, setMessages, addMessage } = useMessageStore();
   const [isLoading, setIsLoading] = useState(true);
 
+  // Handle real-time message updates
+  usePusherSubscription(conversationId, addMessage);
+
+  // Fetch initial messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -23,12 +29,7 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
         
         const data = await response.json();
         const allMessages = [...data.botMessages, ...data.userMessages]
-          .map((msg: SerializedMessage) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp),
-            chatType: msg.chatType || null,
-            chatId: msg.chatId || null
-          }))
+          .map((msg: SerializedMessage) => mapApiMessageToMessage(msg))
           .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         
         setMessages(allMessages);
@@ -40,24 +41,7 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
     };
 
     fetchMessages();
-
-    // Subscribe to real-time updates
-    const eventSource = new EventSource(`/api/messages/subscribe/${conversationId}`);
-    
-    eventSource.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      addMessage({
-        ...message,
-        timestamp: new Date(message.timestamp),
-        chatType: message.chatType || null,
-        chatId: message.chatId || null
-      });
-    };
-
-    return () => {
-      eventSource.close();
-    };
-  }, [conversationId, setMessages, addMessage]);
+  }, [conversationId, setMessages]);
 
   return { messages, isLoading, addMessage };
 }

@@ -1,9 +1,9 @@
 import { Message, Platform, SenderType } from '@prisma/client';
 import { 
   MessageWithChat, 
+  ConversationWithMessages,
   SerializedMessage,
-  SerializedConversation,
-  RuntimeConversation
+  SerializedConversation 
 } from '../types/chat';
 
 // Map database message to chat message
@@ -30,8 +30,8 @@ export function mapApiMessageToMessage(msg: SerializedMessage): Message {
   };
 }
 
-// Map serialized conversation to runtime conversation
-export function deserializeConversation(conv: SerializedConversation): RuntimeConversation {
+// Map database conversation to chat conversation
+export function deserializeConversation(conv: SerializedConversation): ConversationWithMessages {
   return {
     id: conv.id,
     platform: conv.platform,

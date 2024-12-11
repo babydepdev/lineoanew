@@ -4,3 +4,5 @@ export * from './client';
 export * from './signature';
 export * from './webhook';
 export * from './eventProcessor';
+export * from './message';
+export * from './utils/chatIdentifier';

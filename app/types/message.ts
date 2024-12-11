@@ -1,37 +1,30 @@
-import { Platform, SenderType } from '@prisma/client';
+import {  Platform, SenderType } from '@prisma/client';
 
+// Base message interface
 export interface BaseMessage {
   id: string;
   conversationId: string;
   content: string;
   sender: SenderType;
-  timestamp: Date;
+  timestamp: Date | string;
   platform: Platform;
   externalId: string | null;
   chatType: string | null;
   chatId: string | null;
-  botId: string | null;
 }
 
-export interface TempMessage extends BaseMessage {
-  id: string;
-  isTemp?: boolean;
+// Serialized message for API responses
+export interface SerializedMessage extends BaseMessage {
+  timestamp: string;
 }
 
-export const createTempMessage = (
-  conversationId: string,
-  content: string,
-  platform: Platform
-): TempMessage => ({
-  id: `temp-${Date.now()}`,
-  conversationId,
-  content,
-  sender: 'USER',
-  timestamp: new Date(),
-  platform,
-  externalId: null,
-  chatType: null,
-  chatId: null,
-  botId: null,
-  isTemp: true
-});
+// Runtime message with proper Date object
+export interface RuntimeMessage extends BaseMessage {
+  timestamp: Date;
+}
+
+// Message with chat context
+export interface MessageWithChat extends RuntimeMessage {
+  chatType: string | null;
+  chatId: string | null;
+}

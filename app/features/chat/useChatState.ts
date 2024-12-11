@@ -1,17 +1,9 @@
 "use client";
 
 import { create } from 'zustand';
-import { ConversationWithMessages } from '@/app/types/chat';
-import { Message } from '@prisma/client';
+import { ChatState } from './types';
 
-interface ChatState {
-  conversations: ConversationWithMessages[];
-  selectedConversation: ConversationWithMessages | null;
-  setConversations: (conversations: ConversationWithMessages[]) => void;
-  setSelectedConversation: (conversation: ConversationWithMessages | null) => void;
-  updateConversation: (updatedConversation: ConversationWithMessages) => void;
-  addMessage: (message: Message) => void;
-}
+import { sortMessages, sortConversations } from '@/app/utils/sorting';
 
 export const useChatState = create<ChatState>((set) => ({
   conversations: [],
@@ -74,17 +66,3 @@ export const useChatState = create<ChatState>((set) => ({
       };
     }),
 }));
-
-function sortMessages(messages: Message[]): Message[] {
-  return [...messages].sort((a, b) => 
-    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-  );
-}
-
-function sortConversations(conversations: ConversationWithMessages[]): ConversationWithMessages[] {
-  return [...conversations].sort((a, b) => {
-    const aTime = new Date(a.updatedAt).getTime();
-    const bTime = new Date(b.updatedAt).getTime();
-    return bTime - aTime;
-  });
-}
