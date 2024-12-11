@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { LineMessageParams, LineMessageResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
-
+import { createMessage } from '../../message';
 import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
 
@@ -31,6 +31,7 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
         return existing;
       }
 
+      // Create new message
       return tx.message.create({
         data: {
           conversationId: conversation.id,

@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'Processed LINE webhook',
       processed: result.processed,
-      total: result.total
+      total: result.total,
+      results: result.results
     });
   } catch (error) {
     console.error('Error processing webhook:', error);
