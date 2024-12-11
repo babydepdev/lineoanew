@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { ChatInterface } from './components/ChatInterface';
 import { SerializedConversation } from './types/chat';
-import { serializeConversation } from './utils/serializers';
 
 const prisma = new PrismaClient();
 
@@ -11,15 +10,22 @@ async function getConversations(): Promise<SerializedConversation[]> {
       include: {
         messages: {
           orderBy: { timestamp: 'asc' }
-        },
-        lineChannel: true
+        }
       },
       orderBy: {
         updatedAt: 'desc'
       }
     });
 
-    return conversations.map(serializeConversation);
+    return conversations.map(conv => ({
+      ...conv,
+      messages: conv.messages.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp.toISOString()
+      })),
+      createdAt: conv.createdAt.toISOString(),
+      updatedAt: conv.updatedAt.toISOString()
+    }));
   } catch (error) {
     console.error('Error fetching conversations:', error);
     return [];

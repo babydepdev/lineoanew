@@ -20,7 +20,7 @@ export function ChannelList({ channels }: ChannelListProps) {
             <div>
               <h3 className="text-lg font-semibold text-gray-900">{channel.name}</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Added {formatDate(new Date(channel.createdAt))}
+                Added {formatDate(channel.createdAt)}
               </p>
             </div>
             <div className="text-sm text-gray-500">
@@ -34,7 +34,7 @@ export function ChannelList({ channels }: ChannelListProps) {
                 <span className="font-medium">Channel ID:</span>
                 <br />
                 <code className="text-xs bg-gray-50 px-2 py-1 rounded">
-                  {channel.channelId}
+                  {channel.id}
                 </code>
               </p>
               <p className="text-sm text-gray-500">
@@ -54,7 +54,7 @@ export function ChannelList({ channels }: ChannelListProps) {
               <p className="text-sm text-gray-500">
                 <span className="font-medium">Last Updated:</span>
                 <br />
-                {formatDate(new Date(channel.updatedAt))}
+                {formatDate(channel.updatedAt)}
               </p>
             </div>
           </div>

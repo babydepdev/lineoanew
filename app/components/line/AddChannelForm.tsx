@@ -8,22 +8,11 @@ interface AddChannelFormProps {
 }
 
 export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
-  const [formData, setFormData] = useState({
-    name: '',
-    channelId: '',
-    accessToken: '',
-    secret: ''
-  });
+  const [name, setName] = useState('');
+  const [accessToken, setAccessToken] = useState('');
+  const [secret, setSecret] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,24 +25,25 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name,
+          accessToken,
+          secret,
+        }),
       });
 
-      const data = await response.json();
-
       if (!response.ok) {
+        const data = await response.json();
         throw new Error(data.error || 'Failed to add channel');
       }
 
-      onChannelAdded(data);
+      const channel = await response.json();
+      onChannelAdded(channel);
       
       // Reset form
-      setFormData({
-        name: '',
-        channelId: '',
-        accessToken: '',
-        secret: ''
-      });
+      setName('');
+      setAccessToken('');
+      setSecret('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -70,32 +60,12 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="text"
           id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Enter channel name"
           required
         />
-      </div>
-
-      <div>
-        <label htmlFor="channelId" className="block text-sm font-medium text-gray-700">
-          Channel ID
-        </label>
-        <input
-          type="text"
-          id="channelId"
-          name="channelId"
-          value={formData.channelId}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          placeholder="Enter LINE channel ID"
-          required
-        />
-        <p className="mt-1 text-xs text-gray-500">
-          You can find your Channel ID in the LINE Developers Console
-        </p>
       </div>
 
       <div>
@@ -105,9 +75,8 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="text"
           id="accessToken"
-          name="accessToken"
-          value={formData.accessToken}
-          onChange={handleChange}
+          value={accessToken}
+          onChange={(e) => setAccessToken(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Paste your LINE channel access token"
           required
@@ -121,9 +90,8 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="password"
           id="secret"
-          name="secret"
-          value={formData.secret}
-          onChange={handleChange}
+          value={secret}
+          onChange={(e) => setSecret(e.target.value)}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Enter channel secret"
           required

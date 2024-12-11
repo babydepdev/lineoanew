@@ -40,26 +40,11 @@ export interface LineApiResponse {
 
 export interface LineChannel {
   id: string;
-  channelId: string;
   name: string;
   accessToken: string;
   secret: string;
   createdAt: Date;
   updatedAt: Date;
-  _count?: {
-    conversations: number;
-    userProfiles: number;
-  };
-}
-
-export interface SerializedLineChannel {
-  id: string;
-  channelId: string;
-  name: string;
-  accessToken: string;
-  secret: string;
-  createdAt: string;
-  updatedAt: string;
   _count?: {
     conversations: number;
     userProfiles: number;

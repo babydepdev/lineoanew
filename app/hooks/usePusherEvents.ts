@@ -5,7 +5,6 @@ import { Message, Platform, SenderType } from '@prisma/client';
 import { PusherMessage, PusherConversation } from '../types/chat';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { useChatState } from '../features/chat/useChatState';
-import { deserializeConversation } from '../utils/serializers';
 
 export function usePusherEvents() {
   const {
@@ -31,7 +30,7 @@ export function usePusherEvents() {
           conversationId: message.conversationId,
           content: message.content,
           sender: message.sender as SenderType,
-          timestamp: new Date(message.timestamp),
+          timestamp: new Date(),
           platform: message.platform as Platform,
           externalId: message.externalId
         };
@@ -45,11 +44,32 @@ export function usePusherEvents() {
           return;
         }
 
-        const processedConversation = deserializeConversation(conversation);
-        updateConversation(processedConversation);
+        const processedMessages = conversation.messages.map(msg => ({
+          id: msg.id,
+          conversationId: msg.conversationId,
+          content: msg.content,
+          sender: msg.sender as SenderType,
+          timestamp: new Date(msg.timestamp),
+          platform: msg.platform as Platform,
+          externalId: msg.externalId
+        }));
+
+        const updatedConversation = {
+          id: conversation.id,
+          platform: conversation.platform as Platform,
+          channelId: conversation.channelId,
+          userId: conversation.userId,
+          messages: processedMessages,
+          createdAt: new Date(conversation.createdAt),
+          updatedAt: new Date(conversation.updatedAt),
+          lineChannelId: conversation.lineChannelId,
+          lineChannel: conversation.lineChannel
+        };
+
+        updateConversation(updatedConversation);
 
         if (selectedConversation?.id === conversation.id) {
-          setSelectedConversation(processedConversation);
+          setSelectedConversation(updatedConversation);
         }
       };
 
@@ -59,16 +79,33 @@ export function usePusherEvents() {
           return;
         }
 
-        const processedConversations = conversations.map(deserializeConversation);
+        const processedConversations = conversations.map(conv => ({
+          id: conv.id,
+          platform: conv.platform as Platform,
+          channelId: conv.channelId,
+          userId: conv.userId,
+          messages: conv.messages.map(msg => ({
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender as SenderType,
+            timestamp: new Date(msg.timestamp),
+            platform: msg.platform as Platform,
+            externalId: msg.externalId
+          })),
+          createdAt: new Date(conv.createdAt),
+          updatedAt: new Date(conv.updatedAt),
+          lineChannelId: conv.lineChannelId,
+          lineChannel: conv.lineChannel
+        }));
+
         setConversations(processedConversations);
       };
 
-      // Subscribe to events
       channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
       channel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
       channel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
 
-      // Cleanup
       return () => {
         channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
         channel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);

@@ -18,11 +18,8 @@ export async function handleLineWebhookEvent(event: LineMessageEvent, channelId:
     const timestamp = new Date(event.timestamp);
 
     // Check if message already exists to prevent duplicates
-    const existingMessage = await prisma.message.findFirst({
-      where: { 
-        externalId: messageId,
-        platform: 'LINE'
-      }
+    const existingMessage = await prisma.message.findUnique({
+      where: { externalId: messageId }
     });
 
     if (existingMessage) {
@@ -63,11 +60,8 @@ export async function handleLineWebhookEvent(event: LineMessageEvent, channelId:
     // Create message with transaction to handle race conditions
     const message = await prisma.$transaction(async (tx) => {
       // Double-check message doesn't exist within transaction
-      const msg = await tx.message.findFirst({
-        where: { 
-          externalId: messageId,
-          platform: 'LINE'
-        }
+      const msg = await tx.message.findUnique({
+        where: { externalId: messageId }
       });
 
       if (msg) {
