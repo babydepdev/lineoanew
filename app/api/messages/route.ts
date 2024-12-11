@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { sendLineMessage } from '@/lib/services/lineService';
+import { sendLineMessageToUser } from '@/app/features/line/lineMessageService';
 import { sendFacebookMessage } from '@/lib/facebookClient';
 import { broadcastMessageUpdate } from '@/lib/messageService';
 
@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
         messages: {
           orderBy: { timestamp: 'asc' },
         },
-        lineChannel: true,
       },
     });
 
@@ -54,23 +53,8 @@ export async function POST(request: NextRequest) {
     // Send to platform
     let messageSent = false;
     if (platform === 'LINE') {
-      if (!conversation.lineChannel) {
-        console.error('No LINE channel found for conversation');
-        // Delete the message if sending failed
-        await prisma.message.delete({
-          where: { id: botMessage.id }
-        });
-        return NextResponse.json(
-          { error: 'LINE channel not configured' },
-          { status: 400 }
-        );
-      }
       console.log('Sending LINE message to:', conversation.userId);
-      messageSent = await sendLineMessage(
-        conversation.userId,
-        content,
-        conversation.lineChannel.id
-      );
+      messageSent = await sendLineMessageToUser(conversation.userId, content);
     } else if (platform === 'FACEBOOK') {
       console.log('Sending Facebook message to:', conversation.userId);
       messageSent = await sendFacebookMessage(conversation.userId, content);
@@ -98,7 +82,6 @@ export async function POST(request: NextRequest) {
         messages: {
           orderBy: { timestamp: 'asc' },
         },
-        lineChannel: true,
       },
     });
 

@@ -61,9 +61,7 @@ export function usePusherEvents() {
           userId: conversation.userId,
           messages: processedMessages,
           createdAt: new Date(conversation.createdAt),
-          updatedAt: new Date(conversation.updatedAt),
-          lineChannelId: conversation.lineChannelId,
-          lineChannel: conversation.lineChannel
+          updatedAt: new Date(conversation.updatedAt)
         };
 
         updateConversation(updatedConversation);
@@ -94,9 +92,7 @@ export function usePusherEvents() {
             externalId: msg.externalId
           })),
           createdAt: new Date(conv.createdAt),
-          updatedAt: new Date(conv.updatedAt),
-          lineChannelId: conv.lineChannelId,
-          lineChannel: conv.lineChannel
+          updatedAt: new Date(conv.updatedAt)
         }));
 
         setConversations(processedConversations);

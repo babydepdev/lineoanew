@@ -6,14 +6,15 @@ const prisma = new PrismaClient();
 
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
-export async function getLineUserProfile(userId: string, channelId: string): Promise<LineUserProfile | null> {
+export async function getLineUserProfile(userId: string): Promise<LineUserProfile | null> {
   try {
     // Check cache first
-    const cachedProfile = await prisma.userProfile.findFirst({
+    const cachedProfile = await prisma.userProfile.findUnique({
       where: { 
-        userId,
-        platform: 'LINE',
-        lineChannelId: channelId
+        userId_platform: { 
+          userId, 
+          platform: 'LINE' 
+        } 
       }
     });
 
@@ -24,24 +25,25 @@ export async function getLineUserProfile(userId: string, channelId: string): Pro
         displayName: cachedProfile.displayName,
         pictureUrl: cachedProfile.pictureUrl || undefined,
         statusMessage: cachedProfile.statusMessage || undefined,
-        platform: 'LINE',
-        channelId: cachedProfile.lineChannelId
+        platform: 'LINE'
       };
     }
 
     // If cache is stale or doesn't exist, fetch from LINE API
-    const client = await getLineClient(channelId);
+    const client = getLineClient();
     const profile = await client.getProfile(userId);
 
-    // Update cache using upsert with unique constraint
-    const updatedProfile = await prisma.userProfile.upsert({
+    // Update cache
+    await prisma.userProfile.upsert({
       where: { 
-        id: cachedProfile?.id || 'temp-id'
+        userId_platform: { 
+          userId, 
+          platform: 'LINE' 
+        } 
       },
       create: {
         userId: profile.userId,
         platform: 'LINE',
-        lineChannelId: channelId,
         displayName: profile.displayName,
         pictureUrl: profile.pictureUrl,
         statusMessage: profile.statusMessage,
@@ -55,15 +57,35 @@ export async function getLineUserProfile(userId: string, channelId: string): Pro
     });
 
     return {
-      userId: updatedProfile.userId,
-      displayName: updatedProfile.displayName,
-      pictureUrl: updatedProfile.pictureUrl || undefined,
-      statusMessage: updatedProfile.statusMessage || undefined,
-      platform: 'LINE',
-      channelId
+      userId: profile.userId,
+      displayName: profile.displayName,
+      pictureUrl: profile.pictureUrl,
+      statusMessage: profile.statusMessage,
+      platform: 'LINE'
     };
   } catch (error) {
     console.error('Error fetching LINE user profile:', error);
+    
+    // If API fails, return cached profile even if stale
+    const staleProfile = await prisma.userProfile.findUnique({
+      where: { 
+        userId_platform: { 
+          userId, 
+          platform: 'LINE' 
+        } 
+      }
+    });
+
+    if (staleProfile) {
+      return {
+        userId: staleProfile.userId,
+        displayName: staleProfile.displayName,
+        pictureUrl: staleProfile.pictureUrl || undefined,
+        statusMessage: staleProfile.statusMessage || undefined,
+        platform: 'LINE'
+      };
+    }
+
     return null;
   }
 }

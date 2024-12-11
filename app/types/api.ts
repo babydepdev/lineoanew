@@ -1,5 +1,4 @@
 import { Platform, SenderType } from '@prisma/client';
-import { LineChannel } from './line';
 
 export interface MessageResponse {
   id: string;
@@ -18,8 +17,6 @@ export interface ConversationResponse {
   userId: string;
   createdAt: string;
   updatedAt: string;
-  lineChannelId: string | null;
-  lineChannel?: LineChannel | null;
   messages: MessageResponse[];
 }
 

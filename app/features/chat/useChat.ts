@@ -48,9 +48,7 @@ export function useChat(initialConversations: SerializedConversation[]) {
             timestamp: new Date(msg.timestamp)
           })),
           createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt),
-          lineChannelId: data.conversation.lineChannelId,
-          lineChannel: data.conversation.lineChannel
+          updatedAt: new Date(data.conversation.updatedAt)
         };
 
         updateConversation(updatedConversation);

@@ -1,68 +1,33 @@
 import { Client } from '@line/bot-sdk';
-import { PrismaClient } from '@prisma/client';
-import { LineChannel } from '@/app/types/line';
+import { lineConfig, isLineConfigured } from '../config/line';
 
-const prisma = new PrismaClient();
-const clientCache = new Map<string, Client>();
+let lineClient: Client | null = null;
 
-export async function getLineClient(channelId: string): Promise<Client> {
-  // Check cache first
-  if (clientCache.has(channelId)) {
-    return clientCache.get(channelId)!;
+export function getLineClient(): Client {
+  if (!lineClient) {
+    if (!isLineConfigured()) {
+      throw new Error('LINE configuration is missing');
+    }
+
+    lineClient = new Client({
+      channelAccessToken: lineConfig.channelAccessToken,
+      channelSecret: lineConfig.channelSecret
+    });
   }
 
-  // Get channel from database
-  const channel = await prisma.lineChannel.findUnique({
-    where: { id: channelId }
-  });
-
-  if (!channel) {
-    throw new Error(`LINE channel not found: ${channelId}`);
-  }
-
-  // Create new client with channel credentials
-  const client = new Client({
-    channelAccessToken: channel.accessToken,
-    channelSecret: channel.secret
-  });
-
-  // Cache the client
-  clientCache.set(channelId, client);
-  return client;
+  return lineClient;
 }
 
-export async function sendLineMessage(
-  userId: string,
-  content: string,
-  channelId: string
-): Promise<boolean> {
+export async function sendLineMessage(userId: string, message: string): Promise<boolean> {
   try {
-    console.log('Sending LINE message:', { userId, content, channelId });
-    const client = await getLineClient(channelId);
+    const client = getLineClient();
     await client.pushMessage(userId, {
       type: 'text',
-      text: content
+      text: message
     });
-    console.log('LINE message sent successfully');
     return true;
   } catch (error) {
     console.error('Error sending LINE message:', error);
     return false;
   }
-}
-
-export async function getAllLineChannels(): Promise<LineChannel[]> {
-  const channels = await prisma.lineChannel.findMany({
-    include: {
-      _count: {
-        select: {
-          conversations: true,
-          userProfiles: true
-        }
-      }
-    },
-    orderBy: { name: 'asc' }
-  });
-
-  return channels;
 }
