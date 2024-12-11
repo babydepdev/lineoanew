@@ -8,42 +8,56 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
+    // Get raw body and signature
     const rawBody = await request.text();
-    const signature = extractLineSignature(request.headers.get('x-line-signature'));
+    console.log('Received LINE webhook:', rawBody);
+
+    const signature = extractLineSignature(
+      request.headers.get('x-line-signature')
+    );
 
     if (!signature) {
+      console.error('Missing LINE signature header');
       return NextResponse.json(
         { error: 'Missing signature header' },
         { status: 400 }
       );
     }
 
+    // Parse webhook body
     let webhookBody: LineWebhookBody;
     try {
       webhookBody = JSON.parse(rawBody);
-    } catch {
+    } catch (error) {
+      console.error('Invalid webhook body:', error);
       return NextResponse.json(
-        { error: 'Invalid JSON body' },
+        { error: 'Invalid webhook body' },
         { status: 400 }
       );
     }
 
+    // Verify signature and get account
     const verificationResult = await findLineAccountBySignature(rawBody, signature);
-    if (!verificationResult?.isValid) {
+    
+    if (!verificationResult?.isValid || !verificationResult.account) {
+      console.error('Invalid signature or no matching account');
       return NextResponse.json(
         { error: 'Invalid signature' },
         { status: 401 }
       );
     }
 
+    // Process webhook events
     const result = await processLineWebhook(webhookBody, verificationResult.account);
+    console.log('Webhook processing result:', result);
 
     return NextResponse.json({
       message: 'Processed LINE webhook',
-      ...result
+      processed: result.processed,
+      total: result.total
     });
   } catch (error) {
-    console.error('Webhook processing error:', error);
+    console.error('Error processing webhook:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

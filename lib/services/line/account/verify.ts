@@ -4,33 +4,35 @@ import { verifyLineSignature } from '../signature';
 
 export async function findLineAccountBySignature(
   body: string,
-  signature: string
+  signature: string | null
 ): Promise<SignatureVerificationResult | null> {
   try {
+    if (!signature) {
+      console.error('No signature provided');
+      return null;
+    }
+
     const accounts = await getActiveLineAccounts();
-    console.log('Active LINE accounts found:', accounts.length);
+    console.log('Checking signature against accounts:', accounts.length);
 
     for (const account of accounts) {
-      console.log('Verifying signature for account:', {
-        id: account.id,
-        name: account.name
-      });
-
+      console.log('Verifying against account:', account.id);
+      
       const isValid = verifyLineSignature(body, signature, account.channelSecret);
       
       if (isValid) {
-        console.log('Found matching account:', {
-          id: account.id,
-          name: account.name
-        });
-        return { account, isValid: true };
+        console.log('Found matching account:', account.id);
+        return { 
+          account,
+          isValid: true
+        };
       }
     }
 
-    console.log('No matching account found for signature');
+    console.log('No matching account found');
     return null;
   } catch (error) {
-    console.error('Error finding LINE account:', error);
+    console.error('Error verifying signature:', error);
     return null;
   }
 }
