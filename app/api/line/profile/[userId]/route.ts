@@ -7,7 +7,16 @@ export async function GET(
 ) {
   try {
     const { userId } = params;
-    const profile = await getLineUserProfile(userId);
+    const channelId = request.nextUrl.searchParams.get('channelId');
+
+    if (!channelId) {
+      return NextResponse.json(
+        { error: 'Channel ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const profile = await getLineUserProfile(userId, channelId);
     
     if (!profile) {
       return NextResponse.json(

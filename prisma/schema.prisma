@@ -7,14 +7,31 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model LineChannel {
+  id            String         @id @default(cuid())
+  name          String
+  accessToken   String
+  secret        String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  conversations Conversation[]
+  userProfiles  UserProfile[]
+
+  @@index([name])
+}
+
 model Conversation {
-  id        String    @id @default(cuid())
-  platform  Platform
-  channelId String
-  userId    String
-  messages  Message[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String       @id @default(cuid())
+  platform      Platform
+  channelId     String
+  userId        String
+  messages      Message[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  lineChannel   LineChannel? @relation(fields: [lineChannelId], references: [id])
+  lineChannelId String?
+
+  @@index([lineChannelId])
 }
 
 model Message {
@@ -29,15 +46,18 @@ model Message {
 }
 
 model UserProfile {
+  id            String      @id @default(cuid())
   userId        String
   platform      Platform
+  lineChannel   LineChannel @relation(fields: [lineChannelId], references: [id])
+  lineChannelId String
   displayName   String
   pictureUrl    String?
   statusMessage String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  @@id([userId, platform])
+  @@unique([userId, platform, lineChannelId])
 }
 
 enum Platform {

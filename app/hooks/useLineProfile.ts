@@ -25,7 +25,7 @@ export function useLineProfile(userId: string | null) {
         const response = await fetch(`/api/line/profile/${userId}`, {
           signal: controller.signal,
           headers: {
-            'Cache-Control': 'max-age=3600' // Cache for 1 hour
+            'Cache-Control': 'max-age=3600'
           }
         });
         

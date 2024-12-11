@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleLineWebhookEvent } from '@/lib/services/lineWebhookService';
 import { LineMessageEvent, LineWebhookBody } from '@/app/types/line';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,10 +15,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
     }
 
+    // Get channel ID from request headers
+    const channelId = request.headers.get('x-line-channel-id');
+    if (!channelId) {
+      console.error('Missing channel ID in webhook request');
+      return NextResponse.json({ error: 'Missing channel ID' }, { status: 400 });
+    }
+
+    // Verify channel exists
+    const channel = await prisma.lineChannel.findFirst({
+      where: { id: channelId }
+    });
+
+    if (!channel) {
+      console.error('Invalid channel ID:', channelId);
+      return NextResponse.json({ error: 'Invalid channel ID' }, { status: 400 });
+    }
+
     const results = await Promise.allSettled(
       body.events.map(async (event: LineMessageEvent) => {
         try {
-          return await handleLineWebhookEvent(event);
+          return await handleLineWebhookEvent(event, channelId);
         } catch (error) {
           console.error('Error processing LINE message event:', error);
           return null;
