@@ -13,9 +13,6 @@ const nextConfig = {
     FACEBOOK_VERIFY_TOKEN: process.env.FACEBOOK_VERIFY_TOKEN,
     DATABASE_URL: process.env.DATABASE_URL,
     API_SECRET_KEY: process.env.API_SECRET_KEY
-  },
-  experimental: {
-    serverActions: true,
   }
 };
 
