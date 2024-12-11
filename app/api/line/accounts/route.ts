@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createLineAccount, getActiveLineAccounts, updateLineAccount } from '@/lib/services/lineAccountService';
+import { 
+  createLineAccount, 
+  getActiveLineAccounts, 
+  updateLineAccount 
+} from '@/lib/services/line';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,13 +17,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = await createLineAccount({
+    const result = await createLineAccount({
       name,
       channelAccessToken,
       channelSecret
     });
 
-    return NextResponse.json(account);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(result.account);
   } catch (error) {
     console.error('Error creating LINE account:', error);
     return NextResponse.json(
@@ -54,8 +65,16 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const account = await updateLineAccount(id, data);
-    return NextResponse.json(account);
+    const result = await updateLineAccount(id, data);
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(result.account);
   } catch (error) {
     console.error('Error updating LINE account:', error);
     return NextResponse.json(

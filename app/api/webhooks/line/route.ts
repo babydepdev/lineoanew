@@ -1,46 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { handleLineWebhookEvent } from '@/lib/services/lineWebhookService';
-import { LineMessageEvent, LineWebhookBody } from '@/app/types/line';
+import { LineWebhookBody } from '@/app/types/line';
+import { 
+  findLineAccountBySignature,
+  extractLineSignature,
+  processLineWebhook 
+} from '@/lib/services/line';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as LineWebhookBody;
-    console.log('Received LINE webhook:', JSON.stringify(body, null, 2));
+    const rawBody = await request.text();
+    const signature = extractLineSignature(request.headers.get('x-line-signature'));
 
-    // Get LINE signature from header
-    const signature = request.headers.get('x-line-signature');
     if (!signature) {
-      console.error('Missing LINE signature');
-      return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing signature header' },
+        { status: 400 }
+      );
     }
 
-    if (!body.events || !Array.isArray(body.events)) {
-      console.error('Invalid LINE webhook format:', body);
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
+    let webhookBody: LineWebhookBody;
+    try {
+      webhookBody = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json(
+        { error: 'Invalid JSON body' },
+        { status: 400 }
+      );
     }
 
-    const results = await Promise.allSettled(
-      body.events.map(async (event: LineMessageEvent) => {
-        try {
-          return await handleLineWebhookEvent(event, signature);
-        } catch (error) {
-          console.error('Error processing LINE message event:', error);
-          return null;
-        }
-      })
-    );
+    const verificationResult = await findLineAccountBySignature(rawBody, signature);
+    if (!verificationResult?.isValid) {
+      return NextResponse.json(
+        { error: 'Invalid signature' },
+        { status: 401 }
+      );
+    }
 
-    const successfulEvents = results.filter(r => r.status === 'fulfilled' && r.value !== null).length;
-    console.log(`Processed ${successfulEvents} of ${body.events.length} LINE events`);
-    
-    return NextResponse.json({ 
+    const result = await processLineWebhook(webhookBody, verificationResult.account);
+
+    return NextResponse.json({
       message: 'Processed LINE webhook',
-      processed: successfulEvents,
-      total: body.events.length
+      ...result
     });
   } catch (error) {
-    console.error('Error processing LINE webhook:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    console.error('Webhook processing error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 

@@ -1,23 +1,30 @@
 import { Platform } from '@prisma/client';
 
+export interface LineMessageContent {
+  type: string;
+  text?: string;
+  id: string;
+  quoteToken?: string;
+}
+
+export interface LineSource {
+  type: string;
+  userId: string;
+  roomId?: string;
+  groupId?: string;
+}
+
 export interface LineMessageEvent {
   type: string;
-  message: {
-    type: string;
-    text: string;
-    id: string;
-  };
-  source: {
-    type: string;
-    userId: string;
-    roomId?: string;
-    groupId?: string;
-  };
+  message: LineMessageContent;
+  source: LineSource;
   replyToken: string;
   timestamp: number;
-  deliveryContext?: {
+  webhookEventId: string;
+  deliveryContext: {
     isRedelivery: boolean;
   };
+  mode: string;
 }
 
 export interface LineWebhookBody {
@@ -25,6 +32,21 @@ export interface LineWebhookBody {
   events: LineMessageEvent[];
 }
 
+// Account types
+export interface LineAccount {
+  id: string;
+  name: string;
+  channelSecret: string;
+  channelAccessToken: string;
+  active: boolean;
+}
+
+export interface SignatureVerificationResult {
+  account: LineAccount;
+  isValid: boolean;
+}
+
+// Profile types
 export interface LineUserProfile {
   userId: string;
   displayName: string;
@@ -33,6 +55,20 @@ export interface LineUserProfile {
   platform: Platform;
 }
 
+// API Response types
 export interface LineApiResponse {
   messageId: string;
+}
+
+// Webhook types
+export interface LineWebhookEventResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+export interface LineWebhookProcessingResult {
+  processed: number;
+  total: number;
+  results: LineWebhookEventResult[];
 }

@@ -1,17 +1,21 @@
-import { PrismaClient } from '@prisma/client';
-import { broadcastConversationUpdate } from './messageService';
-import { findOrCreateConversation } from './conversationService';
-import { createMessage } from './messageService';
+import { Platform, Message, Conversation } from '@prisma/client';
+import { MessageCreateParams } from './message/types';
+import { broadcastMessageUpdate } from './message';
+import { findOrCreateConversation } from './conversation';
+import { createMessage } from './message';
 
-const prisma = new PrismaClient();
+interface WebhookResult {
+  message: Message;
+  conversation: Conversation;
+}
 
 export async function handleIncomingMessage(
   userId: string,
   messageText: string,
-  platform: 'LINE' | 'FACEBOOK',
+  platform: Platform,
   messageId?: string,
   timestamp?: Date
-) {
+): Promise<WebhookResult> {
   try {
     console.log('Handling incoming message:', {
       userId,
@@ -22,26 +26,32 @@ export async function handleIncomingMessage(
     });
 
     const messageTimestamp = timestamp || new Date();
-    const conversation = await findOrCreateConversation(userId, platform);
-    
-    const message = await createMessage(
-      conversation.id,
-      messageText,
-      'USER',
+
+    // Find or create conversation
+    const conversation = await findOrCreateConversation(
+      userId,
       platform,
-      messageId,
-      messageTimestamp
+      userId // Use userId as channelId for non-LINE platforms
     );
 
-    await prisma.conversation.update({
-      where: { id: conversation.id },
-      data: { updatedAt: messageTimestamp }
-    });
+    // Create message params
+    const messageParams: MessageCreateParams = {
+      conversationId: conversation.id,
+      content: messageText,
+      sender: 'USER',
+      platform,
+      externalId: messageId,
+      timestamp: messageTimestamp
+    };
 
-    await broadcastConversationUpdate(conversation.id);
+    // Create message
+    const message = await createMessage(messageParams);
+
+    // Broadcast update
+    await broadcastMessageUpdate(conversation.id);
     console.log('Message broadcast complete');
 
-    return { message, conversationId: conversation.id };
+    return { message, conversation };
   } catch (error) {
     console.error('Error handling incoming message:', error);
     throw error;

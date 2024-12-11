@@ -1,122 +1,50 @@
-import { PrismaClient } from '@prisma/client';
-import { LineMessageEvent } from '@/app/types/line';
-import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../pusher';
-import { formatMessageForPusher, formatConversationForPusher } from '../messageFormatter';
-import { findLineAccountBySecret } from './lineAccountService';
+import { LineMessageEvent, LineAccount } from '@/app/types/line';
+import { MessageCreateParams } from './message/types';
+import { findOrCreateConversation } from './conversation';
+import { createMessage, broadcastMessageUpdate } from './message';
 
-const prisma = new PrismaClient();
-
-export async function handleLineWebhookEvent(event: LineMessageEvent, signature: string) {
+export async function handleLineWebhookEvent(
+  event: LineMessageEvent, 
+  lineAccount: LineAccount
+) {
   try {
     if (event.type !== 'message' || event.message.type !== 'text') {
-      console.log('Skipping non-text message event');
-      return null;
-    }
-
-    // Find the corresponding LINE account using the signature
-    const lineAccount = await findLineAccountBySecret(signature);
-    if (!lineAccount) {
-      console.error('No LINE account found for signature');
+      console.log('Skipping non-text message event:', {
+        type: event.type,
+        messageType: event.message.type
+      });
       return null;
     }
 
     const userId = event.source.userId;
-    const text = event.message.text;
+    const text = event.message.text || '';
     const messageId = event.message.id;
     const timestamp = new Date(event.timestamp);
     const channelId = event.source.roomId || event.source.groupId || userId;
-    const isFromBot = event.source.type === 'bot';
 
-    // Check if message already exists
-    const existingMessage = await prisma.message.findUnique({
-      where: { externalId: messageId }
-    });
+    // Find or create conversation
+    const conversation = await findOrCreateConversation(
+      userId,
+      'LINE',
+      channelId,
+      lineAccount.id
+    );
 
-    if (existingMessage) {
-      console.log('Message already exists, skipping:', messageId);
-      return existingMessage;
-    }
+    // Create message params
+    const messageParams: MessageCreateParams = {
+      conversationId: conversation.id,
+      content: text,
+      sender: 'USER',
+      platform: 'LINE',
+      externalId: messageId,
+      timestamp
+    };
 
-    // Find or create conversation using transaction
-    const result = await prisma.$transaction(async (tx) => {
-      let conversation = await tx.conversation.findFirst({
-        where: {
-          userId: userId,
-          platform: 'LINE',
-          lineAccountId: lineAccount.id
-        },
-        include: {
-          messages: {
-            orderBy: { timestamp: 'asc' }
-          }
-        }
-      });
+    // Create message
+    const message = await createMessage(messageParams);
 
-      if (!conversation) {
-        conversation = await tx.conversation.create({
-          data: {
-            userId: userId,
-            platform: 'LINE',
-            channelId: channelId,
-            lineAccountId: lineAccount.id
-          },
-          include: {
-            messages: {
-              orderBy: { timestamp: 'asc' }
-            }
-          }
-        });
-      }
-
-      // Create message within transaction
-      const message = await tx.message.create({
-        data: {
-          conversationId: conversation.id,
-          content: text,
-          sender: isFromBot ? 'BOT' : 'USER',
-          platform: 'LINE',
-          externalId: messageId,
-          timestamp
-        }
-      });
-
-      // Update conversation timestamp
-      await tx.conversation.update({
-        where: { id: conversation.id },
-        data: { updatedAt: timestamp }
-      });
-
-      return { message, conversation };
-    });
-
-    const { message, conversation } = result;
-
-    // Format message for Pusher
-    const formattedMessage = formatMessageForPusher(message);
-
-    // Broadcast updates in parallel
-    await Promise.all([
-      // Broadcast message to conversation-specific channel
-      pusherServer.trigger(
-        `private-conversation-${conversation.id}`,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formattedMessage
-      ),
-
-      // Broadcast to main chat channel
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formattedMessage
-      ),
-
-      // Broadcast conversation update
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formatConversationForPusher(conversation)
-      )
-    ]);
+    // Broadcast update
+    await broadcastMessageUpdate(conversation.id);
 
     return message;
   } catch (error) {

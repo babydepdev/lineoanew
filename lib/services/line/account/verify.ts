@@ -1,29 +1,15 @@
-import { PrismaClient } from '@prisma/client';
-import { LineAccount, SignatureVerificationResult } from '@/app/types/line';
-import { verifyLineSignature } from './lineSignatureService';
-
-const prisma = new PrismaClient();
+import { SignatureVerificationResult } from '@/app/types/line';
+import { getActiveLineAccounts } from './find';
+import { verifyLineSignature } from '../signature';
 
 export async function findLineAccountBySignature(
   body: string,
   signature: string
 ): Promise<SignatureVerificationResult | null> {
   try {
-    // Get all active LINE accounts
-    const accounts = await prisma.lineAccount.findMany({
-      where: { active: true },
-      select: {
-        id: true,
-        name: true,
-        channelSecret: true,
-        channelAccessToken: true,
-        active: true
-      }
-    });
-
+    const accounts = await getActiveLineAccounts();
     console.log('Active LINE accounts found:', accounts.length);
 
-    // Try each account's channel secret
     for (const account of accounts) {
       console.log('Verifying signature for account:', {
         id: account.id,
@@ -47,17 +33,4 @@ export async function findLineAccountBySignature(
     console.error('Error finding LINE account:', error);
     return null;
   }
-}
-
-export async function getActiveLineAccounts(): Promise<LineAccount[]> {
-  return prisma.lineAccount.findMany({
-    where: { active: true },
-    select: {
-      id: true,
-      name: true,
-      channelSecret: true,
-      channelAccessToken: true,
-      active: true
-    }
-  });
 }
