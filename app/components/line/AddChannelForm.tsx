@@ -8,12 +8,22 @@ interface AddChannelFormProps {
 }
 
 export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
-  const [name, setName] = useState('');
-  const [channelId, setChannelId] = useState('');
-  const [accessToken, setAccessToken] = useState('');
-  const [secret, setSecret] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    channelId: '',
+    accessToken: '',
+    secret: ''
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,27 +36,24 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          name,
-          channelId,
-          accessToken,
-          secret,
-        }),
+        body: JSON.stringify(formData),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.error || 'Failed to add channel');
       }
 
-      const channel = await response.json();
-      onChannelAdded(channel);
+      onChannelAdded(data);
       
       // Reset form
-      setName('');
-      setChannelId('');
-      setAccessToken('');
-      setSecret('');
+      setFormData({
+        name: '',
+        channelId: '',
+        accessToken: '',
+        secret: ''
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
@@ -63,8 +70,9 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="text"
           id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Enter channel name"
           required
@@ -78,14 +86,15 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="text"
           id="channelId"
-          value={channelId}
-          onChange={(e) => setChannelId(e.target.value)}
+          name="channelId"
+          value={formData.channelId}
+          onChange={handleChange}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Enter LINE channel ID"
           required
         />
         <p className="mt-1 text-xs text-gray-500">
-          This is your LINE Channel ID from the LINE Developers Console
+          You can find your Channel ID in the LINE Developers Console
         </p>
       </div>
 
@@ -96,8 +105,9 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="text"
           id="accessToken"
-          value={accessToken}
-          onChange={(e) => setAccessToken(e.target.value)}
+          name="accessToken"
+          value={formData.accessToken}
+          onChange={handleChange}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Paste your LINE channel access token"
           required
@@ -111,8 +121,9 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         <input
           type="password"
           id="secret"
-          value={secret}
-          onChange={(e) => setSecret(e.target.value)}
+          name="secret"
+          value={formData.secret}
+          onChange={handleChange}
           className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           placeholder="Enter channel secret"
           required
