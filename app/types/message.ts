@@ -1,4 +1,4 @@
-import {  Platform, SenderType } from '@prisma/client';
+import { Platform, SenderType } from '@prisma/client';
 
 // Base message interface
 export interface BaseMessage {
@@ -21,10 +21,4 @@ export interface SerializedMessage extends BaseMessage {
 // Runtime message with proper Date object
 export interface RuntimeMessage extends BaseMessage {
   timestamp: Date;
-}
-
-// Message with chat context
-export interface MessageWithChat extends RuntimeMessage {
-  chatType: string | null;
-  chatId: string | null;
 }

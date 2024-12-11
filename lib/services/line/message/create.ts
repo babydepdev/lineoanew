@@ -1,7 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { LineMessageParams, LineMessageResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
-import { createMessage } from '../../message';
 import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
 

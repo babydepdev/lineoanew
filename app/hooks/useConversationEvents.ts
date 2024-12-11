@@ -1,6 +1,10 @@
+"use client";
+
 import { useEffect } from 'react';
-import { SerializedConversation, ConversationWithMessages } from '../types/chat';
+import { SerializedConversation } from '@/app/types/chat';
+import { RuntimeConversation } from '@/app/types/conversation';
 import { useChatState } from '../features/chat/useChatState';
+import { deserializeConversation } from '../utils/messageMapper';
 
 export function useConversationEvents(initialConversations: SerializedConversation[]) {
   const { setConversations } = useChatState();
@@ -8,15 +12,9 @@ export function useConversationEvents(initialConversations: SerializedConversati
   useEffect(() => {
     if (!Array.isArray(initialConversations)) return;
 
-    const formattedConversations = initialConversations.map(conv => ({
-      ...conv,
-      messages: conv.messages.map(msg => ({
-        ...msg,
-        timestamp: new Date(msg.timestamp)
-      })),
-      createdAt: new Date(conv.createdAt),
-      updatedAt: new Date(conv.updatedAt)
-    })) as ConversationWithMessages[];
+    const formattedConversations: RuntimeConversation[] = initialConversations.map(
+      deserializeConversation
+    );
 
     setConversations(formattedConversations);
   }, [initialConversations, setConversations]);

@@ -1,5 +1,5 @@
 import type { Message } from '@prisma/client';
-import type { ConversationWithMessages } from '@/app/types/chat';
+import type { RuntimeConversation, SerializedConversation } from '@/app/types/conversation';
 
 export function formatMessageForPusher(message: Message) {
   return {
@@ -9,11 +9,13 @@ export function formatMessageForPusher(message: Message) {
     sender: message.sender,
     timestamp: message.timestamp.toISOString(),
     platform: message.platform,
-    externalId: message.externalId
+    externalId: message.externalId,
+    chatType: message.chatType,
+    chatId: message.chatId
   };
 }
 
-export function formatConversationForPusher(conversation: ConversationWithMessages) {
+export function formatConversationForPusher(conversation: RuntimeConversation) {
   return {
     id: conversation.id,
     platform: conversation.platform,
@@ -21,6 +23,7 @@ export function formatConversationForPusher(conversation: ConversationWithMessag
     channelId: conversation.channelId,
     messages: conversation.messages.map(formatMessageForPusher),
     createdAt: conversation.createdAt.toISOString(),
-    updatedAt: conversation.updatedAt.toISOString()
+    updatedAt: conversation.updatedAt.toISOString(),
+    lineAccountId: conversation.lineAccountId
   };
 }

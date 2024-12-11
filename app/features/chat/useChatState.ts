@@ -2,7 +2,6 @@
 
 import { create } from 'zustand';
 import { ChatState } from './types';
-
 import { sortMessages, sortConversations } from '@/app/utils/sorting';
 
 export const useChatState = create<ChatState>((set) => ({

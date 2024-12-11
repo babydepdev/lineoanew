@@ -1,20 +1,21 @@
 import { create } from 'zustand';
-import { ConversationWithMessages } from '../types/chat';
+import { RuntimeConversation } from '@/app/types/conversation';
 import { Message } from '@prisma/client';
+import { sortMessages, sortConversations } from '@/app/utils/sorting';
 
 interface ConversationStore {
-  conversations: ConversationWithMessages[];
-  selectedConversation: ConversationWithMessages | null;
-  setConversations: (conversations: ConversationWithMessages[]) => void;
-  setSelectedConversation: (conversation: ConversationWithMessages | null) => void;
-  updateConversation: (updatedConversation: ConversationWithMessages) => void;
+  conversations: RuntimeConversation[];
+  selectedConversation: RuntimeConversation | null;
+  setConversations: (conversations: RuntimeConversation[]) => void;
+  setSelectedConversation: (conversation: RuntimeConversation | null) => void;
+  updateConversation: (updatedConversation: RuntimeConversation) => void;
   addMessage: (message: Message) => void;
 }
 
 export const useConversationStore = create<ConversationStore>((set) => ({
   conversations: [],
   selectedConversation: null,
-  setConversations: (conversations) => set({ conversations }),
+  setConversations: (conversations) => set({ conversations: sortConversations(conversations) }),
   setSelectedConversation: (conversation) => set({ selectedConversation: conversation }),
   updateConversation: (updatedConversation) =>
     set((state) => {
@@ -22,13 +23,8 @@ export const useConversationStore = create<ConversationStore>((set) => ({
         conv.id === updatedConversation.id ? updatedConversation : conv
       );
 
-      // Sort conversations by updatedAt timestamp
-      const sortedConversations = updatedConversations.sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-      );
-
       return {
-        conversations: sortedConversations,
+        conversations: sortConversations(updatedConversations),
         selectedConversation:
           state.selectedConversation?.id === updatedConversation.id
             ? updatedConversation
@@ -51,36 +47,26 @@ export const useConversationStore = create<ConversationStore>((set) => ({
 
       const updatedConversations = state.conversations.map((conv) => {
         if (conv.id === message.conversationId) {
-          const updatedMessages = [...conv.messages, message].sort(
-            (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-          );
           return {
             ...conv,
-            messages: updatedMessages,
+            messages: sortMessages([...conv.messages, message]),
             updatedAt: message.timestamp
           };
         }
         return conv;
       });
 
-      // Sort conversations by updatedAt timestamp
-      const sortedConversations = updatedConversations.sort(
-        (a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()
-      );
-
       const updatedSelectedConversation = 
         state.selectedConversation?.id === message.conversationId
           ? {
               ...state.selectedConversation,
-              messages: [...state.selectedConversation.messages, message].sort(
-                (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-              ),
+              messages: sortMessages([...state.selectedConversation.messages, message]),
               updatedAt: message.timestamp
             }
           : state.selectedConversation;
 
       return {
-        conversations: sortedConversations,
+        conversations: sortConversations(updatedConversations),
         selectedConversation: updatedSelectedConversation,
       };
     }),
