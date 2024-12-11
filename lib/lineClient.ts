@@ -46,7 +46,7 @@ export async function handleLineWebhook(event: LineMessageEvent) {
       const newMessage = await tx.message.create({
         data: {
           conversationId: conversation.id,
-          content: text,
+          content: text ?? '',
           sender: 'USER',
           platform: 'LINE',
           externalId: messageId,
