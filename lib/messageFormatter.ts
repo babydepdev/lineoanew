@@ -1,5 +1,5 @@
 import type { Message } from '@prisma/client';
-import type { RuntimeConversation, SerializedConversation } from '@/app/types/conversation';
+import type { RuntimeConversation } from '@/app/types/conversation';
 
 export function formatMessageForPusher(message: Message) {
   return {
