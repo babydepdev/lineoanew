@@ -30,11 +30,23 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, accessToken, secret } = body;
+    const { name, channelId, accessToken, secret } = body;
 
-    if (!name || !accessToken || !secret) {
+    if (!name || !channelId || !accessToken || !secret) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Check if channel ID already exists
+    const existingChannel = await prisma.lineChannel.findUnique({
+      where: { channelId }
+    });
+
+    if (existingChannel) {
+      return NextResponse.json(
+        { error: 'Channel ID already exists' },
         { status: 400 }
       );
     }
@@ -42,6 +54,7 @@ export async function POST(request: NextRequest) {
     const channel = await prisma.lineChannel.create({
       data: {
         name,
+        channelId,
         accessToken,
         secret
       },

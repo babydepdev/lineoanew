@@ -1,41 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { handleLineWebhookEvent } from '@/lib/services/lineWebhookService';
-import { LineMessageEvent, LineWebhookBody } from '@/app/types/line';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { LineWebhookBody } from '@/app/types/line';
+import { validateLineWebhook } from '@/lib/services/lineWebhookValidator';
+import { getLineChannelById } from '@/lib/config/lineChannels';
 
 export async function POST(request: NextRequest) {
   try {
+    const signature = request.headers.get('x-line-signature');
+
+    if (!signature) {
+      console.error('Missing LINE signature in headers');
+      return NextResponse.json(
+        { error: 'Missing x-line-signature header' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json() as LineWebhookBody;
-    console.log('Received LINE webhook:', JSON.stringify(body, null, 2));
-
-    if (!body.events || !Array.isArray(body.events)) {
-      console.error('Invalid LINE webhook format:', body);
-      return NextResponse.json({ error: 'Invalid webhook format' }, { status: 400 });
+    
+    // Get destination from webhook body
+    const { destination } = body;
+    if (!destination) {
+      console.error('Missing destination in webhook body');
+      return NextResponse.json(
+        { error: 'Missing destination in webhook body' },
+        { status: 400 }
+      );
     }
 
-    // Get channel ID from request headers
-    const channelId = request.headers.get('x-line-channel-id');
-    if (!channelId) {
-      console.error('Missing channel ID in webhook request');
-      return NextResponse.json({ error: 'Missing channel ID' }, { status: 400 });
+    // Find channel by destination
+    const channel = await getLineChannelById(destination);
+    if (!channel) {
+      console.error('LINE channel not found for destination:', destination);
+      return NextResponse.json(
+        { error: 'Channel not found' },
+        { status: 404 }
+      );
     }
 
-    // Verify channel exists
-    const channel = await prisma.lineChannel.findFirst({
-      where: { id: channelId }
+    console.log('Received LINE webhook:', {
+      channelId: channel.id,
+      channelName: channel.name,
+      body: JSON.stringify(body, null, 2)
     });
 
-    if (!channel) {
-      console.error('Invalid channel ID:', channelId);
-      return NextResponse.json({ error: 'Invalid channel ID' }, { status: 400 });
-    }
+    // Validate webhook with channel credentials
+    const validatedData = await validateLineWebhook(body, channel.id, signature);
 
+    // Process each event
     const results = await Promise.allSettled(
-      body.events.map(async (event: LineMessageEvent) => {
+      validatedData.events.map(async (event) => {
         try {
-          return await handleLineWebhookEvent(event, channelId);
+          return await handleLineWebhookEvent(event, validatedData.channelId);
         } catch (error) {
           console.error('Error processing LINE message event:', error);
           return null;
@@ -44,16 +60,21 @@ export async function POST(request: NextRequest) {
     );
 
     const successfulEvents = results.filter(r => r.status === 'fulfilled' && r.value !== null).length;
-    console.log(`Processed ${successfulEvents} of ${body.events.length} LINE events`);
+    console.log(`Processed ${successfulEvents} of ${body.events.length} LINE events for channel ${channel.name}`);
     
     return NextResponse.json({ 
       message: 'Processed LINE webhook',
       processed: successfulEvents,
-      total: body.events.length
+      total: body.events.length,
+      channelName: channel.name
     });
   } catch (error) {
     console.error('Error processing LINE webhook:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json(
+      { error: errorMessage },
+      { status: error instanceof Error && error.message.includes('signature') ? 401 : 500 }
+    );
   }
 }
 

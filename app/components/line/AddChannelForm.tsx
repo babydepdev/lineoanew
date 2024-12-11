@@ -9,6 +9,7 @@ interface AddChannelFormProps {
 
 export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
   const [name, setName] = useState('');
+  const [channelId, setChannelId] = useState('');
   const [accessToken, setAccessToken] = useState('');
   const [secret, setSecret] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,6 +28,7 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
         },
         body: JSON.stringify({
           name,
+          channelId,
           accessToken,
           secret,
         }),
@@ -42,6 +44,7 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
       
       // Reset form
       setName('');
+      setChannelId('');
       setAccessToken('');
       setSecret('');
     } catch (err) {
@@ -66,6 +69,24 @@ export function AddChannelForm({ onChannelAdded }: AddChannelFormProps) {
           placeholder="Enter channel name"
           required
         />
+      </div>
+
+      <div>
+        <label htmlFor="channelId" className="block text-sm font-medium text-gray-700">
+          Channel ID
+        </label>
+        <input
+          type="text"
+          id="channelId"
+          value={channelId}
+          onChange={(e) => setChannelId(e.target.value)}
+          className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          placeholder="Enter LINE channel ID"
+          required
+        />
+        <p className="mt-1 text-xs text-gray-500">
+          This is your LINE Channel ID from the LINE Developers Console
+        </p>
       </div>
 
       <div>

@@ -9,6 +9,7 @@ generator client {
 
 model LineChannel {
   id            String         @id @default(cuid())
+  channelId     String         @unique
   name          String
   accessToken   String
   secret        String
@@ -18,6 +19,7 @@ model LineChannel {
   userProfiles  UserProfile[]
 
   @@index([name])
+  @@index([channelId])
 }
 
 model Conversation {
