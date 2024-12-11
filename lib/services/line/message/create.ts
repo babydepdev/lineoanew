@@ -12,7 +12,8 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
       messageId, 
       timestamp, 
       lineAccountId,
-      source 
+      source,
+      botId // Add botId parameter
     } = params;
 
     // Validate text content
@@ -44,7 +45,8 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
       externalId: messageId,
       timestamp,
       chatType,
-      chatId
+      chatId,
+      botId // Pass the botId
     };
 
     // Create message

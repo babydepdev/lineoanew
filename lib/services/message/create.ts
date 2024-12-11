@@ -12,7 +12,8 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
     externalId, 
     timestamp,
     chatType,
-    chatId
+    chatId,
+    botId // Add botId parameter
   } = params;
 
   return prisma.message.create({
@@ -24,7 +25,8 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
       externalId,
       timestamp: timestamp || new Date(),
       chatType,
-      chatId
+      chatId,
+      botId // Store the bot identifier
     }
   });
 }

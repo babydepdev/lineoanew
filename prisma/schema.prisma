@@ -53,10 +53,12 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
+  botId          String?      // Add botId field to track which bot sent the message
 
   @@index([conversationId, timestamp])
   @@index([platform, timestamp])
   @@index([externalId])
+  @@index([botId])
 }
 
 // User Profile model

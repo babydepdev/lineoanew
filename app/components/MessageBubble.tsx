@@ -19,6 +19,18 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
 
+  // Get bot name based on botId
+  const getBotName = (botId: string | null) => {
+    switch (botId) {
+      case 'ThenextCrm':
+        return 'TNC';
+      case 'nextcrm2':
+        return 'NC2';
+      default:
+        return 'BOT';
+    }
+  };
+
   return (
     <div className={cn(
       "flex items-end gap-2 group",
@@ -32,7 +44,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       ) : (
         <Avatar className="h-8 w-8 shrink-0">
           <AvatarFallback className="bg-muted/10 text-muted">
-            B
+            {getBotName(message.botId)}
           </AvatarFallback>
         </Avatar>
       )}
@@ -55,6 +67,11 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           displayAsUser ? "text-right" : "text-left"
         )}>
           {formatTimestamp(message.timestamp)}
+          {!displayAsUser && message.botId && (
+            <span className="ml-1 text-xs opacity-75">
+              • {getBotName(message.botId)}
+            </span>
+          )}
         </div>
       </div>
     </div>

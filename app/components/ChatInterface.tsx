@@ -7,7 +7,7 @@ import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
 import { Separator } from './ui/separator';
 import { TypingIndicator } from './TypingIndicator';
-import { Message, Platform, SenderType } from '@prisma/client';
+import { createTempMessage } from '../types/message';
 import { Header } from './layout/Header';
 import { Sidebar } from './chat/Sidebar';
 import { ChatHeader } from './chat/ChatHeader';
@@ -29,18 +29,12 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
 
   const handleSendMessage = async (content: string) => {
     if (selectedConversation) {
-      // Create temporary message with all required fields
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        conversationId: selectedConversation.id,
+      // Create temporary message using the helper function
+      const tempMessage = createTempMessage(
+        selectedConversation.id,
         content,
-        sender: 'USER' as SenderType,
-        timestamp: new Date(),
-        platform: selectedConversation.platform as Platform,
-        externalId: null,
-        chatType: null,
-        chatId: null
-      };
+        selectedConversation.platform
+      );
 
       messageListRef.current?.addLocalMessage(tempMessage);
       await sendMessage(content);
