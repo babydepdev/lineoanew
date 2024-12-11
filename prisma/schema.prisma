@@ -4,10 +4,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Prisma Client generator
 generator client {
   provider = "prisma-client-js"
 }
 
+// LINE Account model
 model LineAccount {
   id                 String         @id @default(cuid())
   name               String
@@ -21,6 +23,7 @@ model LineAccount {
   @@index([active])
 }
 
+// Conversation model
 model Conversation {
   id            String       @id @default(cuid())
   platform      Platform
@@ -32,12 +35,13 @@ model Conversation {
   lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id])
   lineAccountId String?
 
-  // Unique constraint for preventing duplicate conversations
+  // Changed unique constraint to include lineAccountId
   @@unique([userId, platform, channelId, lineAccountId])
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
 
+// Message model
 model Message {
   id             String       @id @default(cuid())
   conversationId String
@@ -55,6 +59,7 @@ model Message {
   @@index([externalId])
 }
 
+// User Profile model
 model UserProfile {
   userId        String
   platform      Platform

@@ -15,8 +15,8 @@
     "@typescript-eslint/no-empty-interface": ["error", {
       "allowSingleExtends": true
     }],
-    "no-var": "error",
     "@typescript-eslint/ban-ts-comment": "off",
-    "@typescript-eslint/no-non-null-assertion": "off"
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "no-var": "error"
   }
 }

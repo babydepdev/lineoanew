@@ -10,7 +10,6 @@ export interface MessageResponse {
   externalId: string | null;
   chatType: string | null;
   chatId: string | null;
-  botId: string | null; // Add botId field
 }
 
 export interface ConversationResponse {

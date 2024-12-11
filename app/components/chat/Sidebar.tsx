@@ -1,16 +1,16 @@
 "use client";
 
 import React from 'react';
-import { RuntimeConversation } from '@/app/types/conversation';
+import { ConversationWithMessages } from '@/app/types/chat';
 import ConversationList from '../ConversationList';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
   isOpen: boolean;
-  conversations: RuntimeConversation[];
+  conversations: ConversationWithMessages[];
   selectedId?: string;
-  onSelect: (conversation: RuntimeConversation) => void;
+  onSelect: (conversation: ConversationWithMessages) => void;
 }
 
 export function Sidebar({ isOpen, conversations, selectedId, onSelect }: SidebarProps) {

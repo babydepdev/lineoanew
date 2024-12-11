@@ -1,22 +1,18 @@
 "use client";
 
-import { Message, Platform, SenderType } from '@prisma/client';
-import { useChatState } from './useChatState';
 import { APIResponse } from '@/app/types/api';
-import { deserializeConversation } from '@/lib/utils/messageMapper';
+import { ConversationWithMessages } from '@/app/types/chat';
+import { useChatState } from './useChatState';
+import { Message, Platform, SenderType } from '@prisma/client';
 
 export function useChatActions() {
-  const { 
-    selectedConversation, 
-    updateConversation, 
-    setSelectedConversation 
-  } = useChatState();
+  const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
 
   const sendMessage = async (content: string) => {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message
+      // Create temporary message with all required fields
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
@@ -29,8 +25,8 @@ export function useChatActions() {
         chatId: null
       };
 
-      // Update conversation with temp message
-      const updatedConversation = {
+      // Update conversation with temporary message
+      const updatedConversation: ConversationWithMessages = {
         ...selectedConversation,
         messages: [...selectedConversation.messages, tempMessage].sort(
           (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
@@ -40,10 +36,11 @@ export function useChatActions() {
 
       updateConversation(updatedConversation);
 
-      // Send message to API
       const response = await fetch('/api/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({
           conversationId: selectedConversation.id,
           content,
@@ -56,9 +53,28 @@ export function useChatActions() {
       }
 
       const data = await response.json() as APIResponse;
-      
       if (data.conversation) {
-        const finalConversation = deserializeConversation(data.conversation);
+        const finalConversation: ConversationWithMessages = {
+          id: data.conversation.id,
+          platform: data.conversation.platform,
+          channelId: data.conversation.channelId,
+          userId: data.conversation.userId,
+          messages: data.conversation.messages.map(msg => ({
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender,
+            timestamp: new Date(msg.timestamp),
+            platform: msg.platform,
+            externalId: msg.externalId,
+            chatType: msg.chatType,
+            chatId: msg.chatId
+          })),
+          createdAt: new Date(data.conversation.createdAt),
+          updatedAt: new Date(data.conversation.updatedAt),
+          lineAccountId: data.conversation.lineAccountId
+        };
+
         updateConversation(finalConversation);
         setSelectedConversation(finalConversation);
       }

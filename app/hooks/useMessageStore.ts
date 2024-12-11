@@ -25,9 +25,7 @@ export function useMessageStore(): MessageStore {
       // Add new message and sort by timestamp
       return [...prev, {
         ...newMessage,
-        timestamp: new Date(newMessage.timestamp),
-        chatType: newMessage.chatType || null,
-        chatId: newMessage.chatId || null
+        timestamp: new Date(newMessage.timestamp)
       }].sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
     });
   }, []);

@@ -9,8 +9,7 @@ export interface LineMessageParams {
   channelId: string;
   platform: Platform;
   lineAccountId?: string | null;
-  source: LineSource;
-  botId?: string; // Add botId parameter
+  source: LineSource; // Add source information
 }
 
 export interface LineMessageResult {

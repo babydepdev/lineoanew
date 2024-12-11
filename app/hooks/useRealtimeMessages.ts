@@ -2,10 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { Message } from '@prisma/client';
+import { usePusherSubscription } from './usePusherSubscription';
 import { useMessageStore } from './useMessageStore';
 import { SerializedMessage } from '../types/chat';
-import { mapApiMessageToMessage } from '@/lib/utils/messageMapper';
-import { usePusherSubscription } from './usePusherSubscription';
 
 interface UseRealtimeMessagesResult {
   messages: Message[];
@@ -17,10 +16,9 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
   const { messages, setMessages, addMessage } = useMessageStore();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle real-time message updates
+  // Subscribe to Pusher channels
   usePusherSubscription(conversationId, addMessage);
 
-  // Fetch initial messages
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -29,7 +27,10 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
         
         const data = await response.json();
         const allMessages = [...data.botMessages, ...data.userMessages]
-          .map((msg: SerializedMessage) => mapApiMessageToMessage(msg))
+          .map((msg: SerializedMessage) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
           .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         
         setMessages(allMessages);

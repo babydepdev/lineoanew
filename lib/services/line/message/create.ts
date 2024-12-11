@@ -1,49 +1,54 @@
-import { PrismaClient } from '@prisma/client';
 import { LineMessageParams, LineMessageResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
-import { broadcastMessageUpdate } from '../../message/broadcast';
+import { createMessage, broadcastMessageUpdate } from '../../message';
 import { getChatIdentifier } from '../utils/chatIdentifier';
-
-const prisma = new PrismaClient();
+import { MessageCreateParams } from '../../message/types';
 
 export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
   try {
-    // Extract chat identifier
-    const { chatId, chatType } = getChatIdentifier(params.source);
+    const { 
+      userId, 
+      text, 
+      messageId, 
+      timestamp, 
+      lineAccountId,
+      source 
+    } = params;
 
-    // Find or create conversation
+    // Validate text content
+    const trimmedText = text.trim();
+    if (!trimmedText) {
+      return {
+        success: false,
+        error: 'Message text is required'
+      };
+    }
+
+    // Get chat identifier based on source type
+    const { chatId, chatType } = getChatIdentifier(source);
+    
+    // Find or create conversation with unique chat identifier
     const conversation = await findOrCreateConversation(
-      params.userId,
+      userId,
       'LINE',
       chatId,
-      params.lineAccountId
+      lineAccountId
     );
 
-    // Create message with transaction
-    const message = await prisma.$transaction(async (tx) => {
-      // Check for existing message
-      const existing = await tx.message.findUnique({
-        where: { externalId: params.messageId }
-      });
+    // Create message params
+    const messageParams: MessageCreateParams = {
+      conversationId: conversation.id,
+      content: trimmedText,
+      sender: 'USER',
+      platform: 'LINE',
+      externalId: messageId,
+      timestamp,
+      chatType,
+      chatId
+    };
 
-      if (existing) {
-        return existing;
-      }
-
-      // Create new message
-      return tx.message.create({
-        data: {
-          conversationId: conversation.id,
-          content: params.text,
-          sender: 'USER',
-          platform: 'LINE',
-          externalId: params.messageId,
-          timestamp: params.timestamp,
-          chatType,
-          chatId
-        }
-      });
-    });
+    // Create message
+    const message = await createMessage(messageParams);
 
     // Broadcast update
     await broadcastMessageUpdate(conversation.id);

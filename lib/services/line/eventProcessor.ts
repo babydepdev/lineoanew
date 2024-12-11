@@ -20,16 +20,16 @@ export async function processLineMessageEvent(
       };
     }
 
-    // Process valid message
+    // Process valid message with source information
     const result = await createLineMessage({
       userId: event.source.userId,
       text: validation.text,
       messageId: event.message.id,
       timestamp: new Date(event.timestamp),
-      lineAccountId: account.id,
+      channelId: event.source.roomId || event.source.groupId || event.source.userId,
       platform: 'LINE',
-      source: event.source,
-      channelId: event.source.roomId || event.source.groupId || event.source.userId
+      lineAccountId: account.id,
+      source: event.source // Pass source information
     });
 
     return {

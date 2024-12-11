@@ -7,9 +7,8 @@ export interface MessageCreateParams {
   platform: Platform;
   externalId?: string | null;
   timestamp?: Date;
-  chatType?: string;
-  chatId?: string;
-  botId?: string; // Add botId field
+  chatType?: string;  // Add optional chatType
+  chatId?: string;    // Add optional chatId
 }
 
 export interface MessageBroadcastResult {

@@ -2,29 +2,34 @@
 
 import { useEffect } from 'react';
 import { Message } from '@prisma/client';
-import { pusherClient, PUSHER_EVENTS } from '@/lib/pusher';
-import { SerializedMessage } from '../types/chat';
-import { mapApiMessageToMessage } from '@/lib/utils/messageMapper';
+import { pusherClient } from '@/lib/pusher';
+import { PUSHER_EVENTS, PUSHER_CHANNELS } from '@/app/constants/pusher';
+import { PusherMessage } from '../types/chat';
 
 export function usePusherSubscription(
   conversationId: string,
   onNewMessage: (message: Message) => void
 ) {
   useEffect(() => {
-    // Subscribe to conversation-specific channel
-    const channel = pusherClient.subscribe(`private-conversation-${conversationId}`);
+    const mainChannel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
+    const conversationChannel = pusherClient.subscribe(`private-conversation-${conversationId}`);
     
-    const handleNewMessage = (message: SerializedMessage) => {
-      const processedMessage = mapApiMessageToMessage(message);
-      onNewMessage(processedMessage);
+    const handleNewMessage = (message: PusherMessage) => {
+      if (message.conversationId === conversationId) {
+        onNewMessage({
+          ...message,
+          timestamp: new Date(message.timestamp)
+        });
+      }
     };
 
-    // Bind to message events
-    channel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+    mainChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+    conversationChannel.bind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
 
-    // Cleanup subscription
     return () => {
-      channel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      mainChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      conversationChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleNewMessage);
+      pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
       pusherClient.unsubscribe(`private-conversation-${conversationId}`);
     };
   }, [conversationId, onNewMessage]);
