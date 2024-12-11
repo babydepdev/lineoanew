@@ -12,11 +12,20 @@ export async function GET(
     if (!profile) {
       return NextResponse.json(
         { error: 'Profile not found' },
-        { status: 404 }
+        { 
+          status: 404,
+          headers: {
+            'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+          }
+        }
       );
     }
     
-    return NextResponse.json(profile);
+    return NextResponse.json(profile, {
+      headers: {
+        'Cache-Control': 'public, max-age=3600' // Cache for 1 hour
+      }
+    });
   } catch (error) {
     console.error('Error fetching LINE profile:', error);
     return NextResponse.json(

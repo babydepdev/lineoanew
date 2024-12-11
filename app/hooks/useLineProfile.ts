@@ -17,20 +17,28 @@ export function useLineProfile(userId: string | null) {
     }
 
     let mounted = true;
-    setIsLoading(true);
+    const controller = new AbortController();
 
     async function fetchProfile() {
       try {
-        const response = await fetch(`/api/line/profile/${userId}`);
-        if (!response.ok) throw new Error('Failed to fetch profile');
+        setIsLoading(true);
+        const response = await fetch(`/api/line/profile/${userId}`, {
+          signal: controller.signal,
+          headers: {
+            'Cache-Control': 'max-age=3600' // Cache for 1 hour
+          }
+        });
         
-        const data = await response.json();
+        if (!response.ok) throw new Error('Failed to fetch profile');
         if (!mounted) return;
         
+        const data = await response.json();
         setProfile(data);
         setError(null);
       } catch (err) {
         if (!mounted) return;
+        if (err instanceof Error && err.name === 'AbortError') return;
+        
         setError(err instanceof Error ? err : new Error('Unknown error'));
         setProfile(null);
       } finally {
@@ -44,6 +52,7 @@ export function useLineProfile(userId: string | null) {
 
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, [userId]);
 
