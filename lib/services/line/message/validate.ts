@@ -1,12 +1,7 @@
 import { LineMessageEvent } from '@/app/types/line';
+import { LineMessageValidationResult } from './types';
 
-export interface MessageValidationResult {
-  isValid: boolean;
-  error?: string;
-  text?: string;
-}
-
-export function validateLineMessage(event: LineMessageEvent): MessageValidationResult {
+export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   // Check event type
   if (event.type !== 'message') {
     return {

@@ -1,5 +1,5 @@
 import { LineMessageEvent, LineAccount, LineWebhookEventResult } from '@/app/types/line';
-import { createLineMessage } from './message';
+import { createLineMessage } from './message/create';
 import { validateLineMessage } from './message/validate';
 
 export async function processLineMessageEvent(

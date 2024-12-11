@@ -15,3 +15,9 @@ export interface LineMessageResult {
   messageId?: string;
   error?: string;
 }
+
+export interface LineMessageValidationResult {
+  isValid: boolean;
+  error?: string;
+  text?: string;
+}

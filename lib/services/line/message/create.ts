@@ -26,7 +26,7 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
     // Create message
     const message = await createMessage({
       conversationId: conversation.id,
-      content: trimmedText,
+      content: trimmedText, // Now guaranteed to be non-empty string
       sender: 'USER',
       platform: 'LINE',
       externalId: messageId,
