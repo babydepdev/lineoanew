@@ -1,11 +1,10 @@
-"use client";
-
 import { useCallback } from 'react';
 import { SerializedConversation, ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 import { useConversationEvents } from '@/app/hooks/useConversationEvents';
 import { usePusherEvents } from '@/app/hooks/usePusherEvents';
 import { APIResponse } from '@/app/types/api';
+import { mapApiMessageToMessage } from '@/app/utils/messageMapper';
 
 export function useChat(initialConversations: SerializedConversation[]) {
   const { 
@@ -46,17 +45,7 @@ export function useChat(initialConversations: SerializedConversation[]) {
           platform: data.conversation.platform,
           channelId: data.conversation.channelId,
           userId: data.conversation.userId,
-          messages: data.conversation.messages.map((msg) => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            content: msg.content,
-            sender: msg.sender,
-            timestamp: new Date(msg.timestamp),
-            platform: msg.platform,
-            externalId: msg.externalId,
-            chatType: msg.chatType,
-            chatId: msg.chatId
-          })),
+          messages: data.conversation.messages.map(mapApiMessageToMessage),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt),
           lineAccountId: data.conversation.lineAccountId

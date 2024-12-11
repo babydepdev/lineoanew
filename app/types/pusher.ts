@@ -1,4 +1,7 @@
-import { SerializedMessage } from './chat';
+import { SerializedMessage, SerializedConversation } from './chat';
+
+export type PusherMessage = SerializedMessage;
+export type PusherConversation = SerializedConversation;
 
 export interface PusherTypingEvent {
   conversationId: string;

@@ -4,6 +4,7 @@ import { Conversation as PrismaConversation, Message as PrismaMessage, Platform 
 export interface MessageWithChat extends PrismaMessage {
   chatType: string | null;
   chatId: string | null;
+  botId: string | null;
 }
 
 // Conversation with messages including chat fields
@@ -23,6 +24,7 @@ export interface SerializedMessage {
   externalId: string | null;
   chatType: string | null;
   chatId: string | null;
+  botId: string | null;
 }
 
 export interface SerializedConversation {
@@ -49,7 +51,3 @@ export function deserializeConversation(conv: SerializedConversation): Conversat
     lineAccountId: conv.lineAccountId || null
   };
 }
-
-// Type aliases for Pusher events
-export type PusherMessage = SerializedMessage;
-export type PusherConversation = SerializedConversation;

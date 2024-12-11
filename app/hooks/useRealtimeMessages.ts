@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Message } from '@prisma/client';
-import { usePusherSubscription } from './usePusherSubscription';
 import { useMessageStore } from './useMessageStore';
 import { SerializedMessage } from '../types/chat';
 
@@ -16,9 +15,6 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
   const { messages, setMessages, addMessage } = useMessageStore();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Subscribe to Pusher channels
-  usePusherSubscription(conversationId, addMessage);
-
   useEffect(() => {
     const fetchMessages = async () => {
       try {
@@ -29,7 +25,9 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
         const allMessages = [...data.botMessages, ...data.userMessages]
           .map((msg: SerializedMessage) => ({
             ...msg,
-            timestamp: new Date(msg.timestamp)
+            timestamp: new Date(msg.timestamp),
+            chatType: msg.chatType || null,
+            chatId: msg.chatId || null
           }))
           .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
         
@@ -42,7 +40,24 @@ export function useRealtimeMessages(conversationId: string): UseRealtimeMessages
     };
 
     fetchMessages();
-  }, [conversationId, setMessages]);
+
+    // Subscribe to real-time updates
+    const eventSource = new EventSource(`/api/messages/subscribe/${conversationId}`);
+    
+    eventSource.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      addMessage({
+        ...message,
+        timestamp: new Date(message.timestamp),
+        chatType: message.chatType || null,
+        chatId: message.chatId || null
+      });
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [conversationId, setMessages, addMessage]);
 
   return { messages, isLoading, addMessage };
 }

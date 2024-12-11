@@ -3,7 +3,7 @@
 import { useEffect, useCallback } from 'react';
 import { Message } from '@prisma/client';
 import { pusherClient, PUSHER_EVENTS } from '@/lib/pusher';
-import { PusherMessage } from '../types/chat';
+import { PusherMessage } from '../types/pusher';
 
 export function useMessageUpdates(
   conversationId: string,

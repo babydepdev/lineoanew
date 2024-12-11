@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
-import { SerializedConversation, ConversationWithMessages, PusherMessage, PusherConversation } from '@/app/types/chat';
+import { SerializedConversation, ConversationWithMessages } from '@/app/types/chat';
+import { PusherMessage, PusherConversation } from '@/app/types/pusher';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { useChatState } from './useChatState';
+import { mapApiMessageToMessage } from '@/app/utils/messageMapper';
 
 export function useChatEvents(initialConversations: SerializedConversation[]) {
   const {
@@ -17,10 +19,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
     if (Array.isArray(initialConversations)) {
       const formattedConversations = initialConversations.map(conv => ({
         ...conv,
-        messages: conv.messages.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        })),
+        messages: conv.messages.map(msg => mapApiMessageToMessage(msg)),
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
@@ -36,11 +35,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
     const handleMessageReceived = (message: PusherMessage) => {
       if (!message?.id || !message?.conversationId) return;
       
-      const updatedMessage = {
-        ...message,
-        timestamp: new Date(message.timestamp)
-      };
-      
+      const updatedMessage = mapApiMessageToMessage(message);
       addMessage(updatedMessage);
     };
 
@@ -49,10 +44,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
 
       const updatedConversation = {
         ...pusherConversation,
-        messages: pusherConversation.messages.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        })),
+        messages: pusherConversation.messages.map(msg => mapApiMessageToMessage(msg)),
         createdAt: new Date(pusherConversation.createdAt),
         updatedAt: new Date(pusherConversation.updatedAt)
       } as ConversationWithMessages;
@@ -67,10 +59,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
     const handleConversationsUpdated = (conversations: PusherConversation[]) => {
       const formattedConversations = conversations.map(conv => ({
         ...conv,
-        messages: conv.messages.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
-        })),
+        messages: conv.messages.map(msg => mapApiMessageToMessage(msg)),
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)
       })) as ConversationWithMessages[];
