@@ -38,7 +38,7 @@ export async function sendReplyMessage(options: ReplyMessageOptions): Promise<Me
     // Send reply
     await client.replyMessage(replyToken, message);
 
-    console.log('LINE reply message sent successfully');
+    console.log('LINE reply message sent trply successfully');
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
