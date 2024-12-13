@@ -3,6 +3,9 @@ import { findOrCreateConversation } from '../../conversation';
 import { createMessage, broadcastMessageUpdate } from '../../message';
 import { getChatIdentifier } from '../utils/chatIdentifier';
 import { MessageCreateParams } from '../../message/types';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
   try {
@@ -24,10 +27,23 @@ export async function createLineMessage(params: LineMessageParams): Promise<Line
       };
     }
 
+    // Check if message already exists
+    const existingMessage = await prisma.message.findUnique({
+      where: { externalId: messageId }
+    });
+
+    if (existingMessage) {
+      console.log('Message already exists, skipping creation:', messageId);
+      return {
+        success: true,
+        messageId: existingMessage.id
+      };
+    }
+
     // Get chat identifier based on source type
     const { chatId, chatType } = getChatIdentifier(source);
     
-    // Find or create conversation with unique chat identifier
+    // Find or create conversation
     const conversation = await findOrCreateConversation(
       userId,
       'LINE',
