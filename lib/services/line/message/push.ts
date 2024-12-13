@@ -1,4 +1,4 @@
-import { MessageResult, PushMessageOptions } from './types/index';
+import { MessageResult, PushMessageOptions } from './types/messageTypes';
 import { createTextMessage } from './types/messages';
 import { getLineClient } from './client';
 
