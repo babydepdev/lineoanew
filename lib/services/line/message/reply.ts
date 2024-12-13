@@ -1,69 +1,47 @@
-
-import { SendMessageResult } from './types';
+import { Client } from '@line/bot-sdk';
+import { MessageResult,ReplyMessageOptions } from './types'
+import { validateReplyToken, formatExpiryTime } from '../utils/
 import { createTextMessage } from './types/messages';
-import LineClientManager from '../client';
-import { findLineAccountById } from '../account';
+import { getLineClient } from './client';
+import { DEFAULT_REPLY_CONFIG } from './types/reply';
 
-const REPLY_TOKEN_EXPIRY = 20 * 60 * 1000; // 20 minutes in milliseconds
+export async function sendReplyMessage(options: ReplyMessageOptions): Promise<MessageResult> {
+  const { replyToken, content, timestamp, lineAccountId } = options;
 
-export async function sendLineReplyMessage(
-  replyToken: string,
-  content: string,
-  timestamp: number,
-  lineAccountId?: string | null
-): Promise<SendMessageResult> {
   try {
-    console.log('Preparing to send LINE reply message:', { 
-      replyToken, 
-      content,
-      timestamp,
-      lineAccountId 
+    // Validate reply token
+    const tokenInfo = validateReplyToken(replyToken, timestamp);
+    
+    if (!tokenInfo.isValid) {
+      console.log('Reply token validation failed:', {
+        token: replyToken,
+        expiresAt: formatExpiryTime(tokenInfo.expiresAt)
+      });
+      return {
+        success: false,
+        error: `Reply token expired or invalid. Expired at: ${new Date(tokenInfo.expiresAt).toISOString()}`
+      };
+    }
+
+    // Get LINE client
+    const client = await getLineClient(lineAccountId);
+    if (!client) {
+      return {
+        success: false,
+        error: 'Failed to initialize LINE client'
+      };
+    }
+
+    // Create message
+    const message = createTextMessage(content);
+
+    console.log('Sending LINE reply message:', {
+      replyToken,
+      content: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+      expiresIn: formatExpiryTime(tokenInfo.expiresAt)
     });
 
-    // Check reply token expiry
-    if (!isReplyTokenValid(timestamp)) {
-      console.log('Reply token expired, falling back to push message');
-      return {
-        success: false,
-        error: 'Reply token expired'
-      };
-    }
-
-    // Get LINE account
-    const account = lineAccountId ? 
-      await findLineAccountById(lineAccountId) :
-      await findDefaultLineAccount();
-
-    if (!account) {
-      console.error('No valid LINE account found');
-      return {
-        success: false,
-        error: 'No valid LINE account configuration found'
-      };
-    }
-
-    // Get client for this account
-    const client = LineClientManager.getClient(account);
-
-    // Validate message content
-    const trimmedContent = content.trim();
-    if (!trimmedContent) {
-      return {
-        success: false,
-        error: 'Message content cannot be empty'
-      };
-    }
-
-    // Create properly typed message
-    const message = createTextMessage(trimmedContent);
-
-    console.log('Sending LINE reply message with account:', {
-      accountId: account.id,
-      accountName: account.name,
-      replyToken
-    });
-
-    // Send reply message
+    // Send reply
     await client.replyMessage(replyToken, message);
 
     console.log('LINE reply message sent successfully');
@@ -73,37 +51,7 @@ export async function sendLineReplyMessage(
     console.error('Error sending LINE reply message:', error);
     return {
       success: false,
-      error: `Failed to send LINE reply message: ${errorMessage}`
+      error: `Failed to send reply message: ${errorMessage}`
     };
-  }
-}
-
-function isReplyTokenValid(timestamp: number): boolean {
-  const now = Date.now();
-  const messageAge = now - timestamp;
-  return messageAge < REPLY_TOKEN_EXPIRY;
-}
-
-async function findDefaultLineAccount() {
-  try {
-    // Get first active account
-    const account = await findLineAccountById(process.env.DEFAULT_LINE_ACCOUNT_ID || '');
-    if (account) return account;
-
-    // Fallback to environment variables
-    if (process.env.LINE_CHANNEL_ACCESS_TOKEN && process.env.LINE_CHANNEL_SECRET) {
-      return {
-        id: 'default',
-        name: 'Default Account',
-        channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
-        channelSecret: process.env.LINE_CHANNEL_SECRET,
-        active: true
-      };
-    }
-
-    return null;
-  } catch (error) {
-    console.error('Error finding default LINE account:', error);
-    return null;
   }
 }

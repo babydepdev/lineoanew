@@ -1,6 +1,6 @@
-export * from './index';
+export * from './messages';
 export * from './reply';
-export * from './validate';
+export * from './validation';
 
 export interface MessageResult {
   success: boolean;
