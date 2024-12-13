@@ -1,45 +1,33 @@
- 
+
 import { SendMessageResult } from './types';
+import { createTextMessage } from './types/messages';
 import LineClientManager from '../client';
 import { findLineAccountById } from '../account';
-import { createTextMessage } from './types/messages';
-import { sendLineReplyMessage } from './reply';
 
-export async function sendLineMessage(
-  userId: string, 
+const REPLY_TOKEN_EXPIRY = 20 * 60 * 1000; // 20 minutes in milliseconds
+
+export async function sendLineReplyMessage(
+  replyToken: string,
   content: string,
-  replyToken?: string,
-  timestamp?: number,
+  timestamp: number,
   lineAccountId?: string | null
 ): Promise<SendMessageResult> {
   try {
-    // Try to use reply token if available and valid
-    if (replyToken && timestamp) {
-      const replyResult = await sendLineReplyMessage(
-        replyToken,
-        content,
-        timestamp,
-        lineAccountId
-      );
-
-      if (replyResult.success) {
-        return replyResult;
-      }
-
-      // If reply failed but not due to expiry, return the error
-      if (replyResult.error !== 'Reply token expired') {
-        return replyResult;
-      }
-
-      // Otherwise fall through to push message
-      console.log('Falling back to push message after reply token expiry');
-    }
-
-    console.log('Preparing to send LINE push message:', { 
-      userId, 
-      content, 
+    console.log('Preparing to send LINE reply message:', { 
+      replyToken, 
+      content,
+      timestamp,
       lineAccountId 
     });
+
+    // Check reply token expiry
+    if (!isReplyTokenValid(timestamp)) {
+      console.log('Reply token expired, falling back to push message');
+      return {
+        success: false,
+        error: 'Reply token expired'
+      };
+    }
 
     // Get LINE account
     const account = lineAccountId ? 
@@ -69,25 +57,31 @@ export async function sendLineMessage(
     // Create properly typed message
     const message = createTextMessage(trimmedContent);
 
-    console.log('Sending LINE push message with account:', {
+    console.log('Sending LINE reply message with account:', {
       accountId: account.id,
       accountName: account.name,
-      userId
+      replyToken
     });
 
-    // Send push message
-    await client.pushMessage(userId, message);
+    // Send reply message
+    await client.replyMessage(replyToken, message);
 
-    console.log('LINE push message sent successfully');
+    console.log('LINE reply message sent successfully');
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    console.error('Error sending LINE message:', error);
+    console.error('Error sending LINE reply message:', error);
     return {
       success: false,
-      error: `Failed to send LINE message: ${errorMessage}`
+      error: `Failed to send LINE reply message: ${errorMessage}`
     };
   }
+}
+
+function isReplyTokenValid(timestamp: number): boolean {
+  const now = Date.now();
+  const messageAge = now - timestamp;
+  return messageAge < REPLY_TOKEN_EXPIRY;
 }
 
 async function findDefaultLineAccount() {

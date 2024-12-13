@@ -9,9 +9,15 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { conversationId, content, platform } = body;
+    const { conversationId, content, platform, replyToken, timestamp } = body;
 
-    console.log('Received message request:', { conversationId, content, platform });
+    console.log('Received message request:', { 
+      conversationId, 
+      content, 
+      platform,
+      replyToken,
+      timestamp
+    });
 
     if (!conversationId || !content || !platform) {
       return NextResponse.json(
@@ -57,6 +63,8 @@ export async function POST(request: NextRequest) {
       const result = await sendLineMessage(
         conversation.userId, 
         content,
+        replyToken,
+        timestamp,
         conversation.lineAccountId
       );
       messageSent = result.success;
