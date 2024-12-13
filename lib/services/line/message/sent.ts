@@ -1,24 +1,30 @@
-import  { MessageResult, PushMessageOptions, ReplyMessageOptions }  from './index';
+import { MessageResult, PushMessageOptions, ReplyMessageOptions } from './types/messageTypes';
 import { sendReplyMessage } from './reply';
 import { sendPushMessage } from './push';
 import { validateReplyToken } from '../utils/replyToken';
-import { DEFAULT_REPLY_CONFIG } from './types/reply';
+
+const REPLY_TOKEN_EXPIRY = 20 * 60 * 1000; // 20 minutes in milliseconds
 
 export async function sendLineMessage(
   userId: string,
   content: string,
-  replyToken?: string,
-  timestamp?: number,
+  replyToken?: string | null,
+  timestamp?: number | null,
   lineAccountId?: string | null
 ): Promise<MessageResult> {
   try {
-    // Try reply message first if token available
+    // Check if we can use reply message
     if (replyToken && timestamp) {
-      const tokenInfo = validateReplyToken(replyToken, timestamp);
+      const now = Date.now();
+      const messageAge = now - timestamp;
       
-      if (tokenInfo.isValid) {
-        console.log('Using reply message with valid token');
-        
+      // Only use reply if within expiry window
+      if (messageAge < REPLY_TOKEN_EXPIRY) {
+        console.log('Using reply message - token still valid:', {
+          messageAge: `${messageAge / 1000}s`,
+          expiryIn: `${(REPLY_TOKEN_EXPIRY - messageAge) / 1000}s`
+        });
+
         const replyOptions: ReplyMessageOptions = {
           replyToken,
           content,
@@ -26,25 +32,26 @@ export async function sendLineMessage(
           lineAccountId
         };
 
-        const replyResult = await sendReplyMessage(replyOptions);
-        
-        // Return success if reply worked
-        if (replyResult.success) {
-          return replyResult;
+        try {
+          const replyResult = await sendReplyMessage(replyOptions);
+          if (replyResult.success) {
+            console.log('Reply message sent successfully');
+            return replyResult;
+          }
+          console.warn('Reply message failed, falling back to push:', replyResult.error);
+        } catch (error) {
+          console.error('Error sending reply message:', error);
         }
-
-        // Only fall back to push if configured
-        if (!DEFAULT_REPLY_CONFIG.fallbackToPush) {
-          return replyResult;
-        }
-
-        console.log('Reply failed, falling back to push message');
       } else {
-        console.log('Reply token expired, using push message');
+        console.log('Reply token expired:', {
+          messageAge: `${messageAge / 1000}s`,
+          maxAge: `${REPLY_TOKEN_EXPIRY / 1000}s`
+        });
       }
     }
 
     // Fall back to push message
+    console.log('Using push message as fallback');
     const pushOptions: PushMessageOptions = {
       userId,
       content,
