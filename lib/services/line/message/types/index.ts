@@ -1,21 +1,36 @@
-export * from './messages';
-export * from './reply';
-export * from './validation';
+import { Platform } from '@prisma/client';
+import { LineSource } from '@/app/types/line';
 
-export interface MessageResult {
+export interface LineMessageParams {
+  userId: string;
+  text: string;
+  messageId: string;
+  timestamp: Date;
+  channelId: string;
+  platform: Platform;
+  lineAccountId?: string | null;
+  source: LineSource;
+}
+
+export interface LineMessageResult {
+  success: boolean;
+  messageId?: string;
+  error?: string;
+}
+
+export interface LineMessageValidationResult {
+  isValid: boolean;
+  error?: string;
+  text?: string;
+}
+
+export interface SendMessageResult {
   success: boolean;
   error?: string;
 }
 
-export interface ReplyMessageOptions {
-  replyToken: string;
-  content: string;
-  timestamp: number;
-  lineAccountId?: string | null;
-}
-
-export interface PushMessageOptions {
-  userId: string;
-  content: string;
-  lineAccountId?: string | null;
+export interface ReplyMessageConfig {
+  maxAge: number;
+  retryOnFailure: boolean;
+  fallbackToPush: boolean;
 }

@@ -1,5 +1,5 @@
-import { ReplyTokenInfo } from '../types/reply';
-import { DEFAULT_REPLY_CONFIG } from '../types/reply';
+import { ReplyTokenInfo } from "../message/types/reply";
+import { DEFAULT_REPLY_CONFIG } from '../message/types/reply';
 
 export function validateReplyToken(
   token: string | null | undefined,
