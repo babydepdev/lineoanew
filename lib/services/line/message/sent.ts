@@ -1,7 +1,7 @@
 import { MessageResult, PushMessageOptions, ReplyMessageOptions } from './types/messageTypes';
 import { sendReplyMessage } from './reply';
 import { sendPushMessage } from './push';
-import { validateReplyToken } from '../utils/replyToken';
+
 
 const REPLY_TOKEN_EXPIRY = 20 * 60 * 1000; // 20 minutes in milliseconds
 
