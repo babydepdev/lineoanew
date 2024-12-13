@@ -1,4 +1,3 @@
-import { Client } from '@line/bot-sdk';
 import { LineMessageResult } from './types';
 import LineClientManager from '../client';
 import { findLineAccountById } from '../account';
