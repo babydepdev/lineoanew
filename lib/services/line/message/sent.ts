@@ -1,4 +1,4 @@
-import { MessageResult, PushMessageOptions, ReplyMessageOptions } from './types';
+import  { MessageResult, PushMessageOptions, ReplyMessageOptions }  from './index';
 import { sendReplyMessage } from './reply';
 import { sendPushMessage } from './push';
 import { validateReplyToken } from '../utils/replyToken';

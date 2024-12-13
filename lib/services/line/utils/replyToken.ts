@@ -1,9 +1,9 @@
 import { ReplyTokenInfo } from '../types/reply';
-import { DEFAULT_REPLY_CONFIG } from '../message/types';
+import { DEFAULT_REPLY_CONFIG } from '../types/reply';
 
 export function validateReplyToken(
-  token: string | undefined | null,
-  timestamp: number | undefined | null
+  token: string | null | undefined,
+  timestamp: number | null | undefined
 ): ReplyTokenInfo {
   if (!token || !timestamp) {
     return {
@@ -25,15 +25,4 @@ export function validateReplyToken(
     isValid,
     expiresAt
   };
-}
-
-export function getReplyTokenExpiry(timestamp: number): number {
-  return timestamp + DEFAULT_REPLY_CONFIG.maxAge;
-}
-
-export function formatExpiryTime(expiresAt: number): string {
-  const remaining = Math.max(0, expiresAt - Date.now());
-  const minutes = Math.floor(remaining / 60000);
-  const seconds = Math.floor((remaining % 60000) / 1000);
-  return `${minutes}m ${seconds}s`;
 }

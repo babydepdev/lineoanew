@@ -1,9 +1,7 @@
-import { Client } from '@line/bot-sdk';
-import { MessageResult,ReplyMessageOptions } from './types'
-import { validateReplyToken, formatExpiryTime } from '../utils/
+import { MessageResult, ReplyMessageOptions } from './index';
 import { createTextMessage } from './types/messages';
 import { getLineClient } from './client';
-import { DEFAULT_REPLY_CONFIG } from './types/reply';
+import { validateReplyToken } from '../utils/replyToken';
 
 export async function sendReplyMessage(options: ReplyMessageOptions): Promise<MessageResult> {
   const { replyToken, content, timestamp, lineAccountId } = options;
@@ -13,13 +11,9 @@ export async function sendReplyMessage(options: ReplyMessageOptions): Promise<Me
     const tokenInfo = validateReplyToken(replyToken, timestamp);
     
     if (!tokenInfo.isValid) {
-      console.log('Reply token validation failed:', {
-        token: replyToken,
-        expiresAt: formatExpiryTime(tokenInfo.expiresAt)
-      });
       return {
         success: false,
-        error: `Reply token expired or invalid. Expired at: ${new Date(tokenInfo.expiresAt).toISOString()}`
+        error: `Reply token expired or invalid (Expired at: ${new Date(tokenInfo.expiresAt).toISOString()})`
       };
     }
 
@@ -37,8 +31,8 @@ export async function sendReplyMessage(options: ReplyMessageOptions): Promise<Me
 
     console.log('Sending LINE reply message:', {
       replyToken,
-      content: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
-      expiresIn: formatExpiryTime(tokenInfo.expiresAt)
+      contentPreview: content.substring(0, 50) + (content.length > 50 ? '...' : ''),
+      expiresIn: tokenInfo.expiresAt - Date.now()
     });
 
     // Send reply
