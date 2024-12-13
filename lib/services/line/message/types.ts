@@ -9,7 +9,7 @@ export interface LineMessageParams {
   channelId: string;
   platform: Platform;
   lineAccountId?: string | null;
-  source: LineSource; // Add source information
+  source: LineSource;
 }
 
 export interface LineMessageResult {
@@ -22,4 +22,9 @@ export interface LineMessageValidationResult {
   isValid: boolean;
   error?: string;
   text?: string;
+}
+
+export interface SendMessageResult {
+  success: boolean;
+  error?: string;
 }

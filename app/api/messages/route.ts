@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import { sendLineMessageToUser } from '@/app/features/line/lineMessageService';
+import { sendLineMessage } from '@/lib/services/line/message/sent';
 import { sendFacebookMessage } from '@/lib/facebookClient';
 import { broadcastMessageUpdate } from '@/lib/messageService';
 
@@ -54,7 +54,15 @@ export async function POST(request: NextRequest) {
     let messageSent = false;
     if (platform === 'LINE') {
       console.log('Sending LINE message to:', conversation.userId);
-      messageSent = await sendLineMessageToUser(conversation.userId, content);
+      const result = await sendLineMessage(
+        conversation.userId, 
+        content,
+        conversation.lineAccountId
+      );
+      messageSent = result.success;
+      if (!messageSent && result.error) {
+        console.error('LINE message send error:', result.error);
+      }
     } else if (platform === 'FACEBOOK') {
       console.log('Sending Facebook message to:', conversation.userId);
       messageSent = await sendFacebookMessage(conversation.userId, content);

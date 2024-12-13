@@ -1,5 +1,6 @@
 import { LineMessageEvent } from '@/app/types/line';
 import { LineMessageValidationResult } from './types';
+import { isValidMessage } from './types/messages';
 
 export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   try {
@@ -11,34 +12,29 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       };
     }
 
-    // Check message type
-    if (!event.message || event.message.type !== 'text') {
+    // Check message type and validity
+    if (!event.message || !isValidMessage(event.message)) {
       return {
         isValid: false,
-        error: 'Not a text message'
+        error: 'Invalid message format'
       };
     }
 
-    // Check text content
-    const text = event.message.text?.trim();
-    if (!text) {
-      return {
-        isValid: false,
-        error: 'Empty or missing text content'
-      };
-    }
-
-    // Check source information
-    if (!event.source || !event.source.userId) {
-      return {
-        isValid: false,
-        error: 'Missing source information'
-      };
+    // For text messages, validate content
+    if (event.message.type === 'text') {
+      const text = event.message.text?.trim();
+      if (!text) {
+        return {
+          isValid: false,
+          error: 'Empty or missing text content'
+        };
+      }
+      return { isValid: true, text };
     }
 
     return {
-      isValid: true,
-      text
+      isValid: false,
+      error: 'Unsupported message type'
     };
   } catch (error) {
     console.error('Error validating LINE message:', error);
