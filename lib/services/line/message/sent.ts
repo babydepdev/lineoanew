@@ -1,9 +1,8 @@
 import { MessageResult, PushMessageOptions, ReplyMessageOptions } from './types/messageTypes';
 import { sendReplyMessage } from './reply';
 import { sendPushMessage } from './push';
-
-
-const REPLY_TOKEN_EXPIRY = 20 * 60 * 1000; // 20 minutes in milliseconds
+import { validateReplyToken } from './validators/replyToken';
+import { replyTokenStore } from './replyTokenStore';
 
 export async function sendLineMessage(
   userId: string,
@@ -13,16 +12,14 @@ export async function sendLineMessage(
   lineAccountId?: string | null
 ): Promise<MessageResult> {
   try {
-    // Check if we can use reply message
+    // Try to use reply message if token is available
     if (replyToken && timestamp) {
-      const now = Date.now();
-      const messageAge = now - timestamp;
+      const validation = validateReplyToken(replyToken, timestamp);
       
-      // Only use reply if within expiry window
-      if (messageAge < REPLY_TOKEN_EXPIRY) {
-        console.log('Using reply message - token still valid:', {
-          messageAge: `${messageAge / 1000}s`,
-          expiryIn: `${(REPLY_TOKEN_EXPIRY - messageAge) / 1000}s`
+      if (validation.isValid) {
+        console.log('Attempting reply message:', {
+          remainingTime: `${Math.round(validation.remainingTime / 1000)}s`,
+          expiresAt: new Date(validation.expiresAt).toISOString()
         });
 
         const replyOptions: ReplyMessageOptions = {
@@ -35,18 +32,14 @@ export async function sendLineMessage(
         try {
           const replyResult = await sendReplyMessage(replyOptions);
           if (replyResult.success) {
-            console.log('Reply message sent successfully');
             return replyResult;
           }
-          console.warn('Reply message failed, falling back to push:', replyResult.error);
+          console.warn('Reply message failed:', replyResult.error);
         } catch (error) {
           console.error('Error sending reply message:', error);
         }
       } else {
-        console.log('Reply token expired:', {
-          messageAge: `${messageAge / 1000}s`,
-          maxAge: `${REPLY_TOKEN_EXPIRY / 1000}s`
-        });
+        console.log('Cannot use reply token:', validation.reason);
       }
     }
 
@@ -66,4 +59,13 @@ export async function sendLineMessage(
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
+}
+
+// Store reply token when webhook is received
+export function storeReplyToken(token: string, timestamp: number): void {
+  replyTokenStore.set(token, {
+    token,
+    timestamp,
+    used: false
+  });
 }
