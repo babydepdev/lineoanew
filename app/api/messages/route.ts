@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
         sender: 'BOT',
         platform,
         timestamp: new Date(),
-        metadata: replyToken ? { replyToken } : null
+        metadata: replyToken ? { replyToken } as const : undefined
       },
     });
 
