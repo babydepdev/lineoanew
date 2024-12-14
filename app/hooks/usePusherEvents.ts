@@ -1,8 +1,6 @@
-"use client";
-
 import { useEffect } from 'react';
 import { Message, Platform, SenderType } from '@prisma/client';
-import { PusherMessage, PusherConversation } from '../types/chat';
+import { PusherMessage } from '../types/pusher';
 import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { useChatState } from '../features/chat/useChatState';
 
@@ -30,23 +28,24 @@ export function usePusherEvents() {
           conversationId: message.conversationId,
           content: message.content,
           sender: message.sender as SenderType,
-          timestamp: new Date(),
+          timestamp: new Date(message.timestamp),
           platform: message.platform as Platform,
           externalId: message.externalId,
-          chatType: message.chatType || null,
-          chatId: message.chatId || null
+          chatType: message.chatType,
+          chatId: message.chatId,
+          metadata: message.metadata || null
         };
 
         addMessage(processedMessage);
       };
 
-      const handleConversationUpdated = (conversation: PusherConversation) => {
+      const handleConversationUpdated = (conversation: any) => {
         if (!conversation?.id) {
           console.warn('Received invalid conversation:', conversation);
           return;
         }
 
-        const processedMessages = conversation.messages.map(msg => ({
+        const processedMessages = conversation.messages.map((msg: PusherMessage) => ({
           id: msg.id,
           conversationId: msg.conversationId,
           content: msg.content,
@@ -54,8 +53,9 @@ export function usePusherEvents() {
           timestamp: new Date(msg.timestamp),
           platform: msg.platform as Platform,
           externalId: msg.externalId,
-          chatType: msg.chatType || null,
-          chatId: msg.chatId || null
+          chatType: msg.chatType,
+          chatId: msg.chatId,
+          metadata: msg.metadata || null
         }));
 
         const updatedConversation = {
@@ -76,7 +76,7 @@ export function usePusherEvents() {
         }
       };
 
-      const handleConversationsUpdated = (conversations: PusherConversation[]) => {
+      const handleConversationsUpdated = (conversations: any[]) => {
         if (!Array.isArray(conversations)) {
           console.warn('Received invalid conversations:', conversations);
           return;
@@ -87,7 +87,7 @@ export function usePusherEvents() {
           platform: conv.platform as Platform,
           channelId: conv.channelId,
           userId: conv.userId,
-          messages: conv.messages.map(msg => ({
+          messages: conv.messages.map((msg: PusherMessage) => ({
             id: msg.id,
             conversationId: msg.conversationId,
             content: msg.content,
@@ -95,8 +95,9 @@ export function usePusherEvents() {
             timestamp: new Date(msg.timestamp),
             platform: msg.platform as Platform,
             externalId: msg.externalId,
-            chatType: msg.chatType || null,
-            chatId: msg.chatId || null
+            chatType: msg.chatType,
+            chatId: msg.chatId,
+            metadata: msg.metadata || null
           })),
           createdAt: new Date(conv.createdAt),
           updatedAt: new Date(conv.updatedAt),
