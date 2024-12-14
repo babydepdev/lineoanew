@@ -1,7 +1,7 @@
 import { Platform, SenderType } from '@prisma/client';
+import { JsonValue } from '@prisma/client/runtime/library';
 
 export interface MessageResponse {
-  metadata: null;
   id: string;
   conversationId: string;
   content: string;
@@ -11,6 +11,7 @@ export interface MessageResponse {
   externalId: string | null;
   chatType: string | null;
   chatId: string | null;
+  metadata: JsonValue;
 }
 
 export interface ConversationResponse {

@@ -1,9 +1,7 @@
-"use client";
-
 import { APIResponse } from '@/app/types/api';
 import { ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
-import { Message, Platform, SenderType } from '@prisma/client';
+import { createTempMessage } from './messageFactory';
 
 export function useChatActions() {
   const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
@@ -12,18 +10,12 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message with all required fields
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        conversationId: selectedConversation.id,
+      // Create temporary message
+      const tempMessage = createTempMessage(
+        selectedConversation.id,
         content,
-        sender: 'BOT' as SenderType,
-        timestamp: new Date(),
-        platform: selectedConversation.platform as Platform,
-        externalId: null,
-        chatType: null,
-        chatId: null
-      };
+        selectedConversation.platform
+      );
 
       // Update conversation with temporary message
       const updatedConversation: ConversationWithMessages = {
@@ -60,15 +52,9 @@ export function useChatActions() {
           channelId: data.conversation.channelId,
           userId: data.conversation.userId,
           messages: data.conversation.messages.map(msg => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            content: msg.content,
-            sender: msg.sender,
+            ...msg,
             timestamp: new Date(msg.timestamp),
-            platform: msg.platform,
-            externalId: msg.externalId,
-            chatType: msg.chatType,
-            chatId: msg.chatId
+            metadata: msg.metadata || null
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt),
