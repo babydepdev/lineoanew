@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create bot message
+    // Create bot message with metadata
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
         sender: 'BOT',
         platform,
         timestamp: new Date(),
+        metadata: replyToken ? { replyToken } : null
       },
     });
 
@@ -64,7 +65,7 @@ export async function POST(request: NextRequest) {
         conversation.userId, 
         content,
         replyToken,
-        timestamp,
+        timestamp ? Number(timestamp) : null,
         conversation.lineAccountId
       );
       messageSent = result.success;

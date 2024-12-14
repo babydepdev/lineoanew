@@ -1,4 +1,4 @@
-import { Platform } from '@prisma/client';
+import { Platform, Prisma } from '@prisma/client';
 import { LineSource } from '@/app/types/line';
 
 export interface CreateLineMessageParams {
@@ -10,12 +10,13 @@ export interface CreateLineMessageParams {
   platform: Platform;
   lineAccountId?: string | null;
   source: LineSource;
-  replyToken?: string; // Add replyToken to params
+  replyToken?: string;
 }
 
 export interface CreateLineMessageResult {
   success: boolean;
   messageId?: string;
   error?: string;
-  replyToken?: string; // Add replyToken to result
+  replyToken?: string;
+  metadata?: Prisma.JsonValue;
 }

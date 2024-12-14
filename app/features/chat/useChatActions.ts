@@ -1,7 +1,9 @@
+"use client";
+
 import { APIResponse } from '@/app/types/api';
 import { ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
-import { createTempMessage } from './messageFactory';
+import { Message, Platform, SenderType } from '@prisma/client';
 
 export function useChatActions() {
   const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
@@ -10,12 +12,24 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
+      // Get latest message for reply token
+      const latestMessage = selectedConversation.messages[selectedConversation.messages.length - 1];
+      const replyToken = latestMessage?.metadata?.replyToken;
+      const timestamp = latestMessage?.timestamp?.getTime();
+
       // Create temporary message
-      const tempMessage = createTempMessage(
-        selectedConversation.id,
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`,
+        conversationId: selectedConversation.id,
         content,
-        selectedConversation.platform
-      );
+        sender: 'BOT' as SenderType,
+        timestamp: new Date(),
+        platform: selectedConversation.platform as Platform,
+        externalId: null,
+        chatType: null,
+        chatId: null,
+        metadata: null
+      };
 
       // Update conversation with temporary message
       const updatedConversation: ConversationWithMessages = {
@@ -37,6 +51,8 @@ export function useChatActions() {
           conversationId: selectedConversation.id,
           content,
           platform: selectedConversation.platform,
+          replyToken,
+          timestamp
         }),
       });
 
@@ -47,18 +63,14 @@ export function useChatActions() {
       const data = await response.json() as APIResponse;
       if (data.conversation) {
         const finalConversation: ConversationWithMessages = {
-          id: data.conversation.id,
-          platform: data.conversation.platform,
-          channelId: data.conversation.channelId,
-          userId: data.conversation.userId,
+          ...data.conversation,
           messages: data.conversation.messages.map(msg => ({
             ...msg,
             timestamp: new Date(msg.timestamp),
             metadata: msg.metadata || null
           })),
           createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt),
-          lineAccountId: data.conversation.lineAccountId
+          updatedAt: new Date(data.conversation.updatedAt)
         };
 
         updateConversation(finalConversation);

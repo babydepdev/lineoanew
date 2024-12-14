@@ -1,4 +1,4 @@
-import { PrismaClient, Message } from '@prisma/client';
+import { PrismaClient, Message, Prisma } from '@prisma/client';
 import { MessageCreateParams } from './types/messageTypes';
 
 const prisma = new PrismaClient();
@@ -13,7 +13,7 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
     externalId,
     chatType,
     chatId,
-    replyToken
+    metadata
   } = params;
 
   return prisma.message.create({
@@ -26,7 +26,7 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
       externalId,
       chatType,
       chatId,
-      metadata: replyToken ? { replyToken } : undefined
+      metadata: metadata as Prisma.InputJsonValue
     }
   });
 }

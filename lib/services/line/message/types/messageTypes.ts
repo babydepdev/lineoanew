@@ -1,4 +1,4 @@
-import { Platform } from '@prisma/client';
+import { Platform, Prisma } from '@prisma/client';
 
 export interface BaseMessageParams {
   conversationId: string;
@@ -8,29 +8,27 @@ export interface BaseMessageParams {
   timestamp?: Date;
 }
 
-export interface MessageMetadata {
+export interface MessageCreateParams extends BaseMessageParams {
   externalId?: string | null;
-  chatType?: string;
-  chatId?: string;
-  replyToken?: string;
+  chatType?: string | null;
+  chatId?: string | null;
+  metadata?: Prisma.InputJsonValue | null;
 }
-
-export interface MessageCreateParams extends BaseMessageParams, MessageMetadata {}
 
 export interface MessageResult {
   success: boolean;
   error?: string;
 }
 
+export interface PushMessageOptions {
+  userId: string;
+  content: string;
+  lineAccountId?: string | null;
+}
+
 export interface ReplyMessageOptions {
   replyToken: string;
   content: string;
   timestamp: number;
-  lineAccountId?: string | null;
-}
-
-export interface PushMessageOptions {
-  userId: string;
-  content: string;
   lineAccountId?: string | null;
 }

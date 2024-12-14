@@ -1,10 +1,10 @@
+import { PrismaClient } from '@prisma/client';
 import { CreateLineMessageParams, CreateLineMessageResult } from './types/createMessage';
 import { findOrCreateConversation } from '../../conversation';
 import { createMessage } from './repository';
 import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
 import { MessageCreateParams } from './types/messageTypes';
-import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -54,7 +54,7 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       lineAccountId
     );
 
-    // Create message params with metadata
+    // Create message params
     const messageParams: MessageCreateParams = {
       conversationId: conversation.id,
       content: trimmedText,
@@ -64,7 +64,7 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       externalId: messageId,
       chatType,
       chatId,
-      replyToken
+      metadata: replyToken ? { replyToken } : null
     };
 
     // Create message
@@ -72,6 +72,11 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
 
     // Broadcast update
     await broadcastMessageUpdate(conversation.id);
+
+    console.log('Created LINE message with reply token:', {
+      messageId: message.id,
+      replyToken: replyToken || 'none'
+    });
 
     return {
       success: true,
