@@ -4,6 +4,7 @@ import { formatTimestamp } from '../utils/dateFormatter';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
+import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
 
 interface ConversationPreviewProps {
@@ -18,7 +19,7 @@ export function ConversationPreview({
   onClick,
 }: ConversationPreviewProps) {
   const lastMessage = conversation.messages[conversation.messages.length - 1];
-  const { profile, isLoading } = useLineProfile(
+  const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
   
@@ -59,12 +60,18 @@ export function ConversationPreview({
                 "font-medium leading-none truncate transition-colors duration-200",
                 isSelected ? "text-primary" : "text-slate-900"
               )}>
-                {isLoading ? (
+                {isProfileLoading ? (
                   <span className="animate-pulse bg-slate-200 rounded h-4 w-24 inline-block" />
                 ) : (
                   profile?.displayName || `${conversation.platform} User`
                 )}
               </h3>
+              {conversation.platform === 'LINE' && conversation.lineAccountId && (
+                <LineAccountInfo 
+                  accountId={conversation.lineAccountId} 
+                  className="mt-1"
+                />
+              )}
               <p className="text-xs text-slate-500 mt-1 truncate">
                 {profile?.statusMessage || `ID: ${conversation.userId.slice(0, 8)}...`}
               </p>
