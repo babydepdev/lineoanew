@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+
 import { ChatInterface } from './components/ChatInterface';
-import { SerializedConversation } from './types/chat';
+
 import { getConversations } from './services/conversation';
 
 export default async function Home() {
