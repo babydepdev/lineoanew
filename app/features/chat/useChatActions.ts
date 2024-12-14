@@ -12,7 +12,7 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message with all required fields
+      // Create temporary message with all required fieldsk
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
