@@ -1,5 +1,5 @@
 import { LineMessageEvent } from '@/app/types/line';
-import { LineMessageValidationResult } from './types/validation';
+import { LineMessageValidationResult } from './types';
 import { isValidMessage } from './types/messages';
 
 export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {

@@ -12,12 +12,7 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      // Get latest message for reply token
-      const latestMessage = selectedConversation.messages[selectedConversation.messages.length - 1];
-      const replyToken = latestMessage?.metadata?.replyToken;
-      const timestamp = latestMessage?.timestamp?.getTime();
-
-      // Create temporary message
+      // Create temporary message with all required fields
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
@@ -27,8 +22,7 @@ export function useChatActions() {
         platform: selectedConversation.platform as Platform,
         externalId: null,
         chatType: null,
-        chatId: null,
-        metadata: null
+        chatId: null
       };
 
       // Update conversation with temporary message
@@ -51,8 +45,6 @@ export function useChatActions() {
           conversationId: selectedConversation.id,
           content,
           platform: selectedConversation.platform,
-          replyToken,
-          timestamp
         }),
       });
 
@@ -63,14 +55,24 @@ export function useChatActions() {
       const data = await response.json() as APIResponse;
       if (data.conversation) {
         const finalConversation: ConversationWithMessages = {
-          ...data.conversation,
+          id: data.conversation.id,
+          platform: data.conversation.platform,
+          channelId: data.conversation.channelId,
+          userId: data.conversation.userId,
           messages: data.conversation.messages.map(msg => ({
-            ...msg,
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender,
             timestamp: new Date(msg.timestamp),
-            metadata: msg.metadata || null
+            platform: msg.platform,
+            externalId: msg.externalId,
+            chatType: msg.chatType,
+            chatId: msg.chatId
           })),
           createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt)
+          updatedAt: new Date(data.conversation.updatedAt),
+          lineAccountId: data.conversation.lineAccountId
         };
 
         updateConversation(finalConversation);

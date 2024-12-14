@@ -30,7 +30,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
   const handleSendMessage = async (content: string) => {
     if (selectedConversation) {
       // Create temporary message with all required fields
-      const tempMessage: Partial<Message> = {
+      const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
         content,
@@ -39,11 +39,10 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
         platform: selectedConversation.platform as Platform,
         externalId: null,
         chatType: null,
-        chatId: null,
-        metadata: null // Add null metadata
+        chatId: null
       };
 
-      messageListRef.current?.addLocalMessage(tempMessage as Message);
+      messageListRef.current?.addLocalMessage(tempMessage);
       await sendMessage(content);
     }
   };

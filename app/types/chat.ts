@@ -1,8 +1,9 @@
-import { Conversation as PrismaConversation, Message as PrismaMessage, Platform, Prisma } from '@prisma/client';
+import { Conversation as PrismaConversation, Message as PrismaMessage, Platform } from '@prisma/client';
 
 // Base types from Prisma with proper message fields
 export interface MessageWithChat extends PrismaMessage {
-  metadata: Prisma.JsonValue | null;
+  chatType: string | null;
+  chatId: string | null;
 }
 
 // Conversation with messages including chat fields
@@ -22,7 +23,6 @@ export interface SerializedMessage {
   externalId: string | null;
   chatType: string | null;
   chatId: string | null;
-  metadata: Prisma.JsonValue | null;
 }
 
 export interface SerializedConversation {
@@ -42,8 +42,7 @@ export function deserializeConversation(conv: SerializedConversation): Conversat
     ...conv,
     messages: conv.messages.map(msg => ({
       ...msg,
-      timestamp: new Date(msg.timestamp),
-      metadata: msg.metadata
+      timestamp: new Date(msg.timestamp)
     })),
     createdAt: new Date(conv.createdAt),
     updatedAt: new Date(conv.updatedAt),

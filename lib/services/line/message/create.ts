@@ -1,14 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { CreateLineMessageParams, CreateLineMessageResult } from './types/createMessage';
+import { LineMessageParams, LineMessageResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
-import { createMessage } from './repository';
-import { broadcastMessageUpdate } from '../../message/broadcast';
+import { createMessage, broadcastMessageUpdate } from '../../message';
 import { getChatIdentifier } from '../utils/chatIdentifier';
-import { MessageCreateParams } from './types/messageTypes';
+import { MessageCreateParams } from '../../message/types';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function createLineMessage(params: CreateLineMessageParams): Promise<CreateLineMessageResult> {
+export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
   try {
     const { 
       userId, 
@@ -16,8 +15,7 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       messageId, 
       timestamp, 
       lineAccountId,
-      source,
-      replyToken 
+      source 
     } = params;
 
     // Validate text content
@@ -38,8 +36,7 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       console.log('Message already exists, skipping creation:', messageId);
       return {
         success: true,
-        messageId: existingMessage.id,
-        replyToken
+        messageId: existingMessage.id
       };
     }
 
@@ -60,11 +57,10 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       content: trimmedText,
       sender: 'USER',
       platform: 'LINE',
-      timestamp,
       externalId: messageId,
+      timestamp,
       chatType,
-      chatId,
-      metadata: replyToken ? { replyToken } : null
+      chatId
     };
 
     // Create message
@@ -73,15 +69,9 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
     // Broadcast update
     await broadcastMessageUpdate(conversation.id);
 
-    console.log('Created LINE message with reply token:', {
-      messageId: message.id,
-      replyToken: replyToken || 'none'
-    });
-
     return {
       success: true,
-      messageId: message.id,
-      replyToken
+      messageId: message.id
     };
   } catch (error) {
     console.error('Error creating LINE message:', error);

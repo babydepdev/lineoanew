@@ -1,23 +1,30 @@
-import { Platform, SenderType } from '@prisma/client';
+import { Platform } from '@prisma/client';
+import { LineSource } from '@/app/types/line';
 
-export interface MessageCreateParams {
-  conversationId: string;
-  content: string;
-  sender: SenderType;
+export interface LineMessageParams {
+  userId: string;
+  text: string;
+  messageId: string;
+  timestamp: Date;
+  channelId: string;
   platform: Platform;
-  externalId?: string | null;
-  timestamp?: Date;
-  chatType?: string;
-  chatId?: string;
-  replyToken?: string; // Add replyToken field
+  lineAccountId?: string | null;
+  source: LineSource;
 }
 
-export interface MessageBroadcastResult {
+export interface LineMessageResult {
   success: boolean;
+  messageId?: string;
   error?: string;
 }
 
-export interface ConversationUpdateResult {
+export interface LineMessageValidationResult {
+  isValid: boolean;
+  error?: string;
+  text?: string;
+}
+
+export interface SendMessageResult {
   success: boolean;
   error?: string;
 }

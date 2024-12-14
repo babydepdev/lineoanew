@@ -5,23 +5,12 @@ import {
 } from '@/app/types/line';
 import { createLineMessage } from './message/create';
 import { validateLineMessage } from './message/validate';
-import { CreateLineMessageParams } from './message/types/createMessage';
-import { storeReplyToken } from './message/sent';
 
 export async function processLineMessageEvent(
   event: LineMessageEvent,
   account: LineAccount
 ): Promise<LineWebhookEventResult> {
   try {
-    // Store reply token first
-    if (event.replyToken) {
-      console.log('Storing reply token from event:', {
-        token: event.replyToken.substring(0, 8) + '...',
-        timestamp: event.timestamp
-      });
-      storeReplyToken(event.replyToken, event.timestamp);
-    }
-
     // Validate message
     const validation = validateLineMessage(event);
     if (!validation.isValid || !validation.text) {
@@ -32,7 +21,7 @@ export async function processLineMessageEvent(
     }
 
     // Process valid message with source information
-    const messageParams: CreateLineMessageParams = {
+    const result = await createLineMessage({
       userId: event.source.userId,
       text: validation.text,
       messageId: event.message.id,
@@ -40,11 +29,8 @@ export async function processLineMessageEvent(
       channelId: event.source.roomId || event.source.groupId || event.source.userId,
       platform: 'LINE',
       lineAccountId: account.id,
-      source: event.source,
-      replyToken: event.replyToken // Add replyToken to message params
-    };
-
-    const result = await createLineMessage(messageParams);
+      source: event.source // Pass source information
+    });
 
     return {
       success: result.success,

@@ -1,89 +1,85 @@
-import { MessageResult, PushMessageOptions, ReplyMessageOptions } from './types/messageTypes';
-import { sendReplyMessage } from './reply';
-import { sendPushMessage } from './push';
-import { validateReplyToken } from './validators/replyToken';
-import { replyTokenStore } from './replyTokenStore';
+import { LineMessageResult } from './types';
+import LineClientManager from '../client';
+import { findLineAccountById } from '../account';
+import { createTextMessage } from './types/messages';
 
 export async function sendLineMessage(
-  userId: string,
+  userId: string, 
   content: string,
-  replyToken?: string | null,
-  timestamp?: number | null,
   lineAccountId?: string | null
-): Promise<MessageResult> {
+): Promise<LineMessageResult> {
   try {
-    // Try to use reply message if token is available
-    if (replyToken && timestamp) {
-      console.log('Attempting to use reply token:', {
-        token: replyToken.substring(0, 8) + '...',
-        timestamp: new Date(timestamp).toISOString()
-      });
+    console.log('Preparing to send LINE message:', { userId, content, lineAccountId });
 
-      const validation = validateReplyToken(replyToken, timestamp);
-      
-      if (validation.isValid) {
-        console.log('Reply token is valid:', {
-          remainingTime: `${Math.round(validation.remainingTime / 1000)}s`,
-          expiresAt: new Date(validation.expiresAt).toISOString()
-        });
+    // Get LINE account
+    const account = lineAccountId ? 
+      await findLineAccountById(lineAccountId) :
+      await findDefaultLineAccount();
 
-        const replyOptions: ReplyMessageOptions = {
-          replyToken,
-          content,
-          timestamp,
-          lineAccountId
-        };
-
-        try {
-          const replyResult = await sendReplyMessage(replyOptions);
-          if (replyResult.success) {
-            console.log('Successfully sent reply message');
-            return replyResult;
-          }
-          console.warn('Reply message failed:', replyResult.error);
-        } catch (error) {
-          console.error('Error sending reply message:', error);
-        }
-      } else {
-        console.log('Reply token is invalid:', validation.reason);
-      }
-    } else {
-      console.log('No reply token available, using push message');
+    if (!account) {
+      console.error('No valid LINE account found');
+      return {
+        success: false,
+        error: 'No valid LINE account configuration found'
+      };
     }
 
-    // Fall back to push message
-    console.log('Using push message as fallback');
-    const pushOptions: PushMessageOptions = {
-      userId,
-      content,
-      lineAccountId
-    };
+    // Get client for this account
+    const client = LineClientManager.getClient(account);
 
-    return await sendPushMessage(pushOptions);
+    // Validate message content
+    const trimmedContent = content.trim();
+    if (!trimmedContent) {
+      return {
+        success: false,
+        error: 'Message content cannot be empty'
+      };
+    }
+
+    // Create properly typed message
+    const message = createTextMessage(trimmedContent);
+
+    console.log('Sending LINE message with account:', {
+      accountId: account.id,
+      accountName: account.name,
+      userId
+    });
+
+    // Send message
+    await client.pushMessage(userId, message);
+
+    console.log('LINE message sent successfully');
+    return { success: true };
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error sending LINE message:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: `Failed to send LINE message: ${errorMessage}`
     };
   }
 }
 
-// Store reply token when webhook is received
-export function storeReplyToken(token: string, timestamp: number): void {
-  if (!token || !timestamp) {
-    console.warn('Invalid reply token data:', { token, timestamp });
-    return;
+async function findDefaultLineAccount() {
+  try {
+    // Get first active account
+    const account = await findLineAccountById(process.env.DEFAULT_LINE_ACCOUNT_ID || '');
+    if (account) return account;
+
+    // Fallback to environment variables
+    if (process.env.LINE_CHANNEL_ACCESS_TOKEN && process.env.LINE_CHANNEL_SECRET) {
+      return {
+        id: 'default',
+        name: 'Default Account',
+        channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+        channelSecret: process.env.LINE_CHANNEL_SECRET,
+        active: true
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error finding default LINE account:', error);
+    return null;
   }
-
-  console.log('Storing reply token:', {
-    token: token.substring(0, 8) + '...',
-    timestamp: new Date(timestamp).toISOString()
-  });
-
-  replyTokenStore.set(token, {
-    token,
-    timestamp,
-    used: false
-  });
 }

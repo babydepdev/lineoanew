@@ -9,15 +9,9 @@ const prisma = new PrismaClient();
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { conversationId, content, platform, replyToken, timestamp } = body;
+    const { conversationId, content, platform } = body;
 
-    console.log('Received message request:', { 
-      conversationId, 
-      content, 
-      platform,
-      replyToken,
-      timestamp
-    });
+    console.log('Received message request:', { conversationId, content, platform });
 
     if (!conversationId || !content || !platform) {
       return NextResponse.json(
@@ -43,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create bot message with metadata
+    // Create bot message
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -51,7 +45,6 @@ export async function POST(request: NextRequest) {
         sender: 'BOT',
         platform,
         timestamp: new Date(),
-        metadata: replyToken ? { replyToken } as const : undefined
       },
     });
 
@@ -64,8 +57,6 @@ export async function POST(request: NextRequest) {
       const result = await sendLineMessage(
         conversation.userId, 
         content,
-        replyToken,
-        timestamp ? Number(timestamp) : null,
         conversation.lineAccountId
       );
       messageSent = result.success;

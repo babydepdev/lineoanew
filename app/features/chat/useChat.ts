@@ -46,10 +46,16 @@ export function useChat(initialConversations: SerializedConversation[]) {
           platform: data.conversation.platform,
           channelId: data.conversation.channelId,
           userId: data.conversation.userId,
-          messages: data.conversation.messages.map(msg => ({
-            ...msg,
+          messages: data.conversation.messages.map((msg) => ({
+            id: msg.id,
+            conversationId: msg.conversationId,
+            content: msg.content,
+            sender: msg.sender,
             timestamp: new Date(msg.timestamp),
-            metadata: msg.metadata || null
+            platform: msg.platform,
+            externalId: msg.externalId,
+            chatType: msg.chatType,
+            chatId: msg.chatId
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt),
@@ -57,12 +63,11 @@ export function useChat(initialConversations: SerializedConversation[]) {
         };
 
         updateConversation(updatedConversation);
-        setSelectedConversation(updatedConversation);
       }
     } catch (error) {
       console.error('Error sending message:', error);
     }
-  }, [selectedConversation, updateConversation, setSelectedConversation]);
+  }, [selectedConversation, updateConversation]);
 
   return {
     conversations,
