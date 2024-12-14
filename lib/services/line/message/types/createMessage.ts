@@ -10,10 +10,12 @@ export interface CreateLineMessageParams {
   platform: Platform;
   lineAccountId?: string | null;
   source: LineSource;
+  replyToken?: string; // Add replyToken to params
 }
 
 export interface CreateLineMessageResult {
   success: boolean;
   messageId?: string;
   error?: string;
+  replyToken?: string; // Add replyToken to result
 }

@@ -1,8 +1,9 @@
 import { CreateLineMessageParams, CreateLineMessageResult } from './types/createMessage';
 import { findOrCreateConversation } from '../../conversation';
-import { createMessage, broadcastMessageUpdate } from '../../message';
+import { createMessage } from './repository';
+import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
-import { MessageCreateParams } from '../../message/types';
+import { MessageCreateParams } from './types/messageTypes';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -15,7 +16,8 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       messageId, 
       timestamp, 
       lineAccountId,
-      source 
+      source,
+      replyToken 
     } = params;
 
     // Validate text content
@@ -36,7 +38,8 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       console.log('Message already exists, skipping creation:', messageId);
       return {
         success: true,
-        messageId: existingMessage.id
+        messageId: existingMessage.id,
+        replyToken
       };
     }
 
@@ -51,16 +54,17 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
       lineAccountId
     );
 
-    // Create message params
+    // Create message params with metadata
     const messageParams: MessageCreateParams = {
       conversationId: conversation.id,
       content: trimmedText,
       sender: 'USER',
       platform: 'LINE',
-      externalId: messageId,
       timestamp,
+      externalId: messageId,
       chatType,
-      chatId
+      chatId,
+      replyToken
     };
 
     // Create message
@@ -71,7 +75,8 @@ export async function createLineMessage(params: CreateLineMessageParams): Promis
 
     return {
       success: true,
-      messageId: message.id
+      messageId: message.id,
+      replyToken
     };
   } catch (error) {
     console.error('Error creating LINE message:', error);

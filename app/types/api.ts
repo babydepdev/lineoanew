@@ -1,6 +1,7 @@
 import { Platform, SenderType } from '@prisma/client';
 
 export interface MessageResponse {
+  metadata: null;
   id: string;
   conversationId: string;
   content: string;

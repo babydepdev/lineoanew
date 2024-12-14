@@ -35,7 +35,6 @@ model Conversation {
   lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id])
   lineAccountId String?
 
-  // Changed unique constraint to include lineAccountId
   @@unique([userId, platform, channelId, lineAccountId])
   @@index([platform, updatedAt])
   @@index([userId, platform])
@@ -53,6 +52,7 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
+  metadata       Json?        // Store additional metadata like replyToken
 
   @@index([conversationId, timestamp])
   @@index([platform, timestamp])
@@ -73,6 +73,41 @@ model UserProfile {
   @@index([platform, updatedAt])
 }
 
+// Webhook Event Log model
+model WebhookEventLog {
+  id          String    @id @default(cuid())
+  platform    Platform
+  eventId     String    @unique
+  eventType   String
+  payload     Json
+  processed   Boolean   @default(false)
+  error       String?
+  createdAt   DateTime  @default(now())
+  processedAt DateTime?
+
+  @@index([platform, createdAt])
+  @@index([processed, createdAt])
+}
+
+// Message Queue model for handling retries
+model MessageQueue {
+  id           String    @id @default(cuid())
+  platform     Platform
+  userId       String
+  content      String    @db.Text
+  metadata     Json?
+  status       QueueStatus
+  retryCount   Int       @default(0)
+  maxRetries   Int       @default(3)
+  createdAt    DateTime  @default(now())
+  scheduledFor DateTime
+  processedAt  DateTime?
+  error        String?
+
+  @@index([status, scheduledFor])
+  @@index([platform, status])
+}
+
 enum Platform {
   LINE
   FACEBOOK
@@ -81,4 +116,11 @@ enum Platform {
 enum SenderType {
   USER
   BOT
+}
+
+enum QueueStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
