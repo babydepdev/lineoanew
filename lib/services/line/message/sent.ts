@@ -14,10 +14,15 @@ export async function sendLineMessage(
   try {
     // Try to use reply message if token is available
     if (replyToken && timestamp) {
+      console.log('Attempting to use reply token:', {
+        token: replyToken.substring(0, 8) + '...',
+        timestamp: new Date(timestamp).toISOString()
+      });
+
       const validation = validateReplyToken(replyToken, timestamp);
       
       if (validation.isValid) {
-        console.log('Attempting reply message:', {
+        console.log('Reply token is valid:', {
           remainingTime: `${Math.round(validation.remainingTime / 1000)}s`,
           expiresAt: new Date(validation.expiresAt).toISOString()
         });
@@ -32,6 +37,7 @@ export async function sendLineMessage(
         try {
           const replyResult = await sendReplyMessage(replyOptions);
           if (replyResult.success) {
+            console.log('Successfully sent reply message');
             return replyResult;
           }
           console.warn('Reply message failed:', replyResult.error);
@@ -39,8 +45,10 @@ export async function sendLineMessage(
           console.error('Error sending reply message:', error);
         }
       } else {
-        console.log('Cannot use reply token:', validation.reason);
+        console.log('Reply token is invalid:', validation.reason);
       }
+    } else {
+      console.log('No reply token available, using push message');
     }
 
     // Fall back to push message
@@ -63,6 +71,16 @@ export async function sendLineMessage(
 
 // Store reply token when webhook is received
 export function storeReplyToken(token: string, timestamp: number): void {
+  if (!token || !timestamp) {
+    console.warn('Invalid reply token data:', { token, timestamp });
+    return;
+  }
+
+  console.log('Storing reply token:', {
+    token: token.substring(0, 8) + '...',
+    timestamp: new Date(timestamp).toISOString()
+  });
+
   replyTokenStore.set(token, {
     token,
     timestamp,

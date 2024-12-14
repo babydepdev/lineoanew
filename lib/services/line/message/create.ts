@@ -1,4 +1,4 @@
-import { LineMessageParams, LineMessageResult } from './types';
+import { CreateLineMessageParams, CreateLineMessageResult } from './types/createMessage';
 import { findOrCreateConversation } from '../../conversation';
 import { createMessage, broadcastMessageUpdate } from '../../message';
 import { getChatIdentifier } from '../utils/chatIdentifier';
@@ -7,7 +7,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
+export async function createLineMessage(params: CreateLineMessageParams): Promise<CreateLineMessageResult> {
   try {
     const { 
       userId, 

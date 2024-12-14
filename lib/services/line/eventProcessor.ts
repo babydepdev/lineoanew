@@ -5,6 +5,7 @@ import {
 } from '@/app/types/line';
 import { createLineMessage } from './message/create';
 import { validateLineMessage } from './message/validate';
+import { CreateLineMessageParams } from './message/types/createMessage';
 
 export async function processLineMessageEvent(
   event: LineMessageEvent,
@@ -21,7 +22,7 @@ export async function processLineMessageEvent(
     }
 
     // Process valid message with source information
-    const result = await createLineMessage({
+    const messageParams: CreateLineMessageParams = {
       userId: event.source.userId,
       text: validation.text,
       messageId: event.message.id,
@@ -29,8 +30,10 @@ export async function processLineMessageEvent(
       channelId: event.source.roomId || event.source.groupId || event.source.userId,
       platform: 'LINE',
       lineAccountId: account.id,
-      source: event.source // Pass source information
-    });
+      source: event.source
+    };
+
+    const result = await createLineMessage(messageParams);
 
     return {
       success: result.success,
