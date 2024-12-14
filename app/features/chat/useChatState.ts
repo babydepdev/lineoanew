@@ -16,8 +16,10 @@ interface ChatState {
 export const useChatState = create<ChatState>((set) => ({
   conversations: [],
   selectedConversation: null,
-  setConversations: (conversations) => 
-    set({ conversations: sortConversations(conversations) }),
+  setConversations: (conversations) => {
+    console.log('Setting conversations:', conversations.length);
+    set({ conversations: sortConversations(conversations) });
+  },
   setSelectedConversation: (conversation) => 
     set({ selectedConversation: conversation }),
   updateConversation: (updatedConversation) =>
@@ -40,7 +42,10 @@ export const useChatState = create<ChatState>((set) => ({
         (conv) => conv.id === message.conversationId
       );
 
-      if (!conversationToUpdate) return state;
+      if (!conversationToUpdate) {
+        console.warn('No conversation found for message:', message.id);
+        return state;
+      }
 
       const messageExists = conversationToUpdate.messages.some(
         (msg) => msg.id === message.id
@@ -59,18 +64,16 @@ export const useChatState = create<ChatState>((set) => ({
         return conv;
       });
 
-      const updatedSelectedConversation = 
-        state.selectedConversation?.id === message.conversationId
-          ? {
-              ...state.selectedConversation,
-              messages: sortMessages([...state.selectedConversation.messages, message]),
-              updatedAt: message.timestamp
-            }
-          : state.selectedConversation;
-
       return {
         conversations: sortConversations(updatedConversations),
-        selectedConversation: updatedSelectedConversation,
+        selectedConversation:
+          state.selectedConversation?.id === message.conversationId
+            ? {
+                ...state.selectedConversation,
+                messages: sortMessages([...state.selectedConversation.messages, message]),
+                updatedAt: message.timestamp
+              }
+            : state.selectedConversation,
       };
     }),
 }));
