@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createToken } from '@/lib/auth/token';
-import { AUTH_COOKIE_NAME } from '@/lib/auth/constants';
+import { AUTH_COOKIE_NAME, COOKIE_OPTIONS } from '@/lib/auth/constants';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,14 +16,8 @@ export async function POST(request: NextRequest) {
       // Create JWT token
       const token = await createToken({ username });
 
-      // Set cookie
-      cookies().set(AUTH_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24, // 24 hours
-        path: '/',
-      });
+      // Set cookie with updated options
+      cookies().set(AUTH_COOKIE_NAME, token, COOKIE_OPTIONS);
 
       return NextResponse.json({ success: true });
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AUTH_COOKIE_NAME, PUBLIC_PATHS, IGNORE_PATHS } from './constants';
+import { AUTH_COOKIE_NAME, PUBLIC_PATHS } from './constants';
 import { verifyToken } from './token';
 
 export async function handleAuth(request: NextRequest) {
@@ -25,10 +25,7 @@ export async function handleAuth(request: NextRequest) {
     return null;
   }
 
-  // Ignore static files and assets
-  if (IGNORE_PATHS.some(path => pathname.startsWith(path))) {
-    return null;
-  }
+  
 
   // Check for auth token
   const token = request.cookies.get(AUTH_COOKIE_NAME);
