@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { SignJWT } from 'jose';
 import { cookies } from 'next/headers';
-
-const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key');
+import { createToken } from '@/lib/auth/token';
+import { AUTH_COOKIE_NAME } from '@/lib/auth/constants';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,17 +14,15 @@ export async function POST(request: NextRequest) {
       password === process.env.ADMIN_PASSWORD
     ) {
       // Create JWT token
-      const token = await new SignJWT({ username })
-        .setProtectedHeader({ alg: 'HS256' })
-        .setExpirationTime('24h')
-        .sign(secretKey);
+      const token = await createToken({ username });
 
       // Set cookie
-      cookies().set('auth-token', token, {
+      cookies().set(AUTH_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 60 * 60 * 24, // 24 hours
+        path: '/',
       });
 
       return NextResponse.json({ success: true });

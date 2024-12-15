@@ -1,16 +1,18 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     
     try {
       const response = await fetch('/api/auth/login', {
@@ -22,14 +24,24 @@ export default function LoginPage() {
       });
 
       if (response.ok) {
-        router.push('/');
+        const from = searchParams.get('from') || '/';
+        router.push(from);
       } else {
-        setError('Invalid credentials');
+        const data = await response.json();
+        setError(data.error || 'Invalid credentials');
       }
     } catch (err) {
-      setError('An error occurred');
+      setError('An error occurred during login');
     }
   };
+
+  // Redirect to the requested page after login
+  useEffect(() => {
+    const from = searchParams.get('from');
+    if (from) {
+      console.log('Will redirect to:', from);
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

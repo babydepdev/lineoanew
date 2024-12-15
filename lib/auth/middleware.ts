@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AUTH_COOKIE_NAME, PUBLIC_PATHS, IGNORE_PATHS } from '../lib/auth/constants';
-import { verifyToken } from '@/lib/auth/token';
+import { AUTH_COOKIE_NAME, PUBLIC_PATHS, IGNORE_PATHS } from './constants';
+import { verifyToken } from './token';
 
 export async function handleAuth(request: NextRequest) {
   const { pathname } = request.nextUrl;
