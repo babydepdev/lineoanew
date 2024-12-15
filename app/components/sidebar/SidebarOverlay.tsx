@@ -2,11 +2,10 @@ import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface SidebarOverlayProps {
-  isOpen: boolean;
   onClick: () => void;
 }
 
-export function SidebarOverlay({ isOpen, onClick }: SidebarOverlayProps) {
+export function SidebarOverlay({ onClick }: SidebarOverlayProps) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}

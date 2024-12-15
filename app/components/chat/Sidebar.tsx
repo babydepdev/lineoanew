@@ -26,9 +26,7 @@ export function Sidebar({
   return (
     <>
       <AnimatePresence>
-        {isOpen && (
-          <SidebarOverlay isOpen={isOpen} onClick={onClose} />
-        )}
+        {isOpen && <SidebarOverlay onClick={onClose} />}
       </AnimatePresence>
       
       <AnimatePresence>
