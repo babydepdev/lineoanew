@@ -29,7 +29,7 @@ export function MessageActions({ message }: MessageActionsProps) {
         className="!px-2 !py-1.5 flex items-center gap-1"
       >
         <FileText className="w-3 h-3" />
-        <span className="text-xs">ใบเสนอราคา</span>
+        <span className="text-xs">Quotation</span>
       </DocumentButton>
       
       <DocumentButton 
@@ -38,7 +38,7 @@ export function MessageActions({ message }: MessageActionsProps) {
         className="!px-2 !py-1.5 flex items-center gap-1"
       >
         <FileSpreadsheet className="w-3 h-3" />
-        <span className="text-xs">ใบเรียกเก็บเงิน</span>
+        <span className="text-xs">Invoices</span>
       </DocumentButton>
     </div>
   );

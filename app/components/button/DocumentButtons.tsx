@@ -17,7 +17,7 @@ export function DocumentButtons() {
     <div className="flex items-center gap-2">
       <DocumentButton onClick={handleQuotation} className="flex items-center gap-2">
         <FileText className="w-4 h-4" />
-        <span className="hidden sm:inline">ใบเสนอราคา</span>
+        <span className="hidden sm:inline">Quotation</span>
       </DocumentButton>
       
       <DocumentButton 
@@ -26,7 +26,7 @@ export function DocumentButtons() {
         className="flex items-center gap-2"
       >
         <FileSpreadsheet className="w-4 h-4" />
-        <span className="hidden sm:inline">ใบเรียกเก็บเงิน</span>
+        <span className="hidden sm:inline">Invoices</span>
       </DocumentButton>
     </div>
   );
