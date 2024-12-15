@@ -24,7 +24,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   return (
     <div className={cn(
       "flex items-end gap-2 group relative",
-      displayAsUser ? "flex-row-reverse pr-16 lg:pr-24" : "flex-row"
+      displayAsUser ? "flex-row-reverse pr-16 lg:pr-36" : "flex-row"
     )}>
       {displayAsUser ? (
         <ProfileAvatar 

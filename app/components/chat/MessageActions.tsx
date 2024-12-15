@@ -23,46 +23,23 @@ export function MessageActions({ message }: MessageActionsProps) {
   }
 
   return (
-    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
-      {/* Desktop buttons */}
-      <div className="hidden lg:flex items-center gap-2 absolute -right-[280px]">
-        <DocumentButton 
-          onClick={handleQuotation}
-          className="flex items-center gap-2 whitespace-nowrap"
-        >
-          <FileText className="w-4 h-4" />
-          <span>ใบเสนอราคา</span>
-        </DocumentButton>
-        
-        <DocumentButton 
-          onClick={handleInvoice}
-          variant="secondary"
-          className="flex items-center gap-2 whitespace-nowrap"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span>ใบเรียกเก็บเงิน</span>
-        </DocumentButton>
-      </div>
-
-      {/* Mobile buttons */}
-      <div className="flex lg:hidden items-center gap-2 px-2">
-        <DocumentButton 
-          onClick={handleQuotation}
-          className="!p-2"
-          title="ใบเสนอราคา"
-        >
-          <FileText className="w-4 h-4" />
-        </DocumentButton>
-        
-        <DocumentButton 
-          onClick={handleInvoice}
-          variant="secondary"
-          className="!p-2"
-          title="ใบเรียกเก็บเงิน"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-        </DocumentButton>
-      </div>
+    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute -right-[140px] top-1/2 -translate-y-1/2 flex items-center gap-1">
+      <DocumentButton 
+        onClick={handleQuotation}
+        className="!px-2 !py-1.5 flex items-center gap-1"
+      >
+        <FileText className="w-3 h-3" />
+        <span className="text-xs">Quotation</span>
+      </DocumentButton>
+      
+      <DocumentButton 
+        onClick={handleInvoice}
+        variant="secondary"
+        className="!px-2 !py-1.5 flex items-center gap-1"
+      >
+        <FileSpreadsheet className="w-3 h-3" />
+        <span className="text-xs">Invoices</span>
+      </DocumentButton>
     </div>
   );
 }
