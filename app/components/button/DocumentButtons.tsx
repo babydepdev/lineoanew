@@ -1,4 +1,3 @@
-
 import { FileText, FileSpreadsheet } from 'lucide-react';
 import { DocumentButton } from './DocumentButton';
 
@@ -36,7 +35,7 @@ export function DocumentButtons() {
       <div className="flex sm:hidden items-center gap-2">
         <DocumentButton 
           onClick={handleQuotation} 
-          className="!p-2"
+          className="!p-2 flex items-center justify-center"
           title="ใบเสนอราคา"
         >
           <FileText className="w-4 h-4" />
@@ -45,7 +44,7 @@ export function DocumentButtons() {
         <DocumentButton 
           onClick={handleInvoice} 
           variant="secondary"
-          className="!p-2"
+          className="!p-2 flex items-center justify-center"
           title="ใบเรียกเก็บเงิน"
         >
           <FileSpreadsheet className="w-4 h-4" />
