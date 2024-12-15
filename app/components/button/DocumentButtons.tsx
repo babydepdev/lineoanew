@@ -1,5 +1,5 @@
 import { FileText, FileSpreadsheet } from 'lucide-react';
-import { DocumentButton } from './DocumentButton';
+import { ResponsiveDocumentButton } from './ResponsiveDocumentButton';
 
 export function DocumentButtons() {
   const handleQuotation = () => {
@@ -14,42 +14,18 @@ export function DocumentButtons() {
 
   return (
     <div className="flex items-center gap-2">
-      {/* Desktop buttons */}
-      <div className="hidden sm:flex items-center gap-2">
-        <DocumentButton onClick={handleQuotation} className="flex items-center gap-2">
-          <FileText className="w-4 h-4" />
-          <span>ใบเสนอราคา</span>
-        </DocumentButton>
-        
-        <DocumentButton 
-          onClick={handleInvoice} 
-          variant="secondary"
-          className="flex items-center gap-2"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-          <span>ใบเรียกเก็บเงิน</span>
-        </DocumentButton>
-      </div>
-
-      {/* Mobile buttons */}
-      <div className="flex sm:hidden items-center gap-2">
-        <DocumentButton 
-          onClick={handleQuotation} 
-          className="!p-2 flex items-center justify-center"
-          title="ใบเสนอราคา"
-        >
-          <FileText className="w-4 h-4" />
-        </DocumentButton>
-        
-        <DocumentButton 
-          onClick={handleInvoice} 
-          variant="secondary"
-          className="!p-2 flex items-center justify-center"
-          title="ใบเรียกเก็บเงิน"
-        >
-          <FileSpreadsheet className="w-4 h-4" />
-        </DocumentButton>
-      </div>
+      <ResponsiveDocumentButton
+        onClick={handleQuotation}
+        title="ใบเสนอราคา"
+        icon={<FileText className="w-4 h-4" />}
+      />
+      
+      <ResponsiveDocumentButton
+        onClick={handleInvoice}
+        variant="secondary"
+        title="ใบเรียกเก็บเงิน"
+        icon={<FileSpreadsheet className="w-4 h-4" />}
+      />
     </div>
   );
 }
