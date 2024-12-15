@@ -2,12 +2,11 @@ import { MessageCircle, ChevronLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SidebarHeaderProps {
-  isOpen: boolean;
   onClose: () => void;
   conversationCount: number;
 }
 
-export function SidebarHeader({ isOpen, onClose, conversationCount }: SidebarHeaderProps) {
+export function SidebarHeader({ onClose, conversationCount }: SidebarHeaderProps) {
   return (
     <div className="flex-none p-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
       <div className="flex items-center justify-between">
