@@ -5,10 +5,10 @@ import {
   extractLineSignature,
   processLineWebhook 
 } from '@/lib/services/line';
+import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
 
 export async function POST(request: NextRequest) {
   try {
-    // Get raw body and signature
     const rawBody = await request.text();
     console.log('Received LINE webhook:', rawBody);
 
@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Parse webhook body
     let webhookBody: LineWebhookBody;
     try {
       webhookBody = JSON.parse(rawBody);
@@ -36,7 +35,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify signature and get account
     const verificationResult = await findLineAccountBySignature(rawBody, signature);
     
     if (!verificationResult?.isValid || !verificationResult.account) {
@@ -47,8 +45,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Process webhook events
     const result = await processLineWebhook(webhookBody, verificationResult.account);
+    
+    // Broadcast all conversations after webhook processing
+    await broadcastAllConversations();
+
     console.log('Webhook processing result:', result);
 
     return NextResponse.json({

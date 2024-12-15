@@ -1,8 +1,9 @@
+
 import { Platform, Message, Conversation } from '@prisma/client';
 import { MessageCreateParams } from './message/types';
-import { broadcastMessageUpdate } from './message';
 import { findOrCreateConversation } from './conversation';
 import { createMessage } from './message';
+import { broadcastConversationUpdate } from './conversation/broadcast';
 
 interface WebhookResult {
   message: Message;
@@ -47,9 +48,8 @@ export async function handleIncomingMessage(
     // Create message
     const message = await createMessage(messageParams);
 
-    // Broadcast update
-    await broadcastMessageUpdate(conversation.id);
-    console.log('Message broadcast complete');
+    // Broadcast updates
+    await broadcastConversationUpdate(conversation.id);
 
     return { message, conversation };
   } catch (error) {
