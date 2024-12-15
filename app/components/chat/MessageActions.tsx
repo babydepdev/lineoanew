@@ -23,43 +23,44 @@ export function MessageActions({ message }: MessageActionsProps) {
   }
 
   return (
-    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 lg:-right-[140px] top-1/2 -translate-y-1/2 flex items-center gap-1 px-2 lg:px-0">
-      <div className="hidden lg:flex items-center gap-1">
+    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
+      {/* Desktop buttons */}
+      <div className="hidden lg:flex items-center gap-2 absolute -right-[280px]">
         <DocumentButton 
           onClick={handleQuotation}
-          className="!px-2 !py-1.5 flex items-center gap-1"
+          className="flex items-center gap-2 whitespace-nowrap"
         >
-          <FileText className="w-3 h-3" />
-          <span className="text-xs">ใบเสนอราคา</span>
+          <FileText className="w-4 h-4" />
+          <span>ใบเสนอราคา</span>
         </DocumentButton>
         
         <DocumentButton 
           onClick={handleInvoice}
           variant="secondary"
-          className="!px-2 !py-1.5 flex items-center gap-1"
+          className="flex items-center gap-2 whitespace-nowrap"
         >
-          <FileSpreadsheet className="w-3 h-3" />
-          <span className="text-xs">ใบเรียกเก็บเงิน</span>
+          <FileSpreadsheet className="w-4 h-4" />
+          <span>ใบเรียกเก็บเงิน</span>
         </DocumentButton>
       </div>
 
       {/* Mobile buttons */}
-      <div className="flex lg:hidden items-center gap-1">
+      <div className="flex lg:hidden items-center gap-2 px-2">
         <DocumentButton 
           onClick={handleQuotation}
-          className="!p-1.5"
+          className="!p-2"
           title="ใบเสนอราคา"
         >
-          <FileText className="w-3 h-3" />
+          <FileText className="w-4 h-4" />
         </DocumentButton>
         
         <DocumentButton 
           onClick={handleInvoice}
           variant="secondary"
-          className="!p-1.5"
+          className="!p-2"
           title="ใบเรียกเก็บเงิน"
         >
-          <FileSpreadsheet className="w-3 h-3" />
+          <FileSpreadsheet className="w-4 h-4" />
         </DocumentButton>
       </div>
     </div>
