@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -7,6 +8,7 @@ import { Avatar, AvatarFallback } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { ProfileAvatar } from './ProfileAvatar';
 import { useChatState } from '../features/chat/useChatState';
+import { MessageActions } from './chat/MessageActions';
 
 interface MessageBubbleProps {
   message: Message;
@@ -21,8 +23,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div className={cn(
-      "flex items-end gap-2 group",
-      displayAsUser ? "flex-row-reverse" : "flex-row"
+      "flex items-end gap-2 group relative",
+      displayAsUser ? "flex-row-reverse pr-36" : "flex-row"
     )}>
       {displayAsUser ? (
         <ProfileAvatar 
@@ -57,6 +59,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
           {formatTimestamp(message.timestamp)}
         </div>
       </div>
+
+      <MessageActions message={message} />
     </div>
   );
 }

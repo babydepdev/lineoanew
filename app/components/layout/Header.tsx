@@ -1,8 +1,10 @@
+
 "use client";
 
 import React from 'react';
 import { Menu, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { DocumentButtons } from '../button/DocumentButtons';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -36,15 +38,19 @@ export function Header({ toggleSidebar, title }: HeaderProps) {
             {title}
           </h1>
         </div>
-        
-        <button
-          onClick={handleLogout}
-          className="p-2 hover:bg-foreground/5 rounded-md transition-colors flex items-center gap-2 text-sm"
-          aria-label="Logout"
-        >
-          <LogOut className="h-4 w-4" />
-          <span className="hidden sm:inline">Logout</span>
-        </button>
+
+        <div className="flex items-center gap-4">
+          <DocumentButtons />
+          
+          <button
+            onClick={handleLogout}
+            className="p-2 hover:bg-foreground/5 rounded-md transition-colors flex items-center gap-2 text-sm"
+            aria-label="Logout"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Logout</span>
+          </button>
+        </div>
       </div>
     </header>
   );
