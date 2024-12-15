@@ -21,11 +21,15 @@ export function Sidebar({
   onSelect,
   onClose 
 }: SidebarProps) {
-  const showSidebar = isOpen || typeof window !== 'undefined' && window.innerWidth >= 1024;
+  const showSidebar = isOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024);
 
   return (
     <>
-      <SidebarOverlay isOpen={isOpen} onClick={onClose} />
+      <AnimatePresence>
+        {isOpen && (
+          <SidebarOverlay isOpen={isOpen} onClick={onClose} />
+        )}
+      </AnimatePresence>
       
       <AnimatePresence>
         {showSidebar && (

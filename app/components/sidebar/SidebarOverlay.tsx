@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
 interface SidebarOverlayProps {
@@ -6,14 +7,15 @@ interface SidebarOverlayProps {
 }
 
 export function SidebarOverlay({ isOpen, onClick }: SidebarOverlayProps) {
-  if (!isOpen) return null;
-
   return (
-    <div 
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       className={cn(
         "fixed inset-0 bg-black/20 backdrop-blur-sm z-30 lg:hidden",
-        "transition-opacity duration-300 ease-in-out",
-        isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+        "transition-opacity duration-300 ease-in-out"
       )}
       onClick={onClick}
       aria-hidden="true"
