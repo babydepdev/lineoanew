@@ -1,6 +1,3 @@
-
-"use client";
-
 import React from 'react';
 import { Message } from '@prisma/client';
 import { formatTimestamp } from '../utils/dateFormatter';
@@ -23,8 +20,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <div className={cn(
-      "flex items-end gap-2 group relative",
-      displayAsUser ? "flex-row-reverse pr-16 lg:pr-24" : "flex-row"
+      "flex items-end gap-2 group relative px-2 sm:px-4 lg:px-8",
+      displayAsUser ? "flex-row-reverse" : "flex-row"
     )}>
       {displayAsUser ? (
         <ProfileAvatar 

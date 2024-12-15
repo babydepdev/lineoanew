@@ -1,7 +1,7 @@
-
 import { FileText, FileSpreadsheet } from 'lucide-react';
 import { Message } from '@prisma/client';
 import { DocumentButton } from '../button/DocumentButton';
+import { cn } from '@/lib/utils';
 
 interface MessageActionsProps {
   message: Message;
@@ -24,15 +24,21 @@ export function MessageActions({ message }: MessageActionsProps) {
   }
 
   return (
-    <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute right-0 top-1/2 -translate-y-1/2 flex items-center gap-2">
-      {/* Desktop buttons */}
-      <div className="hidden lg:flex items-center gap-2 absolute -right-[280px]">
+    <div className={cn(
+      "opacity-0 group-hover:opacity-100 transition-opacity",
+      "absolute top-1/2 -translate-y-1/2",
+      "flex items-center gap-2",
+      // Position differently based on screen size
+      "right-2 sm:right-4 lg:right-8"
+    )}>
+      {/* Desktop view */}
+      <div className="hidden lg:flex items-center gap-2">
         <DocumentButton 
           onClick={handleQuotation}
           className="flex items-center gap-2 whitespace-nowrap"
         >
           <FileText className="w-4 h-4" />
-          <span>Quot</span>
+          <span>ใบเสนอราคา</span>
         </DocumentButton>
         
         <DocumentButton 
@@ -41,16 +47,16 @@ export function MessageActions({ message }: MessageActionsProps) {
           className="flex items-center gap-2 whitespace-nowrap"
         >
           <FileSpreadsheet className="w-4 h-4" />
-          <span>Quot</span>
+          <span>ใบเรียกเก็บเงิน</span>
         </DocumentButton>
       </div>
 
-      {/* Mobile buttons */}
-      <div className="flex lg:hidden items-center gap-2 px-2">
+      {/* Tablet/Mobile view */}
+      <div className="flex lg:hidden items-center gap-2">
         <DocumentButton 
           onClick={handleQuotation}
           className="!p-2"
-          title="Invoices"
+          title="ใบเสนอราคา"
         >
           <FileText className="w-4 h-4" />
         </DocumentButton>
@@ -59,7 +65,7 @@ export function MessageActions({ message }: MessageActionsProps) {
           onClick={handleInvoice}
           variant="secondary"
           className="!p-2"
-          title="Invoice"
+          title="ใบเรียกเก็บเงิน"
         >
           <FileSpreadsheet className="w-4 h-4" />
         </DocumentButton>
