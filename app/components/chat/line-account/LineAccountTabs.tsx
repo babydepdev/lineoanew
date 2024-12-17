@@ -20,6 +20,11 @@ export function LineAccountTabs({
     );
   }
 
+  // Only show tabs if there are LINE accounts
+  if (!accounts.length) {
+    return null;
+  }
+
   return (
     <div className="px-4 border-b border-slate-200">
       <div className="flex space-x-2 overflow-x-auto py-2 scrollbar-hide">

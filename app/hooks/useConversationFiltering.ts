@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { ConversationWithMessages } from '../types/chat';
 
 interface UseConversationFilteringResult {
@@ -14,12 +14,28 @@ export function useConversationFiltering(
 ): UseConversationFilteringResult {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
 
+  // Reset selected account if it no longer exists in conversations
+  useEffect(() => {
+    if (selectedAccountId) {
+      const accountExists = conversations.some(conv => 
+        conv.platform === 'LINE' && conv.lineAccountId === selectedAccountId
+      );
+      if (!accountExists) {
+        setSelectedAccountId(null);
+      }
+    }
+  }, [conversations, selectedAccountId]);
+
   const filteredConversations = useMemo(() => {
     if (!selectedAccountId) return conversations;
     
-    return conversations.filter(conv => 
-      conv.platform === 'LINE' && conv.lineAccountId === selectedAccountId
-    );
+    return conversations.filter(conv => {
+      // Only filter LINE conversations by account
+      if (conv.platform !== 'LINE') return false;
+      
+      // Include conversations with matching lineAccountId
+      return conv.lineAccountId === selectedAccountId;
+    });
   }, [conversations, selectedAccountId]);
 
   const sortedConversations = useMemo(() => {

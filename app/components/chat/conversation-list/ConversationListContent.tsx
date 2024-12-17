@@ -18,6 +18,7 @@ export function ConversationListContent({
   onSelect,
   selectedAccountId
 }: ConversationListContentProps) {
+  // Show empty state if no conversations match the current filter
   if (conversations.length === 0) {
     return <EmptyState selectedAccountId={selectedAccountId} />;
   }
