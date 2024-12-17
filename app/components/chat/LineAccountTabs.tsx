@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { LineAccount } from '@/app/types/line';
+
 import { cn } from '@/lib/utils';
 import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 
