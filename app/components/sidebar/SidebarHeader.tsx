@@ -13,10 +13,8 @@ export function SidebarHeader({ onClose, conversationCount }: SidebarHeaderProps
         <div className="flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-primary" />
           <div>
-            <h2 className="text-lg font-semibold text-slate-900">Conversations</h2>
-            <p className="text-sm text-slate-500 mt-1">
-              {conversationCount} {conversationCount === 1 ? 'conversation' : 'conversations'}
-            </p>
+            <h2 className="text-lg font-semibold text-slate-900">All in one Chat</h2>
+          
           </div>
         </div>
         
