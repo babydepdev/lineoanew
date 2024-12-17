@@ -6,7 +6,7 @@ interface SidebarHeaderProps {
   conversationCount: number;
 }
 
-export function SidebarHeader({ onClose, conversationCount }: SidebarHeaderProps) {
+export function SidebarHeader({ onClose }: SidebarHeaderProps) {
   return (
     <div className="flex-none p-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
       <div className="flex items-center justify-between">
