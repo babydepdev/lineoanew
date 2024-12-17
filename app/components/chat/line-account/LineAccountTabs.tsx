@@ -1,6 +1,5 @@
 import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { cn } from '@/lib/utils';
-import { AddLineAccountButton } from '../../line-account/AddLineAccountButton';
 
 interface LineAccountTabsProps {
   selectedAccountId: string | null;
@@ -23,24 +22,20 @@ export function LineAccountTabs({
 
   return (
     <div className="px-4 border-b border-slate-200">
-      <div className="flex items-center justify-between py-2">
-        <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+      <div className="flex items-center space-x-2 overflow-x-auto py-2 scrollbar-hide">
+        <Tab
+          isSelected={selectedAccountId === null}
+          onClick={() => onAccountSelect(null)}
+          label="All Accounts"
+        />
+        {accounts.map((account) => (
           <Tab
-            isSelected={selectedAccountId === null}
-            onClick={() => onAccountSelect(null)}
-            label="All Accounts"
+            key={account.id}
+            isSelected={selectedAccountId === account.id}
+            onClick={() => onAccountSelect(account.id)}
+            label={account.name}
           />
-          {accounts.map((account) => (
-            <Tab
-              key={account.id}
-              isSelected={selectedAccountId === account.id}
-              onClick={() => onAccountSelect(account.id)}
-              label={account.name}
-            />
-          ))}
-        </div>
-        
-        <AddLineAccountButton />
+        ))}
       </div>
     </div>
   );

@@ -1,10 +1,10 @@
-
 "use client";
 
 import React from 'react';
 import { Menu, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { DocumentButtons } from '../button/DocumentButtons';
+import { AddLineAccountButton } from '../line-account/AddLineAccountButton';
 
 interface HeaderProps {
   toggleSidebar: () => void;
@@ -39,7 +39,8 @@ export function Header({ toggleSidebar, title }: HeaderProps) {
           </h1>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          <AddLineAccountButton />
           <DocumentButtons />
           
           <button

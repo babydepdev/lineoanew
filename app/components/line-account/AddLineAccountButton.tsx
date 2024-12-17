@@ -9,10 +9,10 @@ export function AddLineAccountButton() {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary hover:bg-primary/10 rounded-md transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
       >
         <Plus className="w-4 h-4" />
-        Add LINE Account
+        <span className="hidden sm:inline">Add LINE Account</span>
       </button>
 
       <AddLineAccountDialog 
