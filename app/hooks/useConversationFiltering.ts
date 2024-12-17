@@ -5,6 +5,7 @@ interface UseConversationFilteringResult {
   selectedAccountId: string | null;
   setSelectedAccountId: (id: string | null) => void;
   filteredConversations: ConversationWithMessages[];
+  filteredCount: number;
   totalCount: number;
 }
 
@@ -31,6 +32,7 @@ export function useConversationFiltering(
     selectedAccountId,
     setSelectedAccountId,
     filteredConversations: sortedConversations,
+    filteredCount: filteredConversations.length,
     totalCount: conversations.length
   };
 }
