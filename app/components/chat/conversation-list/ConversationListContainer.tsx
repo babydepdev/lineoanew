@@ -1,6 +1,6 @@
 import React from 'react';
 import { ConversationWithMessages } from '@/app/types/chat';
-import { useConversationFiltering } from '@/app/hooks/useConversationFiltering';
+import { useConversationState } from '@/app/hooks/conversation/useConversationState';
 import { ConversationListHeader } from './ConversationListHeader';
 import { ConversationListContent } from './ConversationListContent';
 import { LineAccountTabs } from '../line-account/LineAccountTabs';
@@ -12,17 +12,23 @@ interface ConversationListContainerProps {
 }
 
 export function ConversationListContainer({
-  conversations,
+  conversations: initialConversations,
   onSelect,
   selectedId
 }: ConversationListContainerProps) {
   const {
+    conversations,
     selectedAccountId,
     setSelectedAccountId,
-    filteredConversations,
     filteredCount,
-    totalCount
-  } = useConversationFiltering(conversations);
+    totalCount,
+    updateConversations
+  } = useConversationState(initialConversations);
+
+  // Update conversations when initial data changes
+  React.useEffect(() => {
+    updateConversations(initialConversations);
+  }, [initialConversations, updateConversations]);
 
   return (
     <div className="flex flex-col h-full">
@@ -35,7 +41,7 @@ export function ConversationListContainer({
         onAccountSelect={setSelectedAccountId}
       />
       <ConversationListContent
-        conversations={filteredConversations}
+        conversations={conversations}
         selectedId={selectedId}
         onSelect={onSelect}
         selectedAccountId={selectedAccountId}
