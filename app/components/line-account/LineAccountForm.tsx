@@ -33,8 +33,8 @@ export function LineAccountForm({ onSuccess }: LineAccountFormProps) {
       )}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-900">
-          Account Name
+        <label className="text-sm font-medium text-white">
+          ชื่อ Line OA
         </label>
         <input
           type="text"
@@ -47,7 +47,7 @@ export function LineAccountForm({ onSuccess }: LineAccountFormProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-900">
+        <label className="text-sm font-medium text-white">
           Channel Access Token
         </label>
         <input
@@ -61,7 +61,7 @@ export function LineAccountForm({ onSuccess }: LineAccountFormProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-900">
+        <label className="text-sm font-medium text-white">
           Channel Secret
         </label>
         <input
