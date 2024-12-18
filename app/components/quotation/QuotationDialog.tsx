@@ -16,18 +16,21 @@ export function QuotationDialog({ isOpen, onClose }: QuotationDialogProps) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl">
-          <DialogHeader className="flex flex-row items-center justify-between">
+        <DialogContent className="max-w-4xl h-[calc(100vh-64px)] sm:h-auto flex flex-col">
+          <DialogHeader className="flex flex-row items-center justify-between flex-shrink-0">
             <DialogTitle>ใบเสนอราคา</DialogTitle>
             <Button 
               onClick={() => setIsCreateDialogOpen(true)}
               className="flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              สร้างใบเสนอราคา
+              <span className="hidden sm:inline">สร้างใบเสนอราคา</span>
+              <span className="sm:hidden">สร้าง</span>
             </Button>
           </DialogHeader>
-          <QuotationList />
+          <div className="flex-1 overflow-hidden">
+            <QuotationList />
+          </div>
         </DialogContent>
       </Dialog>
 

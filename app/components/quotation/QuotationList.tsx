@@ -25,7 +25,7 @@ export function QuotationList() {
         />
       </div>
 
-      <ScrollArea className="h-[600px] pr-4">
+      <ScrollArea className="h-[calc(100vh-300px)] sm:h-[600px] pr-4">
         <div className="space-y-6">
           {accounts.map((account) => (
             <QuotationSection 
