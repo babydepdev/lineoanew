@@ -9,7 +9,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Quotation } from '@/app/types/quotation';
-import { toast } from 'sonner';
+import { showToast } from '@/app/utils/toast';
 
 interface DeleteQuotationDialogProps {
   quotation: Quotation;
@@ -43,13 +43,13 @@ export function DeleteQuotationDialog({
       }
 
       onDelete();
-      toast.success('ลบใบเสนอราคาสำเร็จ', {
+      showToast.success('ลบใบเสนอราคาสำเร็จ', {
         description: 'ใบเสนอราคาถูกลบเรียบร้อยแล้ว'
       });
       onClose();
     } catch (error) {
       console.error('Error deleting quotation:', error);
-      toast.error('เกิดข้อผิดพลาด', {
+      showToast.error('เกิดข้อผิดพลาด', {
         description: 'ไม่สามารถลบใบเสนอราคาได้'
       });
     } finally {

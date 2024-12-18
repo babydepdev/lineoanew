@@ -5,7 +5,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { QuotationItemInputs } from './QuotationItemInputs';
 import { Quotation, QuotationFormData } from '@/app/types/quotation';
-import { toast } from 'sonner';
+import { showToast } from '@/app/utils/toast';
 
 interface EditQuotationDialogProps {
   quotation: Quotation;
@@ -44,13 +44,13 @@ export function EditQuotationDialog({
       if (!response.ok) throw new Error('Failed to update quotation');
       
       onUpdate();
-      toast.success('แก้ไขใบเสนอราคาสำเร็จ', {
+      showToast.success('แก้ไขใบเสนอราคาสำเร็จ', {
         description: 'ใบเสนอราคาถูกแก้ไขเรียบร้อยแล้ว'
       });
       onClose();
     } catch (error) {
       console.error('Error updating quotation:', error);
-      toast.error('เกิดข้อผิดพลาด', {
+      showToast.error('เกิดข้อผิดพลาด', {
         description: 'ไม่สามารถแก้ไขใบเสนอราคาได้'
       });
     } finally {
