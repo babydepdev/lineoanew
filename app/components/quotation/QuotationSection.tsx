@@ -1,7 +1,7 @@
 import { LineAccount } from '@/app/types/line';
-import { useQuotations } from '@/app/hooks/useQuotations';
+import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';
 import { QuotationItem } from './QuotationItem';
-import { useEffect } from 'react';
+import { Quotation } from '@/app/types/quotation';
 
 interface QuotationSectionProps {
   account: LineAccount;
@@ -9,12 +9,7 @@ interface QuotationSectionProps {
 }
 
 export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
-  const { quotations, isLoading, refresh } = useQuotations(account.id);
-
-  // Initial fetch
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
 
   if (isLoading) {
     return <QuotationSectionSkeleton name={account.name} />;
@@ -44,7 +39,7 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
           <QuotationItem 
             key={quotation.id} 
             quotation={quotation}
-            onUpdate={refresh}
+            onUpdate={mutate}
           />
         ))}
       </div>
@@ -65,7 +60,7 @@ function QuotationSectionSkeleton({ name }: { name: string }) {
   );
 }
 
-function filterQuotations(quotations: any[], query: string) {
+function filterQuotations(quotations: Quotation[], query: string): Quotation[] {
   if (!query) return quotations;
 
   const searchTerms = query.toLowerCase().split(' ');
@@ -74,7 +69,7 @@ function filterQuotations(quotations: any[], query: string) {
     const searchText = [
       quotation.customerName,
       quotation.number,
-      ...quotation.items.map((item: any) => item.name)
+      ...quotation.items.map(item => item.name)
     ].join(' ').toLowerCase();
 
     return searchTerms.every(term => searchText.includes(term));

@@ -6,7 +6,7 @@ import { Label } from '../ui/label';
 import { QuotationItemInputs } from './QuotationItemInputs';
 import { AccountSelect } from './AccountSelect';
 import { SuccessAlert } from './SuccessAlert';
-import { useQuotations } from '@/app/hooks/useQuotations';
+import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';
 
 interface CreateQuotationDialogProps {
   isOpen: boolean;
@@ -22,7 +22,8 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
     items: [{ name: '', quantity: 1, price: 0 }]
   });
 
-  const { addQuotation } = useQuotations(formData.lineAccountId);
+  // Get the mutate function from the hook to refresh quotations
+  const { mutate: refreshQuotations } = useQuotationsByAccount(formData.lineAccountId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +38,8 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
 
       if (!response.ok) throw new Error('Failed to create quotation');
       
-      const newQuotation = await response.json();
-      
-      // Add the new quotation to the store
-      addQuotation({
-        ...newQuotation,
-        createdAt: new Date(newQuotation.createdAt)
-      });
+      // Refresh quotations for the selected account
+      await refreshQuotations();
       
       setShowSuccess(true);
       setFormData({
