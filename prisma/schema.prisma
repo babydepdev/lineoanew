@@ -9,7 +9,21 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// LINE Account model
+// ======= Authentication & User Models =======
+model UserProfile {
+  userId        String
+  platform      Platform
+  displayName   String
+  pictureUrl    String?
+  statusMessage String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@id([userId, platform])
+  @@index([platform, updatedAt])
+}
+
+// ======= LINE Integration Models =======
 model LineAccount {
   id                 String         @id @default(cuid())
   name               String
@@ -18,34 +32,36 @@ model LineAccount {
   active            Boolean        @default(true)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
+  
+  // Relationships
   conversations     Conversation[]
+  quotations       Quotation[]
+  invoices         Invoice[]
 
   @@index([active])
 }
 
-// Conversation model
+// ======= Chat & Messaging Models =======
 model Conversation {
   id            String       @id @default(cuid())
   platform      Platform
   channelId     String      // Stores chat identifier (user/room/group)
   userId        String      // User who initiated the conversation
-  messages      Message[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+  
+  // Relationships
+  messages      Message[]
   lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id])
   lineAccountId String?
 
-  // Changed unique constraint to include lineAccountId
   @@unique([userId, platform, channelId, lineAccountId])
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
 
-// Message model
 model Message {
   id             String       @id @default(cuid())
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
   content        String       @db.Text
   sender         SenderType
   timestamp      DateTime     @default(now())
@@ -53,26 +69,89 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
+  
+  // Relationships
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  conversationId String
 
   @@index([conversationId, timestamp])
   @@index([platform, timestamp])
   @@index([externalId])
 }
 
-// User Profile model
-model UserProfile {
-  userId        String
-  platform      Platform
-  displayName   String
-  pictureUrl    String?
-  statusMessage String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+// ======= Document Models =======
+model Quotation {
+  id            String          @id @default(cuid())
+  number        String          @unique
+  customerName  String
+  total         Float
+  status        DocumentStatus @default(DRAFT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relationships
+  items         QuotationItem[]
+  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  lineAccountId String
+  invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
+  invoiceId     String?
 
-  @@id([userId, platform])
-  @@index([platform, updatedAt])
+  @@index([lineAccountId])
+  @@index([createdAt])
+  @@index([status])
 }
 
+model QuotationItem {
+  id          String    @id @default(cuid())
+  name        String
+  quantity    Int
+  price       Float
+  total       Float
+  
+  // Relationships
+  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  quotationId String
+
+  @@index([quotationId])
+}
+
+model Invoice {
+  id            String          @id @default(cuid())
+  number        String          @unique
+  customerName  String
+  total         Float
+  status        DocumentStatus @default(DRAFT)
+  dueDate       DateTime
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relationships
+  items         InvoiceItem[]
+  quotations    Quotation[]
+  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  lineAccountId String
+
+  @@index([lineAccountId])
+  @@index([createdAt])
+  @@index([status])
+  @@index([dueDate])
+}
+
+model InvoiceItem {
+  id          String    @id @default(cuid())
+  name        String
+  quantity    Int
+  price       Float
+  total       Float
+  
+  // Relationships
+  invoice     Invoice   @relation(fields: [invoiceId], references: [id])
+  invoiceId   String
+
+  @@index([invoiceId])
+}
+
+// ======= Enums =======
 enum Platform {
   LINE
   FACEBOOK
@@ -81,4 +160,11 @@ enum Platform {
 enum SenderType {
   USER
   BOT
+}
+
+enum DocumentStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  CANCELLED
 }
