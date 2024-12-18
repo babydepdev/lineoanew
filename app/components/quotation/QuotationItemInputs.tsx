@@ -2,16 +2,11 @@ import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-
-interface QuotationItem {
-  name: string;
-  quantity: number;
-  price: number;
-}
+import { QuotationFormItem } from '@/app/types/quotation';
 
 interface QuotationItemInputsProps {
-  items: QuotationItem[];
-  onChange: (items: QuotationItem[]) => void;
+  items: QuotationFormItem[];
+  onChange: (items: QuotationFormItem[]) => void;
 }
 
 export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProps) {
@@ -23,7 +18,7 @@ export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProp
     onChange(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index: number, field: keyof QuotationItem, value: string | number) => {
+  const updateItem = (index: number, field: keyof QuotationFormItem, value: string | number) => {
     const newItems = items.map((item, i) => {
       if (i === index) {
         return { ...item, [field]: value };
@@ -33,7 +28,7 @@ export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProp
     onChange(newItems);
   };
 
-  const calculateTotal = (item: QuotationItem) => {
+  const calculateTotal = (item: QuotationFormItem) => {
     return item.quantity * item.price;
   };
 

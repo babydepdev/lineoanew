@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { QuotationItemInputs } from './QuotationItemInputs';
-import { Quotation } from '@/app/types/quotation';
+import { Quotation, QuotationFormData, QuotationFormItem } from '@/app/types/quotation';
 
 interface EditQuotationDialogProps {
   quotation: Quotation;
@@ -20,9 +20,13 @@ export function EditQuotationDialog({
   onUpdate 
 }: EditQuotationDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<QuotationFormData>({
     customerName: quotation.customerName,
-    items: quotation.items
+    items: quotation.items.map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price
+    }))
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,6 +51,10 @@ export function EditQuotationDialog({
     }
   };
 
+  const handleItemsChange = (items: QuotationFormItem[]) => {
+    setFormData(prev => ({ ...prev, items }));
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-3xl">
@@ -66,7 +74,7 @@ export function EditQuotationDialog({
 
           <QuotationItemInputs 
             items={formData.items}
-            onChange={(items) => setFormData(prev => ({ ...prev, items }))}
+            onChange={handleItemsChange}
           />
 
           <div className="flex justify-end gap-2 pt-4 border-t">
