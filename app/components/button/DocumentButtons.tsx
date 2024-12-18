@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileText, FileSpreadsheet } from 'lucide-react';
 import { ResponsiveDocumentButton } from './ResponsiveDocumentButton';
-import { QuotationDialog } from '../quotation/QuotationDialog';
+import { QuotationDialog } from '../quotation/QuotationDialog/QuotationDialog';
 
 export function DocumentButtons() {
   const [isQuotationOpen, setIsQuotationOpen] = useState(false);

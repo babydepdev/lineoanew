@@ -14,7 +14,7 @@ import { Quotation } from '@/app/types/quotation';
 
 interface QuotationActionsProps {
   quotation: Quotation;
-  onUpdate?: () => void;  // Make onUpdate optional
+  onUpdate?: () => void;
 }
 
 export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps) {
@@ -23,9 +23,7 @@ export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps)
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const handleUpdate = () => {
-    if (onUpdate) {
-      onUpdate();
-    }
+    onUpdate?.(); // Use optional chaining
   };
 
   const handlePrint = () => {
