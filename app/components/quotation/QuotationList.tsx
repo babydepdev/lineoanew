@@ -5,11 +5,7 @@ import { Input } from '../ui/input';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
 
-interface QuotationListProps {
-  refreshTrigger: number;
-}
-
-export function QuotationList({ refreshTrigger }: QuotationListProps) {
+export function QuotationList() {
   const { accounts, isLoading } = useLineAccounts();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -36,7 +32,6 @@ export function QuotationList({ refreshTrigger }: QuotationListProps) {
               key={account.id} 
               account={account}
               searchQuery={searchQuery}
-              refreshTrigger={refreshTrigger}
             />
           ))}
         </div>

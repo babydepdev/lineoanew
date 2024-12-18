@@ -14,13 +14,19 @@ import { Quotation } from '@/app/types/quotation';
 
 interface QuotationActionsProps {
   quotation: Quotation;
-  onUpdate: () => void; // Make onUpdate required
+  onUpdate?: () => void;  // Make onUpdate optional
 }
 
 export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps) {
   const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleUpdate = () => {
+    if (onUpdate) {
+      onUpdate();
+    }
+  };
 
   const handlePrint = () => {
     // TODO: Implement print functionality
@@ -58,31 +64,25 @@ export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps)
         </DropdownMenu>
       </div>
 
-      {viewOpen && (
-        <ViewQuotationDialog
-          quotation={quotation}
-          isOpen={viewOpen}
-          onClose={() => setViewOpen(false)}
-        />
-      )}
+      <ViewQuotationDialog
+        quotation={quotation}
+        isOpen={viewOpen}
+        onClose={() => setViewOpen(false)}
+      />
 
-      {editOpen && (
-        <EditQuotationDialog
-          quotation={quotation}
-          isOpen={editOpen}
-          onClose={() => setEditOpen(false)}
-          onUpdate={onUpdate}
-        />
-      )}
+      <EditQuotationDialog
+        quotation={quotation}
+        isOpen={editOpen}
+        onClose={() => setEditOpen(false)}
+        onUpdate={handleUpdate}
+      />
 
-      {deleteOpen && (
-        <DeleteQuotationDialog
-          quotation={quotation}
-          isOpen={deleteOpen}
-          onClose={() => setDeleteOpen(false)}
-          onDelete={onUpdate}
-        />
-      )}
+      <DeleteQuotationDialog
+        quotation={quotation}
+        isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        onDelete={handleUpdate}
+      />
     </>
   );
 }
