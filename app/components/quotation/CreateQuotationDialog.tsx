@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { QuotationItemInputs } from './QuotationItemInputs';
+import { AccountSelect } from './AccountSelect';
 
 interface CreateQuotationDialogProps {
   isOpen: boolean;
@@ -13,7 +12,6 @@ interface CreateQuotationDialogProps {
 }
 
 export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialogProps) {
-  const { accounts } = useLineAccounts();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     lineAccountId: '',
@@ -52,21 +50,10 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>LINE Account</Label>
-              <Select 
+              <AccountSelect
                 value={formData.lineAccountId}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, lineAccountId: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="เลือก LINE Account" />
-                </SelectTrigger>
-                <SelectContent>
-                  {accounts.map((account) => (
-                    <SelectItem key={account.id} value={account.id}>
-                      {account.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => setFormData(prev => ({ ...prev, lineAccountId: value }))}
+              />
             </div>
 
             <div className="space-y-2">
@@ -75,6 +62,7 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
                 value={formData.customerName}
                 onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
                 placeholder="ระบุชื่อลูกค้า"
+                className="h-11"
               />
             </div>
           </div>
