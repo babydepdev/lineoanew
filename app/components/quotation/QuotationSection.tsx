@@ -1,23 +1,29 @@
 import { LineAccount } from '@/app/types/line';
 import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';
 import { QuotationItem } from './QuotationItem';
-import { Quotation } from '@/app/types/quotation';
+import { filterQuotations } from '@/app/utils/quotationUtils';
+import { QuotationSectionSkeleton } from './QuotationSectionSkeleton';
 
 interface QuotationSectionProps {
   account: LineAccount;
   searchQuery: string;
+  refreshTrigger: number;
 }
 
-export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
-  const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
+export function QuotationSection({ 
+  account, 
+  searchQuery,
+  refreshTrigger 
+}: QuotationSectionProps) {
+  const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id, refreshTrigger);
 
   if (isLoading) {
     return <QuotationSectionSkeleton name={account.name} />;
   }
 
-  const filteredQuotations = filterQuotations(quotations, searchQuery);
+  const filtered = filterQuotations(quotations, searchQuery);
 
-  if (!filteredQuotations?.length) {
+  if (!filtered?.length) {
     return (
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-slate-900">{account.name}</h3>
@@ -33,11 +39,11 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-slate-900">{account.name}</h3>
         <span className="text-sm text-slate-500">
-          {filteredQuotations.length} รายการ
+          {filtered.length} รายการ
         </span>
       </div>
       <div className="space-y-2">
-        {filteredQuotations.map((quotation) => (
+        {filtered.map((quotation) => (
           <QuotationItem 
             key={quotation.id} 
             quotation={quotation}
@@ -47,33 +53,4 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
       </div>
     </div>
   );
-}
-
-function QuotationSectionSkeleton({ name }: { name: string }) {
-  return (
-    <div className="space-y-3">
-      <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
-      <div className="space-y-2">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 bg-slate-50 rounded animate-pulse" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function filterQuotations(quotations: Quotation[], query: string): Quotation[] {
-  if (!query) return quotations;
-
-  const searchTerms = query.toLowerCase().split(' ');
-  
-  return quotations.filter(quotation => {
-    const searchText = [
-      quotation.customerName,
-      quotation.number,
-      ...quotation.items.map(item => item.name)
-    ].join(' ').toLowerCase();
-
-    return searchTerms.every(term => searchText.includes(term));
-  });
 }
