@@ -4,7 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { QuotationItemInputs } from './QuotationItemInputs';
-import { Quotation, QuotationFormData, QuotationFormItem } from '@/app/types/quotation';
+import { Quotation, QuotationFormData } from '@/app/types/quotation';
 import { SuccessAlert } from './SuccessAlert';
 
 interface EditQuotationDialogProps {
