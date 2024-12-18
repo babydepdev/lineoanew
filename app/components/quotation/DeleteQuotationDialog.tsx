@@ -9,7 +9,7 @@ import {
 } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Quotation } from '@/app/types/quotation';
-import { SuccessAlert } from './SuccessAlert';
+import { toast } from 'sonner';
 
 interface DeleteQuotationDialogProps {
   quotation: Quotation;
@@ -25,13 +25,10 @@ export function DeleteQuotationDialog({
   onDelete
 }: DeleteQuotationDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showSuccess, setShowSuccess] = useState(false);
 
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      setError(null);
 
       const response = await fetch(`/api/quotations/${quotation.id}`, {
         method: 'DELETE',
@@ -46,65 +43,50 @@ export function DeleteQuotationDialog({
       }
 
       onDelete();
-      setShowSuccess(true);
-    } catch (err) {
-      console.error('Error deleting quotation:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete quotation');
+      toast.success('ลบใบเสนอราคาสำเร็จ', {
+        description: 'ใบเสนอราคาถูกลบเรียบร้อยแล้ว'
+      });
+      onClose();
+    } catch (error) {
+      console.error('Error deleting quotation:', error);
+      toast.error('เกิดข้อผิดพลาด', {
+        description: 'ไม่สามารถลบใบเสนอราคาได้'
+      });
     } finally {
       setIsDeleting(false);
     }
   };
 
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    onClose();
-  };
-
   return (
-    <>
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>ลบใบเสนอราคา</DialogTitle>
-            <DialogDescription>
-              คุณต้องการลบใบเสนอราคาเลขที่ #{quotation.number} ใช่หรือไม่?
-              การดำเนินการนี้ไม่สามารถยกเลิกได้
-            </DialogDescription>
-          </DialogHeader>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>ลบใบเสนอราคา</DialogTitle>
+          <DialogDescription>
+            คุณต้องการลบใบเสนอราคาเลขที่ #{quotation.number} ใช่หรือไม่?
+            การดำเนินการนี้ไม่สามารถยกเลิกได้
+          </DialogDescription>
+        </DialogHeader>
 
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
-              {error}
-            </div>
-          )}
-
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isDeleting}
-            >
-              ยกเลิก
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isDeleting}
-            >
-              {isDeleting ? 'กำลังลบ...' : 'ลบ'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <SuccessAlert
-        isOpen={showSuccess}
-        onClose={handleSuccessClose}
-        title="ลบใบเสนอราคาสำเร็จ"
-        description="ใบเสนอราคาถูกลบเรียบร้อยแล้ว"
-      />
-    </>
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isDeleting}
+          >
+            ยกเลิก
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'กำลังลบ...' : 'ลบ'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
