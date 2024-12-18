@@ -24,21 +24,30 @@ export function DeleteQuotationDialog({
   onDelete
 }: DeleteQuotationDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleDelete = async () => {
-    setIsDeleting(true);
-
     try {
+      setIsDeleting(true);
+      setError(null);
+
       const response = await fetch(`/api/quotations/${quotation.id}`, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (!response.ok) throw new Error('Failed to delete quotation');
-      
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to delete quotation');
+      }
+
       onDelete();
       onClose();
-    } catch (error) {
-      console.error('Error deleting quotation:', error);
+    } catch (err) {
+      console.error('Error deleting quotation:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete quotation');
     } finally {
       setIsDeleting(false);
     }
@@ -46,7 +55,7 @@ export function DeleteQuotationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>ลบใบเสนอราคา</DialogTitle>
           <DialogDescription>
@@ -55,12 +64,24 @@ export function DeleteQuotationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+        {error && (
+          <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+            {error}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2 sm:gap-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            disabled={isDeleting}
+          >
             ยกเลิก
           </Button>
-          <Button 
-            variant="destructive" 
+          <Button
+            type="button"
+            variant="destructive"
             onClick={handleDelete}
             disabled={isDeleting}
           >
