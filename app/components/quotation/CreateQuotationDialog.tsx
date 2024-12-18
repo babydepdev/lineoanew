@@ -5,6 +5,7 @@ import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { QuotationItemInputs } from './QuotationItemInputs';
 
 interface CreateQuotationDialogProps {
   isOpen: boolean;
@@ -42,41 +43,48 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-3xl">
         <DialogHeader>
           <DialogTitle>สร้างใบเสนอราคา</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label>LINE Account</Label>
-            <Select 
-              value={formData.lineAccountId}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, lineAccountId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="เลือก LINE Account" />
-              </SelectTrigger>
-              <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>LINE Account</Label>
+              <Select 
+                value={formData.lineAccountId}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, lineAccountId: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="เลือก LINE Account" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>ชื่อลูกค้า</Label>
+              <Input
+                value={formData.customerName}
+                onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
+                placeholder="ระบุชื่อลูกค้า"
+              />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>ชื่อลูกค้า</Label>
-            <Input
-              value={formData.customerName}
-              onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
-              placeholder="ระบุชื่อลูกค้า"
-            />
-          </div>
+          <QuotationItemInputs 
+            items={formData.items}
+            onChange={(items) => setFormData(prev => ({ ...prev, items }))}
+          />
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <Button type="button" variant="outline" onClick={onClose}>
               ยกเลิก
             </Button>
