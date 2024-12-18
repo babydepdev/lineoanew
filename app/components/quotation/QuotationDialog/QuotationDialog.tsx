@@ -44,11 +44,13 @@ export function QuotationDialog({ isOpen, onClose }: QuotationDialogProps) {
         </DialogContent>
       </Dialog>
 
-      <CreateQuotationDialog 
-        isOpen={isCreateDialogOpen}
-        onClose={() => setIsCreateDialogOpen(false)}
-        onSuccess={handleCreateSuccess}
-      />
+      {isCreateDialogOpen && (
+        <CreateQuotationDialog 
+          isOpen={isCreateDialogOpen}
+          onClose={() => setIsCreateDialogOpen(false)}
+          onSuccess={handleCreateSuccess}
+        />
+      )}
     </>
   );
 }
