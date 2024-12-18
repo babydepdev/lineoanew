@@ -12,10 +12,16 @@ export function useQuotationsByAccount(accountId: string) {
         if (!response.ok) throw new Error('Failed to fetch quotations');
         
         const data = await response.json();
-        setQuotations(data.map((q: any) => ({
-          ...q,
-          createdAt: new Date(q.createdAt)
-        })));
+        const sortedQuotations = data
+          .map((q: any) => ({
+            ...q,
+            createdAt: new Date(q.createdAt)
+          }))
+          .sort((a: Quotation, b: Quotation) => 
+            b.createdAt.getTime() - a.createdAt.getTime()
+          );
+
+        setQuotations(sortedQuotations);
       } catch (error) {
         console.error('Error fetching quotations:', error);
         setQuotations([]);
