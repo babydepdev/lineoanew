@@ -28,29 +28,33 @@ export function SuccessAlert({
   useEffect(() => {
     if (isOpen) {
       setOpen(true);
-      // Auto close after 2 seconds
-      const timer = setTimeout(() => {
-        setOpen(false);
-        onClose();
-      }, 2000);
-      return () => clearTimeout(timer);
     }
-  }, [isOpen, onClose]);
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setOpen(false);
+    onClose();
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogContent className="max-w-[360px]">
+      <AlertDialogContent className="max-w-[360px] w-[90vw] sm:w-full">
         <AlertDialogHeader>
           <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-green-100 flex items-center justify-center">
             <CheckCircle2 className="h-6 w-6 text-green-600" />
           </div>
-          <AlertDialogTitle className="text-center">{title}</AlertDialogTitle>
-          <AlertDialogDescription className="text-center">
+          <AlertDialogTitle className="text-center text-base sm:text-lg">
+            {title}
+          </AlertDialogTitle>
+          <AlertDialogDescription className="text-center text-sm sm:text-base">
             {description}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogAction onClick={onClose} className="w-full">
+          <AlertDialogAction 
+            onClick={handleClose} 
+            className="w-full h-11 text-base font-medium"
+          >
             ตกลง
           </AlertDialogAction>
         </AlertDialogFooter>
