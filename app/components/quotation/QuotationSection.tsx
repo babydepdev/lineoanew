@@ -21,7 +21,9 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
     return (
       <div className="space-y-3">
         <h3 className="text-lg font-semibold text-slate-900">{account.name}</h3>
-        <p className="text-sm text-slate-500">ไม่มีใบเสนอราคา</p>
+        <p className="text-sm text-slate-500 p-4 bg-slate-50 rounded-lg text-center">
+          ไม่มีใบเสนอราคา
+        </p>
       </div>
     );
   }
