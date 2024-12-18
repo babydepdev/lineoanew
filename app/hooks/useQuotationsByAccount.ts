@@ -6,6 +6,12 @@ export function useQuotationsByAccount(accountId: string) {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchQuotations = useCallback(async () => {
+    if (!accountId) {
+      setQuotations([]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch(`/api/quotations?accountId=${accountId}`);
       if (!response.ok) throw new Error('Failed to fetch quotations');
