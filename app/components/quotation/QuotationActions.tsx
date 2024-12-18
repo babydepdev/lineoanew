@@ -14,13 +14,19 @@ import { Quotation } from '@/app/types/quotation';
 
 interface QuotationActionsProps {
   quotation: Quotation;
-  onUpdate: () => void;
+  onUpdate?: () => void;  // Make onUpdate optional
 }
 
 export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps) {
   const [viewOpen, setViewOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const handleUpdate = () => {
+    if (onUpdate) {
+      onUpdate();
+    }
+  };
 
   const handlePrint = () => {
     // TODO: Implement print functionality
@@ -68,14 +74,14 @@ export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps)
         quotation={quotation}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
-        onUpdate={onUpdate}
+        onUpdate={handleUpdate}
       />
 
       <DeleteQuotationDialog
         quotation={quotation}
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
-        onDelete={onUpdate}
+        onDelete={handleUpdate}
       />
     </>
   );

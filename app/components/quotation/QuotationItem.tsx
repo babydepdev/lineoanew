@@ -1,13 +1,13 @@
 import { Quotation } from '@/app/types/quotation';
 import { formatTimestamp } from '@/app/utils/dateFormatter';
-import { Button } from '../ui/button';
-import { FileText, Printer, MoreHorizontal } from 'lucide-react';
+import { QuotationActions } from './QuotationActions';
 
 interface QuotationItemProps {
   quotation: Quotation;
+  onUpdate?: () => void;
 }
 
-export function QuotationItem({ quotation }: QuotationItemProps) {
+export function QuotationItem({ quotation, onUpdate }: QuotationItemProps) {
   return (
     <div className="p-4 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
       <div className="flex items-center justify-between">
@@ -26,17 +26,10 @@ export function QuotationItem({ quotation }: QuotationItemProps) {
             {formatTimestamp(quotation.createdAt)}
           </span>
           
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <FileText className="h-4 w-4 text-slate-500" />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <Printer className="h-4 w-4 text-slate-500" />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4 text-slate-500" />
-            </Button>
-          </div>
+          <QuotationActions 
+            quotation={quotation} 
+            onUpdate={onUpdate}
+          />
         </div>
       </div>
     </div>

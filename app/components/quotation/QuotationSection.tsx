@@ -9,7 +9,7 @@ interface QuotationSectionProps {
 }
 
 export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
-  const { quotations, isLoading } = useQuotationsByAccount(account.id);
+  const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
 
   if (isLoading) {
     return <QuotationSectionSkeleton name={account.name} />;
@@ -39,6 +39,7 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
           <QuotationItem 
             key={quotation.id} 
             quotation={quotation}
+            onUpdate={mutate}
           />
         ))}
       </div>
