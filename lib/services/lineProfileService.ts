@@ -1,5 +1,5 @@
 import { LineUserProfile } from '@/app/types/line';
-import { getLineClient } from './lineService';
+import { getLineClient } from './line/client/instance';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -65,27 +65,6 @@ export async function getLineUserProfile(userId: string): Promise<LineUserProfil
     };
   } catch (error) {
     console.error('Error fetching LINE user profile:', error);
-    
-    // If API fails, return cached profile even if stale
-    const staleProfile = await prisma.userProfile.findUnique({
-      where: { 
-        userId_platform: { 
-          userId, 
-          platform: 'LINE' 
-        } 
-      }
-    });
-
-    if (staleProfile) {
-      return {
-        userId: staleProfile.userId,
-        displayName: staleProfile.displayName,
-        pictureUrl: staleProfile.pictureUrl || undefined,
-        statusMessage: staleProfile.statusMessage || undefined,
-        platform: 'LINE'
-      };
-    }
-
     return null;
   }
 }

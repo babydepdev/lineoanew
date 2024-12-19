@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLineClient } from '@/lib/services/lineService';
+import { getLineClient } from '@/lib/services/line/client/index';
 import { getImageBuffer } from '@/lib/services/line/image';
 import { validateLineImage } from '@/lib/services/line/image';
 
