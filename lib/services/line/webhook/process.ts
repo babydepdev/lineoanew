@@ -1,9 +1,9 @@
 import { 
   LineWebhookBody, 
   LineAccount, 
-  LineWebhookProcessingResult,
-  LineMessageEvent
+  LineMessageEvent 
 } from '@/app/types/line';
+import { WebhookProcessingResult, WebhookEventResult } from './types';
 import { processMessageEvent } from './events/message';
 import { processFollowEvent } from './events/follow';
 import { processUnfollowEvent } from './events/unfollow';
@@ -11,7 +11,7 @@ import { processUnfollowEvent } from './events/unfollow';
 export async function processWebhookEvents(
   webhookBody: LineWebhookBody,
   account: LineAccount
-): Promise<LineWebhookProcessingResult> {
+): Promise<WebhookProcessingResult> {
   const results = await Promise.allSettled(
     webhookBody.events.map(event => processEvent(event, account))
   );
@@ -33,7 +33,10 @@ export async function processWebhookEvents(
   };
 }
 
-async function processEvent(event: LineMessageEvent, account: LineAccount) {
+async function processEvent(
+  event: LineMessageEvent, 
+  account: LineAccount
+): Promise<WebhookEventResult> {
   try {
     switch (event.type) {
       case 'message':

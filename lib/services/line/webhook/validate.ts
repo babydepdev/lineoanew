@@ -1,10 +1,5 @@
-import { SignatureVerificationResult } from '@/app/types/line';
+import { WebhookValidationResult } from './types';
 import { findLineAccountBySignature } from '../account/verify';
-
-export interface WebhookValidationResult extends SignatureVerificationResult {
-  isValid: boolean;
-  error?: string;
-}
 
 export async function validateWebhookRequest(
   body: string,
@@ -15,7 +10,8 @@ export async function validateWebhookRequest(
     if (!signature) {
       return {
         isValid: false,
-        error: 'Missing LINE signature header'
+        error: 'Missing LINE signature header',
+        account: undefined
       };
     }
 
@@ -24,7 +20,8 @@ export async function validateWebhookRequest(
     if (!verificationResult || !verificationResult.account) {
       return {
         isValid: false,
-        error: 'Invalid signature or no matching account'
+        error: 'Invalid signature or no matching account',
+        account: undefined
       };
     }
 
@@ -36,7 +33,8 @@ export async function validateWebhookRequest(
     console.error('Error validating webhook:', error);
     return {
       isValid: false,
-      error: 'Webhook validation failed'
+      error: 'Webhook validation failed',
+      account: undefined
     };
   }
 }

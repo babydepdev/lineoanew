@@ -1,11 +1,12 @@
 import { LineMessageEvent, LineAccount } from '@/app/types/line';
+import { WebhookEventResult } from '../types';
 import { validateLineMessage } from '../../message/validate';
 import { createLineMessage } from '../../message/create';
 
 export async function processMessageEvent(
   event: LineMessageEvent,
   account: LineAccount
-) {
+): Promise<WebhookEventResult> {
   try {
     // Validate message
     const validation = validateLineMessage(event);
