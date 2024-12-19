@@ -1,3 +1,4 @@
+// Message creation results
 export interface MessageCreateResult {
   success: boolean;
   messageId?: string;
@@ -9,9 +10,7 @@ export interface MessageSendResult {
   error?: string;
 }
 
-export interface MessageValidationResult {
-  isValid: boolean;
+export interface MessageProcessResult {
+  success: boolean;
   error?: string;
-  text?: string;
-  messageType?: 'text' | 'image';
 }

@@ -2,24 +2,12 @@
 export * from './messages';
 export * from './params';
 export * from './results';
-
+export * from './validation';
 
 // Core message types
 export interface MessageBase {
   type: string;
   messageId: string;
-}
-
-// Message results
-export interface MessageCreateResult {
-  success: boolean;
-  messageId?: string;
-  error?: string;
-}
-
-export interface MessageSendResult {
-  success: boolean;
-  error?: string;
 }
 
 // Message validation
