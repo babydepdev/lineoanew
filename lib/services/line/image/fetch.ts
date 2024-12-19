@@ -1,45 +1,29 @@
 import { Client } from '@line/bot-sdk';
-import { LineImageResponse, LineImageStream } from './types';
+import { LineImageStream, LineImageResponse } from './types';
 
-/**
- * Fetch raw image content from LINE's API
- */
-export async function fetchImageContent(
+export async function fetchLineImage(
   client: Client,
   messageId: string
 ): Promise<LineImageStream> {
   try {
-    const response = await client.getMessageContent(messageId) as LineImageResponse;
+    // Get message content as unknown first
+    const response = await client.getMessageContent(messageId) as unknown;
     
-    if (!response || !response.headers) {
+    // Validate response
+    if (!response || typeof response !== 'object') {
       throw new Error('Invalid response from LINE API');
     }
 
-    // Create a stream with headers
-    const stream = response as unknown as LineImageStream;
-    stream.headers = response.headers;
+    // Cast to our expected type
+    const imageResponse = response as LineImageResponse;
+    
+    // Create stream with headers
+    const stream = imageResponse as unknown as LineImageStream;
+    stream.headers = imageResponse.headers || {};
 
     return stream;
   } catch (error) {
     console.error('Error fetching LINE image:', error);
     throw new Error('Failed to fetch image from LINE API');
-  }
-}
-
-/**
- * Convert stream to buffer
- */
-export async function streamToBuffer(stream: LineImageStream): Promise<Buffer> {
-  const chunks: Buffer[] = [];
-  
-  try {
-    for await (const chunk of stream) {
-      chunks.push(Buffer.from(chunk));
-    }
-    
-    return Buffer.concat(chunks);
-  } catch (error) {
-    console.error('Error converting stream to buffer:', error);
-    throw new Error('Failed to convert stream to buffer');
   }
 }

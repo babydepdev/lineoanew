@@ -1,37 +1,37 @@
 import { Readable } from 'stream';
 import { MessageAPIResponseBase } from '@line/bot-sdk';
 
-// Core types for LINE API responses
-export interface LineImageHeaders {
-  'content-type'?: string;
-  'content-length'?: string;
-}
-
+// Response types
 export interface LineImageResponse extends MessageAPIResponseBase {
-  headers: LineImageHeaders;
+  headers: {
+    'content-type'?: string;
+    'content-length'?: string;
+  };
 }
 
-// Extended stream type with headers
+// Stream with headers
 export interface LineImageStream extends Readable {
-  headers: LineImageHeaders;
+  headers: {
+    'content-type'?: string;
+    'content-length'?: string;
+  };
 }
 
-// Metadata types
-export interface LineImageMetadata {
-  messageId: string;
-  contentType?: string;
-  contentLength?: number;
-}
-
-// Result types
-export interface ImageProcessingResult {
-  success: boolean;
-  url: string;
-  error?: string;
-}
-
+// Validation types
 export interface ImageValidationResult {
   isValid: boolean;
   error?: string;
-  metadata?: LineImageMetadata;
+  metadata?: {
+    messageId: string;
+    contentType?: string;
+    contentLength?: number;
+  };
+}
+
+// Processing result
+export interface ImageProcessingResult {
+  success: boolean;
+  buffer?: Buffer;
+  contentType?: string;
+  error?: string;
 }
