@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLineClient } from '@/lib/services/lineService';
+import { getLineImageBuffer } from '@/lib/services/line/image/process';
+import { validateLineImage } from '@/lib/services/line/image/validate';
 
 export async function GET(
   _request: NextRequest,
@@ -7,17 +9,21 @@ export async function GET(
 ) {
   try {
     const { messageId } = params;
+    
+    // Validate the image request
+    const validation = await validateLineImage(messageId);
+    if (!validation.isValid) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    // Get LINE client
     const client = getLineClient();
     
-    // Get image content from LINE API
-    const imageStream = await client.getMessageContent(messageId);
-    
-    // Convert stream to buffer
-    const chunks = [];
-    for await (const chunk of imageStream) {
-      chunks.push(chunk);
-    }
-    const buffer = Buffer.concat(chunks);
+    // Fetch image buffer
+    const buffer = await getLineImageBuffer(client, messageId);
 
     // Return image with proper headers
     return new NextResponse(buffer, {
@@ -27,9 +33,9 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Error fetching LINE image:', error);
+    console.error('Error serving LINE image:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch image' },
+      { error: 'Failed to serve image' },
       { status: 500 }
     );
   }

@@ -1,6 +1,7 @@
 import { LineMessageEvent } from '@/app/types/line';
 import { LineMessageValidationResult } from './types';
 import { isValidMessage } from './types/messages';
+import { createImageContent } from '../image/fetch';
 
 export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   try {
@@ -33,12 +34,14 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
         return { isValid: true, text, messageType: 'text' };
 
       case 'image':
-        // For image messages, we'll use a placeholder text with the image URL
-        // The actual image URL will be handled by the LINE API
-        const imageUrl = `https://api-data.line.me/v2/bot/message/${event.message.id}/content`;
+        // Create image content with proper URL
+        const content = createImageContent({
+          messageId: event.message.id
+        });
+        
         return { 
           isValid: true, 
-          text: `[Image]${imageUrl}`,
+          text: content,
           messageType: 'image'
         };
 
