@@ -1,37 +1,52 @@
 import { MessageEvent } from '@line/bot-sdk';
-import { LineMessageValidationResult } from './types';
-import { isValidMessage } from './types/messages';
-import { parseImageMessage } from './types/imageMessage';
+import { MessageValidationResult } from './types/base';
+import { validateSource } from './types/source';
+import { validateTextMessage } from './types/text';
+import { validateImageMessage, parseImageMessage } from './types/image';
 
-export function validateLineMessage(event: MessageEvent): LineMessageValidationResult {
+export function validateLineMessage(event: MessageEvent): MessageValidationResult {
   try {
-    if (!isValidMessage(event)) {
+    // Validate source first
+    if (!validateSource(event.source)) {
       return {
         isValid: false,
-        error: 'Invalid message format'
+        error: 'Invalid source or missing userId'
       };
     }
 
+    // Validate message based on type
     const message = event.message;
 
     switch (message.type) {
       case 'text':
-        const text = message.text?.trim();
+        if (!validateTextMessage(message)) {
+          return {
+            isValid: false,
+            error: 'Invalid text message format'
+          };
+        }
+        const text = message.text.trim();
         if (!text) {
           return {
             isValid: false,
-            error: 'Empty or missing text content'
+            error: 'Empty text content'
           };
         }
         return { 
           isValid: true, 
-          text, 
-          messageType: 'text' 
+          text,
+          messageType: 'text'
         };
 
       case 'image':
+        if (!validateImageMessage(message)) {
+          return {
+            isValid: false,
+            error: 'Invalid image message format'
+          };
+        }
         try {
-          const imageContent = parseImageMessage(event);
+          const imageContent = parseImageMessage(message);
           return { 
             isValid: true, 
             text: JSON.stringify(imageContent),
@@ -40,7 +55,7 @@ export function validateLineMessage(event: MessageEvent): LineMessageValidationR
         } catch (error) {
           return {
             isValid: false,
-            error: 'Invalid image message format'
+            error: 'Failed to parse image message'
           };
         }
 
