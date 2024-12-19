@@ -20,14 +20,26 @@ export async function processLineImage(
 
     // Fetch image stream
     const stream = await fetchLineImage(client, messageId);
+    if (!stream || !stream.readable) {
+      return {
+        success: false,
+        error: 'Invalid image stream'
+      };
+    }
     
     // Convert to buffer
     const buffer = await streamToBuffer(stream);
+    if (!buffer || buffer.length === 0) {
+      return {
+        success: false,
+        error: 'Empty image buffer'
+      };
+    }
     
     return {
       success: true,
       buffer,
-      contentType: stream.headers['content-type']
+      contentType: 'image/jpeg' // LINE API always returns JPEG
     };
   } catch (error) {
     console.error('Error processing LINE image:', error);
@@ -42,6 +54,20 @@ export async function getImageBuffer(
   client: Client,
   messageId: string
 ): Promise<Buffer> {
-  const stream = await fetchLineImage(client, messageId);
-  return streamToBuffer(stream);
+  try {
+    const stream = await fetchLineImage(client, messageId);
+    if (!stream || !stream.readable) {
+      throw new Error('Invalid image stream');
+    }
+    
+    const buffer = await streamToBuffer(stream);
+    if (!buffer || buffer.length === 0) {
+      throw new Error('Empty image buffer');
+    }
+    
+    return buffer;
+  } catch (error) {
+    console.error('Error getting image buffer:', error);
+    throw error;
+  }
 }

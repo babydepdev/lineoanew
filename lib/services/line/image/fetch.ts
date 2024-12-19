@@ -6,22 +6,17 @@ export async function fetchLineImage(
   messageId: string
 ): Promise<LineImageStream> {
   try {
-    // Get message content as unknown first
-    const response = await client.getMessageContent(messageId) as unknown;
+    // Get message content as a stream
+    const stream = await client.getMessageContent(messageId);
     
-    // Validate response
-    if (!response || typeof response !== 'object') {
-      throw new Error('Invalid response from LINE API');
-    }
+    // Add headers to the stream
+    const imageStream = stream as LineImageStream;
+    imageStream.headers = {
+      'content-type': 'image/jpeg', // LINE API always returns JPEG
+      'content-length': stream.readable ? '0' : undefined
+    };
 
-    // Cast to our expected type
-    const imageResponse = response as LineImageResponse;
-    
-    // Create stream with headers
-    const stream = imageResponse as unknown as LineImageStream;
-    stream.headers = imageResponse.headers || {};
-
-    return stream;
+    return imageStream;
   } catch (error) {
     console.error('Error fetching LINE image:', error);
     throw new Error('Failed to fetch image from LINE API');
