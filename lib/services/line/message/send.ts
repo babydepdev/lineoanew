@@ -1,10 +1,8 @@
-import { Client } from '@line/bot-sdk';
 import { MessageSendResult } from './types';
 import { findLineAccountById } from '../account';
 import { createTextMessage } from './types/messages';
 import { validateMessageContent } from './validate/content';
-import { clientManager } from '../client/manager';
-
+import { getLineClient } from '../../lineService';
 
 export async function sendLineMessage(
   userId: string, 
@@ -28,7 +26,7 @@ export async function sendLineMessage(
     }
 
     // Get LINE account and client
-    let client: Client;
+    let client;
     if (lineAccountId) {
       const account = await findLineAccountById(lineAccountId);
       if (!account) {
@@ -37,9 +35,9 @@ export async function sendLineMessage(
           error: 'LINE account not found'
         };
       }
-      client = clientManager.getClient(account);
+      client = getLineClient(account);
     } else {
-      client = clientManager.getClient();
+      client = getLineClient();
     }
 
     // Create message

@@ -1,8 +1,9 @@
 import { Client } from '@line/bot-sdk';
 import { LineAccount } from '@/app/types/line';
+import { LineClientManager } from './types';
 import { getLineClientConfig } from './config';
 
-class LineClientManager {
+class DefaultLineClientManager implements LineClientManager {
   private defaultClient: Client | null = null;
   private accountClients = new Map<string, Client>();
 
@@ -32,4 +33,7 @@ class LineClientManager {
 }
 
 // Export singleton instance
-export const clientManager = new LineClientManager();
+export const clientManager = new DefaultLineClientManager();
+
+// Export convenience function
+export const getLineClient = (account?: LineAccount) => clientManager.getClient(account);
