@@ -1,7 +1,8 @@
 import { LineMessageEvent } from '@/app/types/line';
-import { MessageValidationResult } from '../types';
+import { MessageValidationResult } from '../types/validation';
 import { isValidMessage } from '../types/messages';
 import { validateMessageContent } from './content';
+import { createImageContent } from '../../image/content';
 
 export function validateLineMessage(event: LineMessageEvent): MessageValidationResult {
   try {
@@ -36,9 +37,13 @@ export function validateLineMessage(event: LineMessageEvent): MessageValidationR
       }
 
       case 'image':
+        const content = createImageContent({
+          messageId: event.message.id
+        });
+        
         return {
           isValid: true,
-          text: '[Image]',
+          text: content,
           messageType: 'image'
         };
 
