@@ -4,38 +4,42 @@ import { fetchLineImage } from './fetch';
 import { streamToBuffer } from './stream';
 import { validateLineImage } from './validate';
 
-export async function processLineImage(
+export async function getImageBuffer(
   client: Client,
   messageId: string
-): Promise<ImageProcessingResult> {
+): Promise<Buffer> {
   try {
     // Validate request
     const validation = await validateLineImage(messageId);
     if (!validation.isValid) {
-      return {
-        success: false,
-        error: validation.error
-      };
+      throw new Error(validation.error || 'Invalid image request');
     }
 
     // Fetch image stream
     const stream = await fetchLineImage(client, messageId);
     if (!stream || !stream.readable) {
-      return {
-        success: false,
-        error: 'Invalid image stream'
-      };
+      throw new Error('Invalid image stream');
     }
     
-    // Convert to buffer and then base64
+    // Convert to buffer
     const buffer = await streamToBuffer(stream);
     if (!buffer || buffer.length === 0) {
-      return {
-        success: false,
-        error: 'Empty image buffer'
-      };
+      throw new Error('Empty image buffer');
     }
 
+    return buffer;
+  } catch (error) {
+    console.error('Error getting image buffer:', error);
+    throw error;
+  }
+}
+
+export async function processLineImage(
+  client: Client,
+  messageId: string
+): Promise<ImageProcessingResult> {
+  try {
+    const buffer = await getImageBuffer(client, messageId);
     const base64Data = buffer.toString('base64');
     
     return {
@@ -56,20 +60,6 @@ export async function getImageBase64(
   client: Client,
   messageId: string
 ): Promise<string> {
-  try {
-    const stream = await fetchLineImage(client, messageId);
-    if (!stream || !stream.readable) {
-      throw new Error('Invalid image stream');
-    }
-    
-    const buffer = await streamToBuffer(stream);
-    if (!buffer || buffer.length === 0) {
-      throw new Error('Empty image buffer');
-    }
-    
-    return buffer.toString('base64');
-  } catch (error) {
-    console.error('Error getting image base64:', error);
-    throw error;
-  }
+  const buffer = await getImageBuffer(client, messageId);
+  return buffer.toString('base64');
 }

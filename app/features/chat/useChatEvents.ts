@@ -38,7 +38,8 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
       
       const updatedMessage = {
         ...message,
-        timestamp: new Date(message.timestamp)
+        timestamp: new Date(message.timestamp),
+        imageBase64: message.imageBase64 || null // Add imageBase64 field
       };
       
       addMessage(updatedMessage);
@@ -51,7 +52,8 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
         ...pusherConversation,
         messages: pusherConversation.messages.map(msg => ({
           ...msg,
-          timestamp: new Date(msg.timestamp)
+          timestamp: new Date(msg.timestamp),
+          imageBase64: msg.imageBase64 || null // Add imageBase64 field
         })),
         createdAt: new Date(pusherConversation.createdAt),
         updatedAt: new Date(pusherConversation.updatedAt)
@@ -69,7 +71,8 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
         ...conv,
         messages: conv.messages.map(msg => ({
           ...msg,
-          timestamp: new Date(msg.timestamp)
+          timestamp: new Date(msg.timestamp),
+          imageBase64: msg.imageBase64 || null // Add imageBase64 field
         })),
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)

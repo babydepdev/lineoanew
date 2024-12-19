@@ -12,7 +12,7 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message with all required fieldsk
+      // Create temporary message with all required fields
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
@@ -22,7 +22,8 @@ export function useChatActions() {
         platform: selectedConversation.platform as Platform,
         externalId: null,
         chatType: null,
-        chatId: null
+        chatId: null,
+        imageBase64: null // Add the missing imageBase64 field
       };
 
       // Update conversation with temporary message
@@ -68,7 +69,8 @@ export function useChatActions() {
             platform: msg.platform,
             externalId: msg.externalId,
             chatType: msg.chatType,
-            chatId: msg.chatId
+            chatId: msg.chatId,
+            imageBase64: msg.imageBase64
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt),

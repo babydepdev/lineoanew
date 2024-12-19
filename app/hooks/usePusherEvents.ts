@@ -3,7 +3,8 @@
 import { useEffect } from 'react';
 import { Message, Platform, SenderType } from '@prisma/client';
 import { PusherMessage, PusherConversation } from '../types/chat';
-import { pusherClient, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
+import { pusherClient } from '../config/pusher';
+import { PUSHER_EVENTS, PUSHER_CHANNELS } from '../config/constants';
 import { useChatState } from '../features/chat/useChatState';
 
 export function usePusherEvents() {
@@ -34,7 +35,8 @@ export function usePusherEvents() {
           platform: message.platform as Platform,
           externalId: message.externalId,
           chatType: message.chatType || null,
-          chatId: message.chatId || null
+          chatId: message.chatId || null,
+          imageBase64: message.imageBase64 || null
         };
 
         addMessage(processedMessage);
@@ -55,7 +57,8 @@ export function usePusherEvents() {
           platform: msg.platform as Platform,
           externalId: msg.externalId,
           chatType: msg.chatType || null,
-          chatId: msg.chatId || null
+          chatId: msg.chatId || null,
+          imageBase64: msg.imageBase64 || null
         }));
 
         const updatedConversation = {
@@ -96,7 +99,8 @@ export function usePusherEvents() {
             platform: msg.platform as Platform,
             externalId: msg.externalId,
             chatType: msg.chatType || null,
-            chatId: msg.chatId || null
+            chatId: msg.chatId || null,
+            imageBase64: msg.imageBase64 || null
           })),
           createdAt: new Date(conv.createdAt),
           updatedAt: new Date(conv.updatedAt),
