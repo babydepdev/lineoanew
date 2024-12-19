@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { LineUserProfile } from '@/app/types/line';
+
 
 const prisma = new PrismaClient();
 
