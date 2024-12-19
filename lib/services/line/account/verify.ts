@@ -1,24 +1,21 @@
 import { SignatureVerificationResult } from '@/app/types/line';
 import { getActiveLineAccounts } from './find';
-import { verifyLineSignature } from '../signature';
+import { verifySignature } from '../webhook/validate';
 
 export async function findLineAccountBySignature(
   body: string,
-  signature: string | null
+  signature: string
 ): Promise<SignatureVerificationResult | null> {
   try {
-    if (!signature) {
-      console.error('No signature provided');
-      return null;
-    }
-
+    // Get all active LINE accounts
     const accounts = await getActiveLineAccounts();
     console.log('Checking signature against accounts:', accounts.length);
 
+    // Try each account's channel secret
     for (const account of accounts) {
       console.log('Verifying against account:', account.id);
       
-      const isValid = verifyLineSignature(body, signature, account.channelSecret);
+      const isValid = verifySignature(body, signature, account.channelSecret);
       
       if (isValid) {
         console.log('Found matching account:', account.id);

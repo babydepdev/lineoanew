@@ -6,11 +6,12 @@ import { processWebhookEvents } from '@/lib/services/line/webhook/process';
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
-    console.log('Received LINE webhook:', rawBody);
+    console.log('Received LINE webhook');
 
     // Get signature from headers
     const signature = request.headers.get('x-line-signature');
-    
+    console.log('LINE signature:', signature);
+
     // Validate webhook request
     const validation = await validateWebhookRequest(rawBody, signature);
     if (!validation.isValid || !validation.account) {
@@ -35,7 +36,6 @@ export async function POST(request: NextRequest) {
 
     // Process webhook events
     const result = await processWebhookEvents(webhookBody, validation.account);
-
     console.log('Webhook processing result:', result);
 
     return NextResponse.json({
