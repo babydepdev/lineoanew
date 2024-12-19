@@ -15,19 +15,36 @@ export async function getImageBuffer(
       throw new Error(validation.error || 'Invalid image request');
     }
 
-    // Fetch image stream
-    const stream = await fetchLineImage(client, messageId);
-    if (!stream || !stream.readable) {
-      throw new Error('Invalid image stream');
-    }
-    
-    // Convert to buffer
-    const buffer = await streamToBuffer(stream);
-    if (!buffer || buffer.length === 0) {
-      throw new Error('Empty image buffer');
+    // Add retry logic for fetching image
+    let retries = 3;
+    let lastError: Error | null = null;
+
+    while (retries > 0) {
+      try {
+        // Fetch image stream
+        const stream = await fetchLineImage(client, messageId);
+        if (!stream || !stream.readable) {
+          throw new Error('Invalid image stream');
+        }
+        
+        // Convert to buffer
+        const buffer = await streamToBuffer(stream);
+        if (!buffer || buffer.length === 0) {
+          throw new Error('Empty image buffer');
+        }
+
+        return buffer;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+        retries--;
+        if (retries > 0) {
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
     }
 
-    return buffer;
+    throw lastError || new Error('Failed to fetch image after retries');
   } catch (error) {
     console.error('Error getting image buffer:', error);
     throw error;
