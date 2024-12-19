@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { ProfileAvatar } from './ProfileAvatar';
 import { useChatState } from '../features/chat/useChatState';
 import { MessageActions } from './chat/MessageActions';
-import Image from 'next/image';
 
 interface MessageBubbleProps {
   message: Message;
@@ -18,7 +17,6 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
-  const isImage = message.contentType === 'image';
 
   return (
     <div className={cn(
@@ -43,26 +41,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         displayAsUser ? "items-end" : "items-start"
       )}>
         <div className={cn(
-          "rounded-2xl overflow-hidden",
+          "px-4 py-2.5 text-sm rounded-2xl",
           displayAsUser 
             ? "bg-primary text-primary-foreground rounded-br-none" 
             : "bg-slate-800 text-white rounded-bl-none",
-          isTempMessage && "opacity-70",
-          isImage ? "p-0" : "px-4 py-2.5"
+          isTempMessage && "opacity-70"
         )}>
-          {isImage && message.contentUrl ? (
-            <div className="relative w-[240px] h-[240px]">
-              <Image
-                src={message.contentUrl}
-                alt="Message image"
-                fill
-                className="object-cover"
-                sizes="(max-width: 240px) 100vw, 240px"
-              />
-            </div>
-          ) : (
-            <span className="text-sm">{message.content}</span>
-          )}
+          {message.content}
         </div>
         <div className={cn(
           "px-2 text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity",

@@ -6,9 +6,7 @@ const prisma = new PrismaClient();
 export async function createMessage(params: MessageCreateParams): Promise<Message> {
   const { 
     conversationId, 
-    content,
-    contentType,
-    contentUrl,
+    content, 
     sender, 
     platform, 
     externalId, 
@@ -21,8 +19,6 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
     data: {
       conversationId,
       content,
-      contentType,
-      contentUrl,
       sender,
       platform,
       externalId,

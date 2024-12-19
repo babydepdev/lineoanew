@@ -8,14 +8,8 @@ export interface LineMessageParams {
   timestamp: Date;
   channelId: string;
   platform: Platform;
-  lineAccountId: string;
+  lineAccountId?: string | null;
   source: LineSource;
-  messageType?: 'text' | 'image';
-  contentProvider?: {
-    type: string;
-    originalContentUrl?: string;
-    previewImageUrl?: string;
-  };
 }
 
 export interface LineMessageResult {
@@ -24,26 +18,13 @@ export interface LineMessageResult {
   error?: string;
 }
 
-export interface TextMessageParams extends BaseMessageParams {
-  contentType: 'text';
-  content: string;
-  contentUrl?: never;
+export interface LineMessageValidationResult {
+  isValid: boolean;
+  error?: string;
+  text?: string;
 }
 
-export interface ImageMessageParams extends BaseMessageParams {
-  contentType: 'image';
-  content: string;
-  contentUrl: string;
+export interface SendMessageResult {
+  success: boolean;
+  error?: string;
 }
-
-interface BaseMessageParams {
-  conversationId: string;
-  sender: 'USER' | 'BOT';
-  platform: Platform;
-  timestamp?: Date;
-  externalId?: string | null;
-  chatType?: string | null;
-  chatId?: string | null;
-}
-
-export type MessageCreateParams = TextMessageParams | ImageMessageParams;

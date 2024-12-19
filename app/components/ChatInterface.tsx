@@ -6,12 +6,11 @@ import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
 import { Separator } from './ui/separator';
 import { TypingIndicator } from './TypingIndicator';
-import { Platform } from '@prisma/client';
+import { Message, Platform, SenderType } from '@prisma/client';
 import { Header } from './layout/Header';
 import { Sidebar } from './chat/Sidebar';
 import { ChatHeader } from './chat/ChatHeader';
 import { MessageCircle } from 'lucide-react';
-import { createTempMessage } from '../types/message';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -30,12 +29,17 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
 
   const handleSendMessage = async (content: string) => {
     if (selectedConversation) {
-      const tempMessage = createTempMessage({
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
         content,
-        sender: 'USER',
-        platform: selectedConversation.platform as Platform
-      });
+        sender: 'USER' as SenderType,
+        timestamp: new Date(),
+        platform: selectedConversation.platform as Platform,
+        externalId: null,
+        chatType: null,
+        chatId: null
+      };
 
       messageListRef.current?.addLocalMessage(tempMessage);
       await sendMessage(content);

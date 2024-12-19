@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 import { formatConversationForPusher } from '@/lib/messageFormatter';
-import { ConversationWithMessages } from '@/app/types/chat';
 
 const prisma = new PrismaClient();
 
@@ -26,20 +25,13 @@ export async function GET(request: NextRequest) {
     });
     
     // Format conversations for Pusher
-    const formattedConversations = conversations.map((conv): ConversationWithMessages => ({
-      ...conv,
-      messages: conv.messages.map(msg => ({
-        ...msg,
-        contentType: msg.contentType || 'text',
-        contentUrl: msg.contentUrl || null
-      }))
-    }));
+    const formattedConversations = conversations.map(formatConversationForPusher);
     
     // Broadcast conversations update
     await pusherServer.trigger(
       PUSHER_CHANNELS.CHAT,
       PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-      formattedConversations.map(formatConversationForPusher)
+      formattedConversations
     );
     
     return NextResponse.json(formattedConversations);

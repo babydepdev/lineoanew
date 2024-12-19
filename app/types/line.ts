@@ -13,18 +13,6 @@ export interface LineSource {
   roomId?: string;
   groupId?: string;
 }
-// Update LineMessageContent interface
-export interface LineMessageContent {
-  type: string;
-  text?: string;
-  id: string;
-  quoteToken?: string;
-  contentProvider?: {
-    type: string;
-    originalContentUrl?: string;
-    previewImageUrl?: string;
-  };
-}
 
 export interface LineMessageEvent {
   type: string;

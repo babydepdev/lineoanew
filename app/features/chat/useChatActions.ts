@@ -1,10 +1,9 @@
 "use client";
 
 import { APIResponse } from '@/app/types/api';
-import { ConversationWithMessages, MessageWithChat } from '@/app/types/chat';
-import { createTempMessage, TempMessageParams } from '@/app/types/message';
-import { Platform, SenderType } from '@prisma/client';
+import { ConversationWithMessages } from '@/app/types/chat';
 import { useChatState } from './useChatState';
+import { Message, Platform, SenderType } from '@prisma/client';
 
 export function useChatActions() {
   const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
@@ -13,16 +12,18 @@ export function useChatActions() {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message params
-      const tempParams: TempMessageParams = {
+      // Create temporary message with all required fieldsk
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
         content,
         sender: 'BOT' as SenderType,
-        platform: selectedConversation.platform as Platform
+        timestamp: new Date(),
+        platform: selectedConversation.platform as Platform,
+        externalId: null,
+        chatType: null,
+        chatId: null
       };
-
-      // Create temporary message with all required fields
-      const tempMessage = createTempMessage(tempParams);
 
       // Update conversation with temporary message
       const updatedConversation: ConversationWithMessages = {
@@ -58,12 +59,10 @@ export function useChatActions() {
           platform: data.conversation.platform,
           channelId: data.conversation.channelId,
           userId: data.conversation.userId,
-          messages: data.conversation.messages.map((msg): MessageWithChat => ({
+          messages: data.conversation.messages.map(msg => ({
             id: msg.id,
             conversationId: msg.conversationId,
             content: msg.content,
-            contentType: msg.contentType || 'text',
-            contentUrl: msg.contentUrl || null,
             sender: msg.sender,
             timestamp: new Date(msg.timestamp),
             platform: msg.platform,

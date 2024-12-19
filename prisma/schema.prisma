@@ -60,12 +60,9 @@ model Conversation {
   @@index([userId, platform])
 }
 
-// Update Message model
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
-  contentType    String?      // Add this field for message type (text, image, etc)
-  contentUrl     String?      // Add this field for image URL
   sender         SenderType
   timestamp      DateTime     @default(now())
   platform       Platform
@@ -171,4 +168,3 @@ enum DocumentStatus {
   APPROVED
   CANCELLED
 }
-

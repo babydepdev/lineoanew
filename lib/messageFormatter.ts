@@ -1,31 +1,26 @@
 import type { Message } from '@prisma/client';
-import type { ConversationWithMessages, SerializedMessage, SerializedConversation } from '@/app/types/chat';
+import type { ConversationWithMessages } from '@/app/types/chat';
 
-export function formatMessageForPusher(message: Message): SerializedMessage {
+export function formatMessageForPusher(message: Message) {
   return {
     id: message.id,
     conversationId: message.conversationId,
     content: message.content,
-    contentType: message.contentType || 'text',
-    contentUrl: message.contentUrl || null,
     sender: message.sender,
     timestamp: message.timestamp.toISOString(),
     platform: message.platform,
-    externalId: message.externalId,
-    chatType: message.chatType,
-    chatId: message.chatId
+    externalId: message.externalId
   };
 }
 
-export function formatConversationForPusher(conversation: ConversationWithMessages): SerializedConversation {
+export function formatConversationForPusher(conversation: ConversationWithMessages) {
   return {
     id: conversation.id,
     platform: conversation.platform,
-    channelId: conversation.channelId,
     userId: conversation.userId,
+    channelId: conversation.channelId,
     messages: conversation.messages.map(formatMessageForPusher),
     createdAt: conversation.createdAt.toISOString(),
-    updatedAt: conversation.updatedAt.toISOString(),
-    lineAccountId: conversation.lineAccountId
+    updatedAt: conversation.updatedAt.toISOString()
   };
 }

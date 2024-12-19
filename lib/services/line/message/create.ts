@@ -1,49 +1,69 @@
-import { PrismaClient } from '@prisma/client';
 import { LineMessageParams, LineMessageResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
-import { createMessage } from '../../message';
-import { broadcastMessageUpdate } from '../../message/broadcast';
-import { createMessageParams } from './utils';
-import { validateMessageParams } from './validation';
+import { createMessage, broadcastMessageUpdate } from '../../message';
+import { getChatIdentifier } from '../utils/chatIdentifier';
+import { MessageCreateParams } from '../../message/types';
+import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-/**
- * Creates a new LINE message and broadcasts updates
- */
 export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
   try {
-    // Validate message parameters
-    const validationResult = validateMessageParams(params);
-    if (!validationResult.isValid) {
+    const { 
+      userId, 
+      text, 
+      messageId, 
+      timestamp, 
+      lineAccountId,
+      source 
+    } = params;
+
+    // Validate text content
+    const trimmedText = text.trim();
+    if (!trimmedText) {
       return {
         success: false,
-        error: validationResult.error
+        error: 'Message text is required'
       };
     }
 
-    // Check for existing message
+    // Check if message already exists
     const existingMessage = await prisma.message.findUnique({
-      where: { externalId: params.messageId }
+      where: { externalId: messageId }
     });
 
     if (existingMessage) {
+      console.log('Message already exists, skipping creation:', messageId);
       return {
         success: true,
         messageId: existingMessage.id
       };
     }
 
+    // Get chat identifier based on source type
+    const { chatId, chatType } = getChatIdentifier(source);
+    
     // Find or create conversation
     const conversation = await findOrCreateConversation(
-      params.userId,
+      userId,
       'LINE',
-      params.channelId,
-      params.lineAccountId
+      chatId,
+      lineAccountId
     );
 
-    // Create message with proper parameters
-    const messageParams = createMessageParams(params, conversation.id);
+    // Create message params
+    const messageParams: MessageCreateParams = {
+      conversationId: conversation.id,
+      content: trimmedText,
+      sender: 'USER',
+      platform: 'LINE',
+      externalId: messageId,
+      timestamp,
+      chatType,
+      chatId
+    };
+
+    // Create message
     const message = await createMessage(messageParams);
 
     // Broadcast update
