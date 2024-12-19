@@ -20,22 +20,31 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       };
     }
 
-    // For text messages, validate content
-    if (event.message.type === 'text') {
-      const text = event.message.text?.trim();
-      if (!text) {
+    // Handle different message types
+    switch (event.message.type) {
+      case 'text':
+        const text = event.message.text?.trim();
+        if (!text) {
+          return {
+            isValid: false,
+            error: 'Empty or missing text content'
+          };
+        }
+        return { isValid: true, text, messageType: 'text' };
+
+      case 'image':
+        return { 
+          isValid: true, 
+          text: '[Image]',
+          messageType: 'image'
+        };
+
+      default:
         return {
           isValid: false,
-          error: 'Empty or missing text content'
+          error: 'Unsupported message type'
         };
-      }
-      return { isValid: true, text };
     }
-
-    return {
-      isValid: false,
-      error: 'Unsupported message type'
-    };
   } catch (error) {
     console.error('Error validating LINE message:', error);
     return {
