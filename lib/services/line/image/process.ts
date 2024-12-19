@@ -1,8 +1,12 @@
 import { Client } from '@line/bot-sdk';
-import { ImageProcessingResult, LineImageMetadata } from './types';
+import { ImageProcessingResult } from './types';
 import { fetchLineImage } from './fetch';
 import { validateLineImage } from './validate';
+import { getLineImageUrl } from './fetch';
 
+/**
+ * Process a LINE image and return its URL for display
+ */
 export async function processLineImage(
   client: Client,
   messageId: string
@@ -18,14 +22,8 @@ export async function processLineImage(
       };
     }
 
-    // Create metadata
-    const metadata: LineImageMetadata = {
-      messageId,
-      contentType: 'image/jpeg' // LINE images are typically JPEG
-    };
-
     // Generate the URL for the image
-    const imageUrl = `/api/line/image/${messageId}`;
+    const imageUrl = getLineImageUrl(messageId);
 
     return {
       success: true,
@@ -41,6 +39,9 @@ export async function processLineImage(
   }
 }
 
+/**
+ * Fetch the actual image buffer from LINE's API
+ */
 export async function getLineImageBuffer(client: Client, messageId: string): Promise<Buffer> {
   return fetchLineImage(client, messageId);
 }
