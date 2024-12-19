@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { ProfileAvatar } from './ProfileAvatar';
 import { useChatState } from '../features/chat/useChatState';
 import { MessageActions } from './chat/MessageActions';
+import { Image } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -17,6 +18,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
+  const isImage = message.content === '[Image]';
 
   return (
     <div className={cn(
@@ -41,12 +43,13 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         displayAsUser ? "items-end" : "items-start"
       )}>
         <div className={cn(
-          "px-4 py-2.5 text-sm rounded-2xl",
+          "px-4 py-2.5 text-sm rounded-2xl flex items-center gap-2",
           displayAsUser 
             ? "bg-primary text-primary-foreground rounded-br-none" 
             : "bg-slate-800 text-white rounded-bl-none",
           isTempMessage && "opacity-70"
         )}>
+          {isImage && <Image className="w-4 h-4" />}
           {message.content}
         </div>
         <div className={cn(

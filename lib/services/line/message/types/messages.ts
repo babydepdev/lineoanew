@@ -10,7 +10,16 @@ export interface TextMessage {
   }>;
 }
 
-export type LineMessageType = TextMessage;
+export interface ImageMessage {
+  type: 'image';
+  contentProvider: {
+    type: string;
+    originalContentUrl?: string;
+    previewImageUrl?: string;
+  };
+}
+
+export type LineMessageType = TextMessage | ImageMessage;
 
 export function createTextMessage(text: string): TextMessage {
   return {
@@ -28,6 +37,8 @@ export function isValidMessage(message: unknown): message is LineMessage {
   switch (msg.type) {
     case 'text':
       return typeof msg.text === 'string';
+    case 'image':
+      return true; // Basic validation for image type
     default:
       return false;
   }

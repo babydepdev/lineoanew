@@ -10,6 +10,7 @@ export interface LineMessageParams {
   platform: Platform;
   lineAccountId?: string | null;
   source: LineSource;
+  messageType?: 'text' | 'image';
 }
 
 export interface LineMessageResult {
@@ -22,6 +23,7 @@ export interface LineMessageValidationResult {
   isValid: boolean;
   error?: string;
   text?: string;
+  messageType?: 'text' | 'image';
 }
 
 export interface SendMessageResult {
