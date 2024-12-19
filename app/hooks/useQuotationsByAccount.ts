@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Quotation } from '../types/quotation';
 
 interface UseQuotationsByAccountResult {
@@ -15,7 +15,7 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchQuotations = useCallback(async () => {
+  const fetchQuotations = async () => {
     if (!accountId) {
       setQuotations([]);
       setIsLoading(false);
@@ -23,6 +23,7 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
     }
 
     try {
+      setIsLoading(true);
       const response = await fetch(`/api/quotations?accountId=${accountId}`);
       if (!response.ok) throw new Error('Failed to fetch quotations');
       
@@ -41,6 +42,11 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fetch quotations when accountId changes
+  useEffect(() => {
+    fetchQuotations();
   }, [accountId]);
 
   return { 

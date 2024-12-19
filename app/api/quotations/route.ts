@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const { lineAccountId, customerName, items } = body;
 
     // Validate required fields
-    if (!lineAccountId || !customerName) {
+    if (!lineAccountId || !customerName || !items?.length) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
