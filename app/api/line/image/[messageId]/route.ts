@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getLineClient } from '@/lib/services/lineService';
-import { getLineImageBuffer } from '@/lib/services/line/image/process';
-import { validateLineImage } from '@/lib/services/line/image/validate';
+import { getImageBuffer } from '@/lib/services/line/image';
+import { validateLineImage } from '@/lib/services/line/image';
 
 export async function GET(
   _request: NextRequest,
@@ -25,7 +25,7 @@ export async function GET(
     const client = getLineClient();
     
     // Fetch image buffer
-    const buffer = await getLineImageBuffer(client, messageId);
+    const buffer = await getImageBuffer(client, messageId);
     if (!buffer || buffer.length === 0) {
       throw new Error('Empty image buffer received');
     }

@@ -1,6 +1,7 @@
 import { Client } from '@line/bot-sdk';
 import { ImageProcessingResult, LineImageMetadata } from './types';
-import { fetchImageContent, streamToBuffer } from './fetch';
+import { fetchImageContent } from './fetch';
+import { streamToBuffer } from './stream';
 import { validateLineImage } from './validate';
 import { generateLineImageUrl } from './url';
 
