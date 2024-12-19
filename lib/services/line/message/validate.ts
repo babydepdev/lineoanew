@@ -1,27 +1,22 @@
-import { LineMessageEvent } from '@/app/types/line';
+import { MessageEvent } from '@line/bot-sdk';
 import { LineMessageValidationResult } from './types';
 import { isValidMessage } from './types/messages';
 import { parseImageMessage } from './types/imageMessage';
 
-export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
+export function validateLineMessage(event: MessageEvent): LineMessageValidationResult {
   try {
-    if (event.type !== 'message') {
-      return {
-        isValid: false,
-        error: 'Not a message event'
-      };
-    }
-
-    if (!event.message || !isValidMessage(event.message)) {
+    if (!isValidMessage(event)) {
       return {
         isValid: false,
         error: 'Invalid message format'
       };
     }
 
-    switch (event.message.type) {
+    const message = event.message;
+
+    switch (message.type) {
       case 'text':
-        const text = event.message.text?.trim();
+        const text = message.text?.trim();
         if (!text) {
           return {
             isValid: false,
@@ -35,12 +30,19 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
         };
 
       case 'image':
-        const imageContent = parseImageMessage(event.message);
-        return { 
-          isValid: true, 
-          text: JSON.stringify(imageContent),
-          messageType: 'image'
-        };
+        try {
+          const imageContent = parseImageMessage(event);
+          return { 
+            isValid: true, 
+            text: JSON.stringify(imageContent),
+            messageType: 'image'
+          };
+        } catch (error) {
+          return {
+            isValid: false,
+            error: 'Invalid image message format'
+          };
+        }
 
       default:
         return {
