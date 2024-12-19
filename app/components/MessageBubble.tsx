@@ -18,7 +18,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
-  const isImage = message.content === '[Image]';
+  const isImage = message.content.startsWith('[Image]');
+
+  // Extract image URL from content if it's an image message
+  const imageUrl = isImage ? message.content.replace('[Image]', '').trim() : null;
 
   return (
     <div className={cn(
@@ -43,14 +46,31 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         displayAsUser ? "items-end" : "items-start"
       )}>
         <div className={cn(
-          "px-4 py-2.5 text-sm rounded-2xl flex items-center gap-2",
+          "px-4 py-2.5 rounded-2xl",
           displayAsUser 
             ? "bg-primary text-primary-foreground rounded-br-none" 
             : "bg-slate-800 text-white rounded-bl-none",
-          isTempMessage && "opacity-70"
+          isTempMessage && "opacity-70",
+          isImage && "p-1" // Reduce padding for images
         )}>
-          {isImage && <Image className="w-4 h-4" />}
-          {message.content}
+          {isImage && imageUrl ? (
+            <div className="relative">
+              <img 
+                src={imageUrl}
+                alt="Sent image"
+                className="max-w-full rounded-lg max-h-[300px] object-contain"
+                loading="lazy"
+              />
+              <div className="absolute top-2 left-2 bg-black/50 rounded-full p-1">
+                <Image className="w-4 h-4 text-white" />
+              </div>
+            </div>
+          ) : (
+            <span className="text-sm flex items-center gap-2">
+              {isImage && <Image className="w-4 h-4" />}
+              {message.content}
+            </span>
+          )}
         </div>
         <div className={cn(
           "px-2 text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity",
