@@ -1,7 +1,9 @@
 import { LineMessageEvent } from '@/app/types/line';
 import { LineMessageValidationResult } from './types';
-import { isValidMessage } from './types/messages';
 
+/**
+ * Validates a LINE message event and determines its type and content
+ */
 export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   try {
     // Check event type
@@ -12,43 +14,26 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       };
     }
 
-    // Check message type and validity
-    if (!event.message || !isValidMessage(event.message)) {
+    // Check message exists
+    if (!event.message) {
       return {
         isValid: false,
-        error: 'Invalid message format'
+        error: 'Missing message content'
       };
     }
 
-    // For text messages
-    if (event.message.type === 'text') {
-      const text = event.message.text?.trim();
-      if (!text) {
+    // Validate based on message type
+    switch (event.message.type) {
+      case 'text':
+        return validateTextMessage(event.message.text);
+      case 'image':
+        return validateImageMessage(event.message.contentProvider);
+      default:
         return {
           isValid: false,
-          error: 'Empty or missing text content'
+          error: `Unsupported message type: ${event.message.type}`
         };
-      }
-      return { 
-        isValid: true, 
-        messageType: 'text',
-        text 
-      };
     }
-
-    // For image messages
-    if (event.message.type === 'image') {
-      return {
-        isValid: true,
-        messageType: 'image',
-        contentProvider: event.message.contentProvider
-      };
-    }
-
-    return {
-      isValid: false,
-      error: 'Unsupported message type'
-    };
   } catch (error) {
     console.error('Error validating LINE message:', error);
     return {
@@ -56,4 +41,44 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       error: 'Message validation failed'
     };
   }
+}
+
+/**
+ * Validates a text message
+ */
+function validateTextMessage(text?: string): LineMessageValidationResult {
+  if (!text?.trim()) {
+    return {
+      isValid: false,
+      error: 'Empty or missing text content'
+    };
+  }
+
+  return {
+    isValid: true,
+    messageType: 'text',
+    text: text.trim()
+  };
+}
+
+/**
+ * Validates an image message
+ */
+function validateImageMessage(contentProvider?: {
+  type: string;
+  originalContentUrl?: string;
+  previewImageUrl?: string;
+}): LineMessageValidationResult {
+  if (!contentProvider?.originalContentUrl) {
+    return {
+      isValid: false,
+      error: 'Missing image URL'
+    };
+  }
+
+  return {
+    isValid: true,
+    messageType: 'image',
+    contentProvider
+  };
 }
