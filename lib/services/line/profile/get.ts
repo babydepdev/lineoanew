@@ -3,7 +3,8 @@ import { getLineClient } from '../client/instance';
 
 export async function getLineUserProfile(userId: string): Promise<LineUserProfile | null> {
   try {
-    const client = getLineClient();
+    // Get LINE client asynchronously
+    const client = await getLineClient();
     const profile = await client.getProfile(userId);
 
     return {
