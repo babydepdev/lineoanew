@@ -7,8 +7,17 @@ export * from './image';
 export * from './account';
 
 // Export commonly used functions directly
+export { clientManager, getLineClient } from './client/manager';
+export { sendLineMessage } from './message/send';
+export { processWebhookEvents } from './webhook/process';
+export { getLineUserProfile } from './profile/get';
+export { isImageContent, extractImageUrl } from './image/content';
 
-export { sendLineMessage } from './message';
-
-export { getLineUserProfile } from './profile';
-export { isImageContent, extractImageUrl } from './image';
+// Export types
+export type { 
+  MessageSendResult,
+  MessageCreateResult 
+} from './message/types';
+export type { 
+  WebhookProcessingResult 
+} from './webhook/types';
