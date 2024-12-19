@@ -27,7 +27,7 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
       timestamp: timestamp || new Date(),
       chatType,
       chatId,
-      imageBase64
+      imageBase64: messageType === 'image' ? imageBase64 : null // Only set imageBase64 for image messages
     }
   });
 }

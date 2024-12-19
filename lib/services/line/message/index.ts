@@ -1,10 +1,10 @@
-// Re-export all message-related functionality
+// Export message types
 export * from './types';
-export * from './create';
-export * from './send';
-export * from './validate';
 
-// Export commonly used functions directly
+// Export message creation function
 export { createLineMessage } from './create';
 export { sendLineMessage } from './send';
 export { validateLineMessage } from './validate';
+
+// Export message validation utilities
+export * from './validate/content';

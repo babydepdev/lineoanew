@@ -1,7 +1,7 @@
 import { Platform } from '@prisma/client';
 import { LineSource } from '@/app/types/line';
 
-export interface MessageCreateParams {
+export interface LineMessageCreateParams {
   userId: string;
   text: string;
   messageId: string;
@@ -11,5 +11,4 @@ export interface MessageCreateParams {
   source: LineSource;
   messageType?: 'text' | 'image';
   channelId?: string;
-  imageBase64?: string | null; // Added to match database schema
 }
