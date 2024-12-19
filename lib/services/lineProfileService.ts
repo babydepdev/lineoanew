@@ -30,7 +30,7 @@ export async function getLineUserProfile(userId: string): Promise<LineUserProfil
     }
 
     // If cache is stale or doesn't exist, fetch from LINE API
-    const client = getLineClient();
+    const client = await getLineClient();
     const profile = await client.getProfile(userId);
 
     // Update cache
