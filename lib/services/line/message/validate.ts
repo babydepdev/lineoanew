@@ -31,10 +31,14 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
             error: 'Empty or missing text content'
           };
         }
-        return { isValid: true, text, messageType: 'text' };
+        return { 
+          isValid: true, 
+          text, 
+          messageType: 'text' 
+        };
 
       case 'image':
-        // Create image content with proper URL
+        // Create image content with metadata
         const content = createImageContent({
           messageId: event.message.id
         });

@@ -9,9 +9,21 @@ export function generateLineImageUrl(messageId: string): string {
 }
 
 /**
- * Format the full image content string including the URL
+ * Extract message ID from image URL
  */
-export function formatImageContent(messageId: string): string {
-  const imageUrl = generateLineImageUrl(messageId);
-  return `[Image]${imageUrl}`;
+export function extractMessageIdFromUrl(url: string): string | null {
+  try {
+    const parts = url.split('/');
+    const messageId = parts[parts.length - 1];
+    return messageId || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Validate image URL format
+ */
+export function isValidImageUrl(url: string): boolean {
+  return url.startsWith('/api/line/image/') && !!extractMessageIdFromUrl(url);
 }

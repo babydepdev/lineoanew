@@ -17,15 +17,18 @@ export interface LineImageStream extends Readable {
   };
 }
 
+// Image metadata
+export interface LineImageMetadata {
+  messageId: string;
+  contentType?: string;
+  contentLength?: number;
+}
+
 // Validation types
 export interface ImageValidationResult {
   isValid: boolean;
   error?: string;
-  metadata?: {
-    messageId: string;
-    contentType?: string;
-    contentLength?: number;
-  };
+  metadata?: LineImageMetadata;
 }
 
 // Processing result
@@ -34,4 +37,11 @@ export interface ImageProcessingResult {
   buffer?: Buffer;
   contentType?: string;
   error?: string;
+}
+
+// Content types
+export interface ImageContent {
+  type: 'image';
+  url: string;
+  messageId: string;
 }
