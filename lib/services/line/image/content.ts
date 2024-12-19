@@ -32,7 +32,7 @@ export function extractImageUrl(content: string): string | null {
 }
 
 /**
- * Parse image content string into structured object
+ * Parse image content string into strucktured object
  */
 export function parseImageContent(content: string): ImageContent | null {
   if (!isImageContent(content)) {
