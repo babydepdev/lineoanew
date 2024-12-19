@@ -1,5 +1,4 @@
-import { MessageEvent } from '@line/bot-sdk';
-import { LineImageMessage, isImageMessage } from './imageMessage';
+import { Message as LineMessage } from '@line/bot-sdk';
 
 export interface TextMessage {
   type: 'text';
@@ -11,7 +10,7 @@ export interface TextMessage {
   }>;
 }
 
-export type LineMessageType = TextMessage | LineImageMessage;
+export type LineMessageType = TextMessage;
 
 export function createTextMessage(text: string): TextMessage {
   return {
@@ -20,18 +19,15 @@ export function createTextMessage(text: string): TextMessage {
   };
 }
 
-export function isValidMessage(message: MessageEvent): boolean {
+export function isValidMessage(message: unknown): message is LineMessage {
   if (!message || typeof message !== 'object') return false;
   
-  if (message.type !== 'message') return false;
-  
-  const msg = message.message;
+  const msg = message as Record<string, unknown>;
+  if (!msg.type || typeof msg.type !== 'string') return false;
   
   switch (msg.type) {
     case 'text':
       return typeof msg.text === 'string';
-    case 'image':
-      return isImageMessage(msg);
     default:
       return false;
   }

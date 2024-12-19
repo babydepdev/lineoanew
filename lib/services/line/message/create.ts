@@ -1,32 +1,73 @@
+import { LineMessageParams, LineMessageResult } from './types';
+import { findOrCreateConversation } from '../../conversation';
+import { createMessage, broadcastMessageUpdate } from '../../message';
+import { getChatIdentifier } from '../utils/chatIdentifier';
+import { MessageCreateParams } from '../../message/types';
 import { PrismaClient } from '@prisma/client';
-import { MessageParams, MessageResult } from './types/base';
 
 const prisma = new PrismaClient();
 
-export async function createLineMessage(params: MessageParams): Promise<MessageResult> {
+export async function createLineMessage(params: LineMessageParams): Promise<LineMessageResult> {
   try {
-    // Format content based on message type
-    const content = params.messageType === 'text' 
-      ? params.text
-      : JSON.stringify({
-          type: 'image',
-          originalUrl: params.imageContent.originalUrl,
-          previewUrl: params.imageContent.previewUrl
-        });
+    const { 
+      userId, 
+      text, 
+      messageId, 
+      timestamp, 
+      lineAccountId,
+      source 
+    } = params;
 
-    // Create message in database
-    const message = await prisma.message.create({
-      data: {
-        conversationId: params.channelId,
-        content,
-        sender: 'USER',
-        platform: params.platform,
-        externalId: params.messageId,
-        timestamp: params.timestamp,
-        chatType: params.source.type,
-        chatId: `${params.source.type}_${params.userId}`
-      }
+    // Validate text content
+    const trimmedText = text.trim();
+    if (!trimmedText) {
+      return {
+        success: false,
+        error: 'Message text is required'
+      };
+    }
+
+    // Check if message already exists
+    const existingMessage = await prisma.message.findUnique({
+      where: { externalId: messageId }
     });
+
+    if (existingMessage) {
+      console.log('Message already exists, skipping creation:', messageId);
+      return {
+        success: true,
+        messageId: existingMessage.id
+      };
+    }
+
+    // Get chat identifier based on source type
+    const { chatId, chatType } = getChatIdentifier(source);
+    
+    // Find or create conversation
+    const conversation = await findOrCreateConversation(
+      userId,
+      'LINE',
+      chatId,
+      lineAccountId
+    );
+
+    // Create message params
+    const messageParams: MessageCreateParams = {
+      conversationId: conversation.id,
+      content: trimmedText,
+      sender: 'USER',
+      platform: 'LINE',
+      externalId: messageId,
+      timestamp,
+      chatType,
+      chatId
+    };
+
+    // Create message
+    const message = await createMessage(messageParams);
+
+    // Broadcast update
+    await broadcastMessageUpdate(conversation.id);
 
     return {
       success: true,

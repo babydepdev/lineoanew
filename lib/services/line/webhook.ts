@@ -1,36 +1,31 @@
-import { LineAccount } from '@/app/types/line';
-import { validateWebhookBody } from './webhook/validator';
-import { processWebhookEvents } from './webhook/processor';
-import { WebhookProcessingResult } from './webhook/types';
+import { 
+  LineWebhookBody, 
+  LineAccount, 
+  LineWebhookProcessingResult 
+} from '@/app/types/line';
+import { processLineMessageEvent } from './eventProcessor';
 
 export async function processLineWebhook(
-  webhookBody: unknown,
+  webhookBody: LineWebhookBody,
   account: LineAccount
-): Promise<WebhookProcessingResult> {
-  try {
-    // Validate webhook body structure
-    if (!validateWebhookBody(webhookBody)) {
-      return {
-        processed: 0,
-        total: 0,
-        results: [{
-          success: false,
-          error: 'Invalid webhook body format'
-        }]
-      };
-    }
+): Promise<LineWebhookProcessingResult> {
+  const results = await Promise.allSettled(
+    webhookBody.events.map(event => processLineMessageEvent(event, account))
+  );
 
-    // Process webhook events
-    return await processWebhookEvents(webhookBody.events, account);
-  } catch (error) {
-    console.error('Error processing LINE webhook:', error);
+  const processedResults = results.map(result => {
+    if (result.status === 'fulfilled') {
+      return result.value;
+    }
     return {
-      processed: 0,
-      total: 0,
-      results: [{
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }]
+      success: false,
+      error: 'Failed to process event'
     };
-  }
+  });
+
+  return {
+    processed: processedResults.filter(r => r.success).length,
+    total: webhookBody.events.length,
+    results: processedResults
+  };
 }
