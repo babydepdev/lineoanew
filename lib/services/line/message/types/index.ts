@@ -9,9 +9,3 @@ export interface MessageBase {
   type: string;
   messageId: string;
 }
-
-// Message validation
-export interface ValidationResult {
-  isValid: boolean;
-  error?: string;
-}

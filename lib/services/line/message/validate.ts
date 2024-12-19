@@ -1,5 +1,5 @@
 import { LineMessageEvent } from '@/app/types/line';
-import { MessageValidationResult } from './types';
+import { MessageValidationResult } from './types/validation';
 import { isValidMessage } from './types/messages';
 import { createImageContent } from '../image/content';
 
