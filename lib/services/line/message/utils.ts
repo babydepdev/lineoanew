@@ -1,5 +1,9 @@
-import { LineMessageParams } from './types';
-import { MessageCreateParams } from '../../message/types';
+import { 
+  LineMessageParams,
+  MessageCreateParams,
+  TextMessageParams,
+  ImageMessageParams 
+} from './types';
 
 /**
  * Creates message parameters from LINE message data
@@ -10,8 +14,8 @@ export function createMessageParams(
 ): MessageCreateParams {
   const baseParams = {
     conversationId,
-    sender: 'USER',
-    platform: 'LINE',
+    sender: 'USER' as const,
+    platform: 'LINE' as const,
     externalId: params.messageId,
     timestamp: params.timestamp,
     chatType: params.source.type,
@@ -23,16 +27,15 @@ export function createMessageParams(
       ...baseParams,
       contentType: 'image',
       content: 'Sent an image',
-      contentUrl: params.contentProvider?.originalContentUrl
-    };
+      contentUrl: params.contentProvider?.originalContentUrl || ''
+    } satisfies ImageMessageParams;
   }
 
   return {
     ...baseParams,
     contentType: 'text',
-    content: params.text || '',
-    contentUrl: null
-  };
+    content: params.text || ''
+  } satisfies TextMessageParams;
 }
 
 /**
