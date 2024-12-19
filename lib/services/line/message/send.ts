@@ -5,7 +5,7 @@ import { createTextMessage } from './types/messages';
 import { validateMessageContent } from './validate/content';
 import { clientManager } from '../client/manager';
 
-
+import { getLineClientConfig } from '../client/config';
 
 export async function sendLineMessage(
   userId: string, 
