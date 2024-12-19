@@ -1,6 +1,6 @@
 import { ContentValidationResult } from '../types/validation';
 
-export function validateMessageContent(content: string): ContentValidationResult {
+export function validateMessageContent(content: string | undefined): ContentValidationResult {
   try {
     if (!content) {
       return {

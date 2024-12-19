@@ -1,6 +1,11 @@
-import { getLineClient } from '../client';
+import { Client } from '@line/bot-sdk';
 import { MessageSendResult } from './types';
 import { findLineAccountById } from '../account';
+import { createTextMessage } from './types/messages';
+import { validateMessageContent } from './validate/content';
+import { clientManager } from '../client/manager';
+import { LineAccount } from '@/app/types/line';
+import { getLineClientConfig } from '../client/config';
 
 export async function sendLineMessage(
   userId: string, 
@@ -14,8 +19,17 @@ export async function sendLineMessage(
       lineAccountId 
     });
 
-    // Get LINE account if ID provided
-    let client = getLineClient();
+    // Validate content
+    const validation = validateMessageContent(content);
+    if (!validation.isValid || !validation.content) {
+      return {
+        success: false,
+        error: validation.error || 'Invalid message content'
+      };
+    }
+
+    // Get LINE account and client
+    let client: Client;
     if (lineAccountId) {
       const account = await findLineAccountById(lineAccountId);
       if (!account) {
@@ -24,14 +38,16 @@ export async function sendLineMessage(
           error: 'LINE account not found'
         };
       }
-      client = getLineClient(account);
+      client = clientManager.getClient(account);
+    } else {
+      client = clientManager.getClient();
     }
 
+    // Create message
+    const message = createTextMessage(validation.content);
+
     // Send message
-    await client.pushMessage(userId, {
-      type: 'text',
-      text: content
-    });
+    await client.pushMessage(userId, message);
 
     console.log('LINE message sent successfully');
     return { success: true };

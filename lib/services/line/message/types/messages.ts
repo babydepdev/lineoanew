@@ -1,13 +1,8 @@
-import { Message as LineMessage } from '@line/bot-sdk';
+import { Message } from '@line/bot-sdk';
 
 export interface TextMessage {
   type: 'text';
   text: string;
-  emojis?: Array<{
-    index: number;
-    productId: string;
-    emojiId: string;
-  }>;
 }
 
 export interface ImageMessage {
@@ -21,7 +16,7 @@ export interface ImageMessage {
 
 export type LineMessageType = TextMessage | ImageMessage;
 
-export function isValidMessage(message: unknown): message is LineMessage {
+export function isValidMessage(message: unknown): message is Message {
   if (!message || typeof message !== 'object') return false;
   
   const msg = message as Record<string, unknown>;
@@ -31,7 +26,7 @@ export function isValidMessage(message: unknown): message is LineMessage {
     case 'text':
       return typeof msg.text === 'string';
     case 'image':
-      return true; // Basic validation for image type
+      return true;
     default:
       return false;
   }

@@ -1,9 +1,8 @@
 import { Client } from '@line/bot-sdk';
-import { getLineClientConfig } from './config';
 import { LineAccount } from '@/app/types/line';
-import { LineClientManager } from './types';
+import { getLineClientConfig } from './config';
 
-class DefaultLineClientManager implements LineClientManager {
+class LineClientManager {
   private defaultClient: Client | null = null;
   private accountClients = new Map<string, Client>();
 
@@ -33,9 +32,5 @@ class DefaultLineClientManager implements LineClientManager {
   }
 }
 
-// Create singleton instance
-const clientManager = new DefaultLineClientManager();
-
-// Export functions that use the singleton
-export const getLineClient = (account?: LineAccount) => clientManager.getClient(account);
-export const clearLineClients = () => clientManager.clearClients();
+// Export singleton instance
+export const clientManager = new LineClientManager();

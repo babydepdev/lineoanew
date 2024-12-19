@@ -15,7 +15,7 @@ export async function createLineMessage(params: MessageCreateParams): Promise<Me
       platform,
       lineAccountId,
       source,
-      messageType
+      messageType = 'text'
     } = params;
 
     // Validate content
@@ -34,7 +34,7 @@ export async function createLineMessage(params: MessageCreateParams): Promise<Me
     const conversation = await findOrCreateConversation(
       userId,
       platform,
-      chatId, // Use chatId from identifier
+      chatId,
       lineAccountId
     );
 

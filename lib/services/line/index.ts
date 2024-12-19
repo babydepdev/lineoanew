@@ -6,8 +6,9 @@ export * from './profile';
 export * from './image';
 export * from './account';
 
-
-export { sendLineMessage } from './message/send';
-export { processWebhookEvents } from './webhook/process';
-export { getLineUserProfile } from './profile/get';
-export { isImageContent, extractImageUrl } from './image/content';
+// Export commonly used functions directly
+export { getLineClient } from '../line/client/index';
+export { sendLineMessage } from './message';
+export { processWebhookEvents } from './webhook/index';
+export { getLineUserProfile } from './profile';
+export { isImageContent, extractImageUrl } from './image';

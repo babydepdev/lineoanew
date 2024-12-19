@@ -3,5 +3,7 @@ export {
   getLineClient,
   sendLineMessage,
   processWebhookEvents,
-  getLineUserProfile
+  getLineUserProfile,
+  isImageContent,
+  extractImageUrl
 } from './line';
