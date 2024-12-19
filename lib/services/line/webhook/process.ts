@@ -1,9 +1,8 @@
 import { 
   LineWebhookBody, 
-  LineAccount, 
-  LineMessageEvent 
+  LineAccount 
 } from '@/app/types/line';
-import { WebhookProcessingResult, WebhookEventResult } from './types';
+import { WebhookProcessingResult } from './types';
 import { processMessageEvent } from './events/message';
 import { processFollowEvent } from './events/follow';
 import { processUnfollowEvent } from './events/unfollow';
@@ -33,10 +32,7 @@ export async function processWebhookEvents(
   };
 }
 
-async function processEvent(
-  event: LineMessageEvent, 
-  account: LineAccount
-): Promise<WebhookEventResult> {
+async function processEvent(event: any, account: LineAccount) {
   try {
     switch (event.type) {
       case 'message':
