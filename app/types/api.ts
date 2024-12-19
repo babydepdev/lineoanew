@@ -10,6 +10,7 @@ export interface MessageResponse {
   externalId: string | null;
   chatType: string | null;
   chatId: string | null;
+  imageBase64: string | null; // Add imageBase64 field
 }
 
 export interface ConversationResponse {

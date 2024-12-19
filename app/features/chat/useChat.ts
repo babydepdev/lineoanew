@@ -55,7 +55,8 @@ export function useChat(initialConversations: SerializedConversation[]) {
             platform: msg.platform,
             externalId: msg.externalId,
             chatType: msg.chatType,
-            chatId: msg.chatId
+            chatId: msg.chatId,
+            imageBase64: msg.imageBase64 || null // Add imageBase64 field with null fallback
           })),
           createdAt: new Date(data.conversation.createdAt),
           updatedAt: new Date(data.conversation.updatedAt),
