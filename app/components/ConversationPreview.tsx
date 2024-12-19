@@ -1,13 +1,11 @@
 import React from 'react';
 import { ConversationWithMessages } from '../types/chat';
-import { formatTimestamp } from '../utils/dateFormatter';
+import { formatThaiDateTime } from '@/lib/utils/dateFormatter';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
-
-
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -80,7 +78,7 @@ export function ConversationPreview({
             </div>
             {lastMessage && (
               <span className="text-xs text-slate-400 whitespace-nowrap">
-                {formatTimestamp(lastMessage.timestamp)}
+                {formatThaiDateTime(lastMessage.timestamp)}
               </span>
             )}
           </div>
