@@ -1,6 +1,6 @@
 import { LineMessageEvent, LineAccount } from '@/app/types/line';
-import { updateUserProfile } from '../../profile';
-import { getLineUserProfile } from '../../profile';
+import { updateUserProfile } from '../../profile/update';
+import { getLineUserProfile } from '../../profile/get';
 
 export async function processFollowEvent(
   event: LineMessageEvent,

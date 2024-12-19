@@ -1,9 +1,9 @@
 import { LineMessageEvent } from '@/app/types/line';
-import { MessageValidationResult } from './types';
+import { LineMessageValidationResult } from './types';
 import { isValidMessage } from './types/messages';
 import { createImageContent } from '../image/content';
 
-export function validateLineMessage(event: LineMessageEvent): MessageValidationResult {
+export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   try {
     // Check event type
     if (event.type !== 'message') {
