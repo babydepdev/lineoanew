@@ -1,13 +1,13 @@
 import { Client } from '@line/bot-sdk';
-import { getLineClientConfig } from './config';
 import { LineAccount } from '@/app/types/line';
-import { LineClientManager } from './types';
+import { getActiveLineAccounts } from '../account/find';
 
-class DefaultLineClientManager implements LineClientManager {
-  private defaultClient: Client | null = null;
-  private accountClients = new Map<string, Client>();
+class LineClientManager {
+  private static defaultClient: Client | null = null;
+  private static accountClients = new Map<string, Client>();
 
-  getClient(account?: LineAccount): Client {
+  static async getClient(account?: LineAccount): Promise<Client> {
+    // If specific account provided, use or create its client
     if (account) {
       let client = this.accountClients.get(account.id);
       if (!client) {
@@ -20,22 +20,32 @@ class DefaultLineClientManager implements LineClientManager {
       return client;
     }
 
+    // Get or create default client using first active account
     if (!this.defaultClient) {
-      const config = getLineClientConfig();
-      this.defaultClient = new Client(config);
+      const accounts = await getActiveLineAccounts();
+      if (accounts.length === 0) {
+        throw new Error('No active LINE account found');
+      }
+      
+      this.defaultClient = new Client({
+        channelAccessToken: accounts[0].channelAccessToken,
+        channelSecret: accounts[0].channelSecret
+      });
     }
+
     return this.defaultClient;
   }
 
-  clearClients(): void {
+  static clearClients(): void {
     this.defaultClient = null;
     this.accountClients.clear();
   }
+
+  static removeClient(accountId: string): void {
+    this.accountClients.delete(accountId);
+  }
 }
 
-// Create singleton instance
-const clientManager = new DefaultLineClientManager();
-
-// Export functions that use the singleton
-export const getLineClient = (account?: LineAccount) => clientManager.getClient(account);
-export const clearLineClients = () => clientManager.clearClients();
+export const getLineClient = LineClientManager.getClient.bind(LineClientManager);
+export const clearLineClients = LineClientManager.clearClients.bind(LineClientManager);
+export const removeLineClient = LineClientManager.removeClient.bind(LineClientManager);

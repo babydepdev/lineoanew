@@ -4,7 +4,7 @@ import { createMessage } from '../../message';
 import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
 import { validateMessageContent } from './validate/content';
-import { getImageBase64 } from '../image/process';
+import { getImageBase64 } from '../image/base64';
 import { getLineClient } from '../client/instance';
 import { isImageContent } from '../image/content';
 
@@ -45,7 +45,7 @@ export async function createLineMessage(params: MessageCreateParams): Promise<Me
     let imageBase64: string | undefined;
     if (messageType === 'image' && isImageContent(contentValidation.content)) {
       try {
-        const client = getLineClient();
+        const client = await getLineClient();
         imageBase64 = await getImageBase64(client, messageId);
       } catch (error) {
         console.error('Error processing image:', error);

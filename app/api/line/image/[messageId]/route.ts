@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLineClient } from '@/lib/services/line/client/index';
-import { getImageBuffer } from '@/lib/services/line/image';
-import { validateLineImage } from '@/lib/services/line/image';
+import { PrismaClient } from '@prisma/client';
+import { getLineClient } from '@/lib/services/line/client/instance';
+import { getImageBuffer } from '@/lib/services/line/image/process';
+
+const prisma = new PrismaClient();
 
 export async function GET(
   _request: NextRequest,
@@ -9,22 +11,35 @@ export async function GET(
 ) {
   try {
     const { messageId } = params;
-    console.log('Handling LINE image request:', messageId);
-    
-    // Validate the image request
-    const validation = await validateLineImage(messageId);
-    if (!validation.isValid) {
-      console.warn('Invalid image request:', validation.error);
+    console.log('Fetching LINE image:', messageId);
+
+    // Get message with LINE account details
+    const message = await prisma.message.findFirst({
+      where: { 
+        externalId: messageId,
+        platform: 'LINE'
+      },
+      include: {
+        conversation: {
+          include: {
+            lineAccount: true
+          }
+        }
+      }
+    });
+
+    if (!message?.conversation?.lineAccount) {
+      console.error('LINE account not found for message:', messageId);
       return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
+        { error: 'LINE account not found' },
+        { status: 404 }
       );
     }
 
-    // Get LINE client
-    const client = getLineClient();
+    // Get LINE client for this account
+    const client = await getLineClient(message.conversation.lineAccount);
     
-    // Fetch image buffer
+    // Fetch image with retries
     const buffer = await getImageBuffer(client, messageId);
     if (!buffer || buffer.length === 0) {
       throw new Error('Empty image buffer received');
@@ -35,7 +50,7 @@ export async function GET(
       size: buffer.length
     });
 
-    // Return image with proper headers
+    // Return image with caching headers
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': 'image/jpeg',
