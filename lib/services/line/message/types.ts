@@ -1,9 +1,17 @@
-import { Platform } from '@prisma/client';
+
 import { LineSource } from '@/app/types/line';
+import { Platform, SenderType } from '@prisma/client';
+
 
 export interface LineMessageParams {
   userId: string;
-  text: string;
+  text?: string;
+  messageType: 'text' | 'image';
+  contentProvider?: {
+    type: string;
+    originalContentUrl?: string;
+    previewImageUrl?: string;
+  };
   messageId: string;
   timestamp: Date;
   channelId: string;
@@ -12,19 +20,28 @@ export interface LineMessageParams {
   source: LineSource;
 }
 
-export interface LineMessageResult {
-  success: boolean;
-  messageId?: string;
-  error?: string;
-}
-
 export interface LineMessageValidationResult {
   isValid: boolean;
   error?: string;
+  messageType?: 'text' | 'image';
   text?: string;
+  contentProvider?: {
+    type: string;
+    originalContentUrl?: string;
+    previewImageUrl?: string;
+  };
+}
+export interface MessageCreateParams {
+  conversationId: string;
+  content: string;
+  contentType?: string;
+  contentUrl?: string;
+  sender: SenderType;
+  platform: Platform;
+  externalId?: string | null;
+  timestamp?: Date;
+  chatType?: string;
+  chatId?: string;
 }
 
-export interface SendMessageResult {
-  success: boolean;
-  error?: string;
-}
+// Rest of the file remains the same

@@ -20,7 +20,7 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       };
     }
 
-    // For text messages, validate content
+    // For text messages
     if (event.message.type === 'text') {
       const text = event.message.text?.trim();
       if (!text) {
@@ -29,7 +29,20 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
           error: 'Empty or missing text content'
         };
       }
-      return { isValid: true, text };
+      return { 
+        isValid: true, 
+        messageType: 'text',
+        text 
+      };
+    }
+
+    // For image messages
+    if (event.message.type === 'image') {
+      return {
+        isValid: true,
+        messageType: 'image',
+        contentProvider: event.message.contentProvider
+      };
     }
 
     return {
