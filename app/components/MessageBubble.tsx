@@ -7,6 +7,7 @@ import { ProfileAvatar } from './ProfileAvatar';
 import { useChatState } from '../features/chat/useChatState';
 import { MessageActions } from './chat/MessageActions';
 import { Image } from 'lucide-react';
+import { isImageContent, extractImageUrl } from '@/lib/services/line/image/content';
 
 interface MessageBubbleProps {
   message: Message;
@@ -18,10 +19,8 @@ export function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === 'USER';
   const isTempMessage = message.id.startsWith('temp-');
   const displayAsUser = isUser && !isTempMessage;
-  const isImage = message.content.startsWith('[Image]');
-
-  // Extract image URL from content if it's an image message
-  const imageUrl = isImage ? message.content.replace('[Image]', '').trim() : null;
+  const isImage = isImageContent(message.content);
+  const imageUrl = isImage ? extractImageUrl(message.content) : null;
 
   return (
     <div className={cn(
@@ -46,12 +45,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         displayAsUser ? "items-end" : "items-start"
       )}>
         <div className={cn(
-          "px-4 py-2.5 rounded-2xl",
+          "rounded-2xl",
           displayAsUser 
             ? "bg-primary text-primary-foreground rounded-br-none" 
             : "bg-slate-800 text-white rounded-bl-none",
           isTempMessage && "opacity-70",
-          isImage && "p-1" // Reduce padding for images
+          isImage ? "p-1" : "px-4 py-2.5"
         )}>
           {isImage && imageUrl ? (
             <div className="relative">

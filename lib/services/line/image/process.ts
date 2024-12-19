@@ -2,7 +2,7 @@ import { Client } from '@line/bot-sdk';
 import { ImageProcessingResult } from './types';
 import { fetchLineImage } from './fetch';
 import { validateLineImage } from './validate';
-import { getLineImageUrl } from './fetch';
+import { generateLineImageUrl } from './url';
 
 /**
  * Process a LINE image and return its URL for display
@@ -23,7 +23,7 @@ export async function processLineImage(
     }
 
     // Generate the URL for the image
-    const imageUrl = getLineImageUrl(messageId);
+    const imageUrl = generateLineImageUrl(messageId);
 
     return {
       success: true,

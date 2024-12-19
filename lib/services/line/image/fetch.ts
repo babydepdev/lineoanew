@@ -1,6 +1,8 @@
 import { Client } from '@line/bot-sdk';
-import { LineImageMetadata } from './types';
 
+/**
+ * Fetch image content from LINE's API
+ */
 export async function fetchLineImage(client: Client, messageId: string): Promise<Buffer> {
   try {
     const stream = await client.getMessageContent(messageId);
@@ -15,13 +17,4 @@ export async function fetchLineImage(client: Client, messageId: string): Promise
     console.error('Error fetching LINE image:', error);
     throw new Error('Failed to fetch image from LINE API');
   }
-}
-
-export function getLineImageUrl(messageId: string): string {
-  return `/api/line/image/${messageId}`;
-}
-
-export function createImageContent(metadata: LineImageMetadata): string {
-  const imageUrl = getLineImageUrl(metadata.messageId);
-  return `[Image]${imageUrl}`;
 }

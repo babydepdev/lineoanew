@@ -1,7 +1,7 @@
 import { LineMessageEvent } from '@/app/types/line';
 import { LineMessageValidationResult } from './types';
 import { isValidMessage } from './types/messages';
-import { createImageContent } from '../image/fetch';
+import { createImageContent } from '../image/content';
 
 export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   try {
