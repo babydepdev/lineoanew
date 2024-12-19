@@ -1,5 +1,5 @@
-import { Readable } from 'stream';
 import { Client } from '@line/bot-sdk';
+import { LineImageStream } from './types';
 
 /**
  * Get a readable stream for the LINE image
@@ -7,10 +7,13 @@ import { Client } from '@line/bot-sdk';
 export async function getLineImageStream(
   client: Client,
   messageId: string
-): Promise<Readable> {
+): Promise<LineImageStream> {
   try {
     const response = await client.getMessageContent(messageId);
-    return response;
+    if (!response || !response.headers) {
+      throw new Error('Invalid response from LINE API');
+    }
+    return response as LineImageStream;
   } catch (error) {
     console.error('Error getting image stream:', error);
     throw new Error('Failed to get image stream');
@@ -20,12 +23,17 @@ export async function getLineImageStream(
 /**
  * Convert a readable stream to a buffer
  */
-export async function streamToBuffer(stream: Readable): Promise<Buffer> {
+export async function streamToBuffer(stream: LineImageStream): Promise<Buffer> {
   const chunks: Buffer[] = [];
   
-  for await (const chunk of stream) {
-    chunks.push(Buffer.from(chunk));
+  try {
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    
+    return Buffer.concat(chunks);
+  } catch (error) {
+    console.error('Error converting stream to buffer:', error);
+    throw new Error('Failed to convert stream to buffer');
   }
-  
-  return Buffer.concat(chunks);
 }

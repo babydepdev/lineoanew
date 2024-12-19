@@ -9,7 +9,7 @@ export async function fetchImageContent(
   messageId: string
 ): Promise<LineImageStream> {
   try {
-    const response = await client.getMessageContent(messageId) as unknown as LineImageResponse;
+    const response = await client.getMessageContent(messageId) as LineImageResponse;
     
     if (!response || !response.headers) {
       throw new Error('Invalid response from LINE API');

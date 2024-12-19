@@ -11,11 +11,16 @@ export function getLineClient(): Client {
 
     lineClient = new Client({
       channelAccessToken: lineConfig.channelAccessToken,
-      channelSecret: lineConfig.channelSecret
+      channelSecret: lineConfig.channelSecret,
+      retryKey: true // Enable retries
     });
   }
 
   return lineClient;
+}
+
+export function clearLineClient(): void {
+  lineClient = null;
 }
 
 export async function sendLineMessage(userId: string, message: string): Promise<boolean> {

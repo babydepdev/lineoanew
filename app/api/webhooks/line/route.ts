@@ -1,29 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LineWebhookBody } from '@/app/types/line';
-import { 
-  findLineAccountBySignature,
-  extractLineSignature,
-  processLineWebhook 
-} from '@/lib/services/line';
-import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
+import { validateWebhookRequest } from '@/lib/services/line/webhook/validate';
+import { processWebhookEvents } from '@/lib/services/line/webhook/process';
 
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
     console.log('Received LINE webhook:', rawBody);
 
-    const signature = extractLineSignature(
-      request.headers.get('x-line-signature')
-    );
-
-    if (!signature) {
-      console.error('Missing LINE signature header');
+    // Get signature from headers
+    const signature = request.headers.get('x-line-signature');
+    
+    // Validate webhook request
+    const validation = await validateWebhookRequest(rawBody, signature);
+    if (!validation.isValid || !validation.account) {
+      console.error('Invalid webhook request:', validation.error);
       return NextResponse.json(
-        { error: 'Missing signature header' },
-        { status: 400 }
+        { error: validation.error || 'Invalid request' },
+        { status: 401 }
       );
     }
 
+    // Parse webhook body
     let webhookBody: LineWebhookBody;
     try {
       webhookBody = JSON.parse(rawBody);
@@ -35,20 +33,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const verificationResult = await findLineAccountBySignature(rawBody, signature);
-    
-    if (!verificationResult?.isValid || !verificationResult.account) {
-      console.error('Invalid signature or no matching account');
-      return NextResponse.json(
-        { error: 'Invalid signature' },
-        { status: 401 }
-      );
-    }
-
-    const result = await processLineWebhook(webhookBody, verificationResult.account);
-    
-    // Broadcast all conversations after webhook processing
-    await broadcastAllConversations();
+    // Process webhook events
+    const result = await processWebhookEvents(webhookBody, validation.account);
 
     console.log('Webhook processing result:', result);
 
