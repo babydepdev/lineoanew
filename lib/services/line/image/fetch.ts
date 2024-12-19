@@ -1,5 +1,5 @@
 import { Client } from '@line/bot-sdk';
-import { LineImageStream, LineImageResponse } from './types';
+import { LineImageStream } from './types';
 
 export async function fetchLineImage(
   client: Client,
