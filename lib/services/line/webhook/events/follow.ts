@@ -1,5 +1,5 @@
 import { LineMessageEvent, LineAccount } from '@/app/types/line';
-import { getLineUserProfile } from '../../profile';
+import { getLineUserProfile } from '@/lib/services/lineProfileService';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
