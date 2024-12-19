@@ -9,6 +9,14 @@ export async function validateLineImage(messageId: string): Promise<ImageValidat
       };
     }
 
+    // Validate message ID format (LINE message IDs are numeric)
+    if (!/^\d+$/.test(messageId)) {
+      return {
+        isValid: false,
+        error: 'Invalid message ID format'
+      };
+    }
+
     return {
       isValid: true,
       metadata: {

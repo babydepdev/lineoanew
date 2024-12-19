@@ -1,7 +1,6 @@
-import { Client } from '@line/bot-sdk';
+import { Client, ClientConfig } from '@line/bot-sdk';
 import { LineAccount } from '@/app/types/line';
 import { LineClientManager } from './types';
-import { getLineClientConfig } from './config';
 
 class DefaultLineClientManager implements LineClientManager {
   private defaultClient: Client | null = null;
@@ -11,17 +10,27 @@ class DefaultLineClientManager implements LineClientManager {
     if (account) {
       let client = this.accountClients.get(account.id);
       if (!client) {
-        client = new Client({
+        const config: ClientConfig = {
           channelAccessToken: account.channelAccessToken,
           channelSecret: account.channelSecret
-        });
+        };
+        client = new Client(config);
         this.accountClients.set(account.id, client);
       }
       return client;
     }
 
     if (!this.defaultClient) {
-      this.defaultClient = new Client(getLineClientConfig());
+      if (!process.env.LINE_CHANNEL_ACCESS_TOKEN || !process.env.LINE_CHANNEL_SECRET) {
+        throw new Error('LINE credentials not configured');
+      }
+      
+      const config: ClientConfig = {
+        channelAccessToken: process.env.LINE_CHANNEL_ACCESS_TOKEN,
+        channelSecret: process.env.LINE_CHANNEL_SECRET
+      };
+      
+      this.defaultClient = new Client(config);
     }
     return this.defaultClient;
   }
