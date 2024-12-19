@@ -20,8 +20,7 @@ class LineClientManager {
     }
 
     if (!this.defaultClient) {
-      const config = getLineClientConfig();
-      this.defaultClient = new Client(config);
+      this.defaultClient = new Client(getLineClientConfig());
     }
     return this.defaultClient;
   }

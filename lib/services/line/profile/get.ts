@@ -1,5 +1,5 @@
 import { LineUserProfile } from '@/app/types/line';
-import { getLineClient } from '../../lineService';
+import { getLineClient } from '../client/instance';
 
 export async function getLineUserProfile(userId: string): Promise<LineUserProfile | null> {
   try {

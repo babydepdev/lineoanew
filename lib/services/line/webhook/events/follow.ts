@@ -4,7 +4,8 @@ import { getLineUserProfile } from '../../profile/get';
 
 export async function processFollowEvent(
   event: LineMessageEvent,
-  _account: LineAccount // Prefix with underscore since it's unused
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  account: LineAccount
 ) {
   try {
     const userId = event.source.userId;

@@ -5,7 +5,8 @@ const prisma = new PrismaClient();
 
 export async function processUnfollowEvent(
   event: LineMessageEvent,
-  _account: LineAccount
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  account: LineAccount
 ) {
   try {
     const userId = event.source.userId;
