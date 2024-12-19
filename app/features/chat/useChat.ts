@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback } from 'react';
-import { SerializedConversation, ConversationWithMessages } from '@/app/types/chat';
+import { SerializedConversation, ConversationWithMessages, MessageWithChat } from '@/app/types/chat';
 import { useChatState } from './useChatState';
 import { useConversationEvents } from '@/app/hooks/useConversationEvents';
 import { usePusherEvents } from '@/app/hooks/usePusherEvents';
@@ -46,10 +46,12 @@ export function useChat(initialConversations: SerializedConversation[]) {
           platform: data.conversation.platform,
           channelId: data.conversation.channelId,
           userId: data.conversation.userId,
-          messages: data.conversation.messages.map((msg) => ({
+          messages: data.conversation.messages.map((msg): MessageWithChat => ({
             id: msg.id,
             conversationId: msg.conversationId,
             content: msg.content,
+            contentType: msg.contentType || 'text',
+            contentUrl: msg.contentUrl || null,
             sender: msg.sender,
             timestamp: new Date(msg.timestamp),
             platform: msg.platform,

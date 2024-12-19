@@ -4,6 +4,8 @@ export interface MessageResponse {
   id: string;
   conversationId: string;
   content: string;
+  contentType: string;
+  contentUrl: string | null;
   sender: SenderType;
   timestamp: string;
   platform: Platform;

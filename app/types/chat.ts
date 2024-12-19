@@ -1,23 +1,34 @@
-import { Conversation as PrismaConversation, Message as PrismaMessage, Platform } from '@prisma/client';
+import { Conversation as PrismaConversation, Message as PrismaMessage, Platform, SenderType } from '@prisma/client';
 
-// Base types from Prisma with proper message fields
+// Base message interface with all required fields
 export interface MessageWithChat extends PrismaMessage {
+  id: string;
+  conversationId: string;
+  content: string;
+  contentType: string;
+  contentUrl: string | null;
+  sender: SenderType;
+  timestamp: Date;
+  platform: Platform;
+  externalId: string | null;
   chatType: string | null;
   chatId: string | null;
 }
 
-// Conversation with messages including chat fields
+// Conversation with properly typed messages
 export type ConversationWithMessages = Omit<PrismaConversation, 'lineAccountId'> & {
   messages: MessageWithChat[];
   lineAccountId?: string | null;
 };
 
-// Serialized types for API/JSON
+// Serialized message for API/JSON
 export interface SerializedMessage {
   id: string;
   conversationId: string;
   content: string;
-  sender: 'USER' | 'BOT';
+  contentType: string;
+  contentUrl: string | null;
+  sender: SenderType;
   timestamp: string;
   platform: Platform;
   externalId: string | null;
@@ -25,6 +36,7 @@ export interface SerializedMessage {
   chatId: string | null;
 }
 
+// Serialized conversation for API/JSON
 export interface SerializedConversation {
   id: string;
   platform: Platform;
@@ -36,7 +48,7 @@ export interface SerializedConversation {
   lineAccountId?: string | null;
 }
 
-// Helper function to convert serialized to full types
+// Helper function to deserialize conversation
 export function deserializeConversation(conv: SerializedConversation): ConversationWithMessages {
   return {
     ...conv,
