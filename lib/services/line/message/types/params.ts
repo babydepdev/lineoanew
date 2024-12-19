@@ -10,4 +10,5 @@ export interface MessageCreateParams {
   lineAccountId?: string | null;
   source: LineSource;
   messageType?: 'text' | 'image';
+  channelId?: string; // Make channelId optional
 }

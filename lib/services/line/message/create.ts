@@ -12,7 +12,6 @@ export async function createLineMessage(params: MessageCreateParams): Promise<Me
       text, 
       messageId, 
       timestamp,
-      channelId,
       platform,
       lineAccountId,
       source,
@@ -35,7 +34,7 @@ export async function createLineMessage(params: MessageCreateParams): Promise<Me
     const conversation = await findOrCreateConversation(
       userId,
       platform,
-      channelId || chatId,
+      chatId, // Use chatId from identifier
       lineAccountId
     );
 

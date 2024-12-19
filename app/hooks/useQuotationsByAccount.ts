@@ -1,10 +1,14 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Quotation } from '../types/quotation';
 
 interface UseQuotationsByAccountResult {
   quotations: Quotation[];
   isLoading: boolean;
   mutate: () => Promise<void>;
+}
+
+interface QuotationResponse extends Omit<Quotation, 'createdAt'> {
+  createdAt: string;
 }
 
 export function useQuotationsByAccount(accountId: string): UseQuotationsByAccountResult {
@@ -22,15 +26,13 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
       const response = await fetch(`/api/quotations?accountId=${accountId}`);
       if (!response.ok) throw new Error('Failed to fetch quotations');
       
-      const data = await response.json();
+      const data = await response.json() as QuotationResponse[];
       const sortedQuotations = data
-        .map((quotation: Quotation) => ({
+        .map((quotation) => ({
           ...quotation,
           createdAt: new Date(quotation.createdAt)
         }))
-        .sort((a: Quotation, b: Quotation) => 
-          b.createdAt.getTime() - a.createdAt.getTime()
-        );
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       setQuotations(sortedQuotations);
     } catch (error) {
@@ -40,10 +42,6 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
       setIsLoading(false);
     }
   }, [accountId]);
-
-  useEffect(() => {
-    fetchQuotations();
-  }, [fetchQuotations]);
 
   return { 
     quotations, 
