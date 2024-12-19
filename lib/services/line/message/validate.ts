@@ -1,10 +1,10 @@
 import { LineMessageEvent } from '@/app/types/line';
 import { LineMessageValidationResult } from './types';
 import { isValidMessage } from './types/messages';
+import { parseImageMessage } from './types/imageMessage';
 
 export function validateLineMessage(event: LineMessageEvent): LineMessageValidationResult {
   try {
-    // Check event type
     if (event.type !== 'message') {
       return {
         isValid: false,
@@ -12,7 +12,6 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       };
     }
 
-    // Check message type and validity
     if (!event.message || !isValidMessage(event.message)) {
       return {
         isValid: false,
@@ -20,7 +19,6 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
       };
     }
 
-    // Handle different message types
     switch (event.message.type) {
       case 'text':
         const text = event.message.text?.trim();
@@ -30,12 +28,17 @@ export function validateLineMessage(event: LineMessageEvent): LineMessageValidat
             error: 'Empty or missing text content'
           };
         }
-        return { isValid: true, text, messageType: 'text' };
-
-      case 'image':
         return { 
           isValid: true, 
-          text: '[Image]',
+          text, 
+          messageType: 'text' 
+        };
+
+      case 'image':
+        const imageContent = parseImageMessage(event.message);
+        return { 
+          isValid: true, 
+          text: JSON.stringify(imageContent),
           messageType: 'image'
         };
 
