@@ -38,7 +38,8 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
         platform: selectedConversation.platform as Platform,
         externalId: null,
         chatType: null,
-        chatId: null
+        chatId: null,
+        imageBase64: null // Add the missing imageBase64 field
       };
 
       messageListRef.current?.addLocalMessage(tempMessage);
