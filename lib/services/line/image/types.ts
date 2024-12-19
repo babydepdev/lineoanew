@@ -22,6 +22,7 @@ export interface LineImageMetadata {
   messageId: string;
   contentType?: string;
   contentLength?: number;
+  base64?: string;
 }
 
 // Validation types
@@ -34,7 +35,7 @@ export interface ImageValidationResult {
 // Processing result
 export interface ImageProcessingResult {
   success: boolean;
-  buffer?: Buffer;
+  base64?: string;
   contentType?: string;
   error?: string;
 }
@@ -44,4 +45,5 @@ export interface ImageContent {
   type: 'image';
   url: string;
   messageId: string;
+  base64?: string;
 }

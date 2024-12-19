@@ -10,6 +10,7 @@ export interface MessageCreateParams {
   chatType?: string;
   chatId?: string;
   messageType?: 'text' | 'image';
+  imageBase64?: string;
 }
 
 export interface MessageBroadcastResult {

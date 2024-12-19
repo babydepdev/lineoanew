@@ -27,7 +27,7 @@ export async function processLineImage(
       };
     }
     
-    // Convert to buffer
+    // Convert to buffer and then base64
     const buffer = await streamToBuffer(stream);
     if (!buffer || buffer.length === 0) {
       return {
@@ -35,10 +35,12 @@ export async function processLineImage(
         error: 'Empty image buffer'
       };
     }
+
+    const base64Data = buffer.toString('base64');
     
     return {
       success: true,
-      buffer,
+      base64: base64Data,
       contentType: 'image/jpeg' // LINE API always returns JPEG
     };
   } catch (error) {
@@ -50,10 +52,10 @@ export async function processLineImage(
   }
 }
 
-export async function getImageBuffer(
+export async function getImageBase64(
   client: Client,
   messageId: string
-): Promise<Buffer> {
+): Promise<string> {
   try {
     const stream = await fetchLineImage(client, messageId);
     if (!stream || !stream.readable) {
@@ -65,9 +67,9 @@ export async function getImageBuffer(
       throw new Error('Empty image buffer');
     }
     
-    return buffer;
+    return buffer.toString('base64');
   } catch (error) {
-    console.error('Error getting image buffer:', error);
+    console.error('Error getting image base64:', error);
     throw error;
   }
 }

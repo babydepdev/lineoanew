@@ -59,7 +59,7 @@ model Conversation {
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
-
+// Update Message model to include base64 field for images
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
@@ -69,6 +69,7 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
+  imageBase64    String?      @db.Text  // New field for storing base64 image data
   
   // Relationships
   conversation   Conversation @relation(fields: [conversationId], references: [id])
