@@ -21,13 +21,6 @@ export interface ImageMessage {
 
 export type LineMessageType = TextMessage | ImageMessage;
 
-export function createTextMessage(text: string): TextMessage {
-  return {
-    type: 'text',
-    text: text.trim()
-  };
-}
-
 export function isValidMessage(message: unknown): message is LineMessage {
   if (!message || typeof message !== 'object') return false;
   
@@ -42,4 +35,22 @@ export function isValidMessage(message: unknown): message is LineMessage {
     default:
       return false;
   }
+}
+
+export function createTextMessage(text: string): TextMessage {
+  return {
+    type: 'text',
+    text: text.trim()
+  };
+}
+
+export function createImageMessage(url: string): ImageMessage {
+  return {
+    type: 'image',
+    contentProvider: {
+      type: 'external',
+      originalContentUrl: url,
+      previewImageUrl: url
+    }
+  };
 }

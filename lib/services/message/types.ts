@@ -7,8 +7,9 @@ export interface MessageCreateParams {
   platform: Platform;
   externalId?: string | null;
   timestamp?: Date;
-  chatType?: string;  // Add optional chatTypes
-  chatId?: string;    // Add optional chatId
+  chatType?: string;
+  chatId?: string;
+  messageType?: 'text' | 'image';
 }
 
 export interface MessageBroadcastResult {
@@ -16,7 +17,7 @@ export interface MessageBroadcastResult {
   error?: string;
 }
 
-export interface ConversationUpdateResult {
+export interface MessageSendResult {
   success: boolean;
   error?: string;
 }

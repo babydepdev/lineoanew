@@ -1,7 +1,14 @@
 import { Platform } from '@prisma/client';
 import { LineSource } from '@/app/types/line';
 
-export interface LineMessageParams {
+// Core message types
+export interface MessageBase {
+  type: string;
+  messageId: string;
+}
+
+// Message creation params
+export interface MessageCreateParams {
   userId: string;
   text: string;
   messageId: string;
@@ -13,20 +20,22 @@ export interface LineMessageParams {
   messageType?: 'text' | 'image';
 }
 
-export interface LineMessageResult {
+// Message results
+export interface MessageCreateResult {
   success: boolean;
   messageId?: string;
   error?: string;
 }
 
-export interface LineMessageValidationResult {
+export interface MessageSendResult {
+  success: boolean;
+  error?: string;
+}
+
+// Message validation
+export interface MessageValidationResult {
   isValid: boolean;
   error?: string;
   text?: string;
   messageType?: 'text' | 'image';
-}
-
-export interface SendMessageResult {
-  success: boolean;
-  error?: string;
 }

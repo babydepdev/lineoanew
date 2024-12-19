@@ -1,7 +1,7 @@
 import { LineMessageEvent } from '@/app/types/line';
-import { MessageValidationResult } from './types';
-import { isValidMessage } from './types/messages';
-import { createImageContent } from '../image/content';
+import { MessageValidationResult } from '../types';
+import { isValidMessage } from '../types/messages';
+import { validateMessageContent } from './content';
 
 export function validateLineMessage(event: LineMessageEvent): MessageValidationResult {
   try {
@@ -23,29 +23,22 @@ export function validateLineMessage(event: LineMessageEvent): MessageValidationR
 
     // Handle different message types
     switch (event.message.type) {
-      case 'text':
-        const text = event.message.text?.trim();
-        if (!text) {
-          return {
-            isValid: false,
-            error: 'Empty or missing text content'
-          };
+      case 'text': {
+        const validation = validateMessageContent(event.message.text);
+        if (!validation.isValid) {
+          return validation;
         }
-        return { 
-          isValid: true, 
-          text, 
-          messageType: 'text' 
+        return {
+          isValid: true,
+          text: validation.content,
+          messageType: 'text'
         };
+      }
 
       case 'image':
-        // Create image content with metadata
-        const content = createImageContent({
-          messageId: event.message.id
-        });
-        
-        return { 
-          isValid: true, 
-          text: content,
+        return {
+          isValid: true,
+          text: '[Image]',
           messageType: 'image'
         };
 

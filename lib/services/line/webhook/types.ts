@@ -1,4 +1,4 @@
-import { LineAccount } from '@/app/types/line';
+import { LineAccount, LineMessageEvent } from '@/app/types/line';
 
 export interface WebhookValidationResult {
   isValid: boolean;
@@ -16,4 +16,8 @@ export interface WebhookProcessingResult {
   processed: number;
   total: number;
   results: WebhookEventResult[];
+}
+
+export interface EventProcessor {
+  (event: LineMessageEvent, account: LineAccount): Promise<WebhookEventResult>;
 }

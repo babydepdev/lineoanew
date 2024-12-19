@@ -53,9 +53,13 @@ export async function POST(request: NextRequest) {
     // Send to platform
     let messageSent = false;
     if (platform === 'LINE') {
-      console.log('Sending LINE message to:', conversation.userId);
+      console.log('Sending LINE message:', {
+        userId: conversation.userId,
+        lineAccountId: conversation.lineAccountId
+      });
+      
       const result = await sendLineMessage(
-        conversation.userId, 
+        conversation.userId,
         content,
         conversation.lineAccountId
       );

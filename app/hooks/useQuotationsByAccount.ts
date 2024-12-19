@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Quotation } from '../types/quotation';
 
-export function useQuotationsByAccount(accountId: string) {
+interface UseQuotationsByAccountResult {
+  quotations: Quotation[];
+  isLoading: boolean;
+  mutate: () => Promise<void>;
+}
+
+export function useQuotationsByAccount(accountId: string): UseQuotationsByAccountResult {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -18,9 +24,9 @@ export function useQuotationsByAccount(accountId: string) {
       
       const data = await response.json();
       const sortedQuotations = data
-        .map((q: any) => ({
-          ...q,
-          createdAt: new Date(q.createdAt)
+        .map((quotation: Quotation) => ({
+          ...quotation,
+          createdAt: new Date(quotation.createdAt)
         }))
         .sort((a: Quotation, b: Quotation) => 
           b.createdAt.getTime() - a.createdAt.getTime()

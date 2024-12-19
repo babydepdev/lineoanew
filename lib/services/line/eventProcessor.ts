@@ -1,15 +1,12 @@
-import { 
-  LineMessageEvent, 
-  LineAccount, 
-  LineWebhookEventResult 
-} from '@/app/types/line';
-import { createLineMessage } from './message/create';
+import { LineMessageEvent, LineAccount } from '@/app/types/line';
+import { WebhookEventResult } from './webhook/types';
 import { validateLineMessage } from './message/validate';
+import { createLineMessage } from './message/create';
 
 export async function processLineMessageEvent(
   event: LineMessageEvent,
   account: LineAccount
-): Promise<LineWebhookEventResult> {
+): Promise<WebhookEventResult> {
   try {
     // Validate message
     const validation = validateLineMessage(event);
@@ -20,7 +17,7 @@ export async function processLineMessageEvent(
       };
     }
 
-    // Process valid message with source information
+    // Process message
     const result = await createLineMessage({
       userId: event.source.userId,
       text: validation.text,
@@ -29,7 +26,8 @@ export async function processLineMessageEvent(
       channelId: event.source.roomId || event.source.groupId || event.source.userId,
       platform: 'LINE',
       lineAccountId: account.id,
-      source: event.source // Pass source information
+      source: event.source,
+      messageType: validation.messageType
     });
 
     return {
