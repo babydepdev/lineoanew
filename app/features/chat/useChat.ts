@@ -1,80 +1,68 @@
-"use client";
+import { Conversation as PrismaConversation, Message as PrismaMessage, Platform, SenderType } from '@prisma/client';
+import { MessageContentType } from '@/lib/services/message';
 
-import { useCallback } from 'react';
-import { SerializedConversation, ConversationWithMessages, MessageWithChat } from '@/app/types/chat';
-import { useChatState } from './useChatState';
-import { useConversationEvents } from '@/app/hooks/useConversationEvents';
-import { usePusherEvents } from '@/app/hooks/usePusherEvents';
-import { APIResponse } from '@/app/types/api';
+// Base message interface with all required fields
+export interface MessageWithChat extends PrismaMessage {
+  id: string;
+  conversationId: string;
+  content: string;
+  contentType: MessageContentType;
+  contentUrl: string | null;
+  sender: SenderType;
+  timestamp: Date;
+  platform: Platform;
+  externalId: string | null;
+  chatType: string | null;
+  chatId: string | null;
+}
 
-export function useChat(initialConversations: SerializedConversation[]) {
-  const { 
-    conversations, 
-    selectedConversation, 
-    setSelectedConversation,
-    updateConversation 
-  } = useChatState();
-  
-  useConversationEvents(initialConversations);
-  usePusherEvents();
+// Conversation with properly typed messages
+export type ConversationWithMessages = Omit<PrismaConversation, 'lineAccountId'> & {
+  messages: MessageWithChat[];
+  lineAccountId?: string | null;
+};
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!selectedConversation) return;
+// Serialized message for API/JSON
+export interface SerializedMessage {
+  id: string;
+  conversationId: string;
+  content: string;
+  contentType: MessageContentType;
+  contentUrl: string | null;
+  sender: SenderType;
+  timestamp: string;
+  platform: Platform;
+  externalId: string | null;
+  chatType: string | null;
+  chatId: string | null;
+}
 
-    try {
-      const response = await fetch('/api/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          content,
-          platform: selectedConversation.platform,
-        }),
-      });
+// Serialized conversation for API/JSON
+export interface SerializedConversation {
+  id: string;
+  platform: Platform;
+  channelId: string;
+  userId: string;
+  messages: SerializedMessage[];
+  createdAt: string;
+  updatedAt: string;
+  lineAccountId?: string | null;
+}
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      const data = await response.json() as APIResponse;
-      
-      if (data.conversation) {
-        const updatedConversation: ConversationWithMessages = {
-          id: data.conversation.id,
-          platform: data.conversation.platform,
-          channelId: data.conversation.channelId,
-          userId: data.conversation.userId,
-          messages: data.conversation.messages.map((msg): MessageWithChat => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            content: msg.content,
-            contentType: msg.contentType || 'text',
-            contentUrl: msg.contentUrl || null,
-            sender: msg.sender,
-            timestamp: new Date(msg.timestamp),
-            platform: msg.platform,
-            externalId: msg.externalId,
-            chatType: msg.chatType,
-            chatId: msg.chatId
-          })),
-          createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt),
-          lineAccountId: data.conversation.lineAccountId
-        };
-
-        updateConversation(updatedConversation);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-    }
-  }, [selectedConversation, updateConversation]);
-
+// Helper function to deserialize conversation
+export function deserializeConversation(conv: SerializedConversation): ConversationWithMessages {
   return {
-    conversations,
-    selectedConversation,
-    setSelectedConversation,
-    sendMessage,
+    ...conv,
+    messages: conv.messages.map(msg => ({
+      ...msg,
+      timestamp: new Date(msg.timestamp)
+    })),
+    createdAt: new Date(conv.createdAt),
+    updatedAt: new Date(conv.updatedAt),
+    lineAccountId: conv.lineAccountId || null
   };
 }
+
+// Type aliases for Pusher events
+export type PusherMessage = SerializedMessage;
+export type PusherConversation = SerializedConversation;

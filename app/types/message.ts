@@ -1,4 +1,6 @@
-import { Message as PrismaMessage, Platform, SenderType } from '@prisma/client';
+import { Message, Platform, SenderType } from '@prisma/client';
+
+export type MessageContentType = 'text' | 'image';
 
 export interface MessageContent {
   text?: string;
@@ -11,7 +13,7 @@ export interface MessageContent {
 export interface MessageCreateParams {
   conversationId: string;
   content: string;
-  contentType: string;
+  contentType: MessageContentType;
   contentUrl?: string | null;
   sender: SenderType;
   platform: Platform;
@@ -28,7 +30,7 @@ export interface TempMessageParams {
   platform: Platform;
 }
 
-export function createTempMessage(params: TempMessageParams): PrismaMessage {
+export function createTempMessage(params: TempMessageParams): Message {
   return {
     id: `temp-${Date.now()}`,
     conversationId: params.conversationId,
