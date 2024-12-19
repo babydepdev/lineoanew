@@ -10,5 +10,6 @@ export interface MessageCreateParams {
   lineAccountId?: string | null;
   source: LineSource;
   messageType?: 'text' | 'image';
-  channelId?: string; // Make channelId optional
+  channelId?: string;
+  imageBase64?: string | null; // Added to match database schema
 }
