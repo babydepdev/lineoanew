@@ -1,4 +1,4 @@
-// Export types
+// Core LINE service exports
 export * from './client';
 export * from './message';
 export * from './webhook';
@@ -13,11 +13,11 @@ export { processWebhookEvents } from './webhook/process';
 export { getLineUserProfile } from './profile/get';
 export { isImageContent, extractImageUrl } from './image/content';
 
-// Export types from message module
+// Export types
 export type { 
   MessageSendResult,
   MessageCreateResult 
-} from './message/types/results';
+} from './message/types';
 export type { 
   WebhookProcessingResult 
 } from './webhook/types';

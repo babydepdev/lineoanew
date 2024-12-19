@@ -7,10 +7,10 @@ export interface MessageCreateParams {
   platform: Platform;
   externalId?: string | null;
   timestamp?: Date;
-  chatType?: string | null;
-  chatId?: string | null;
+  chatType?: string;
+  chatId?: string;
   messageType?: 'text' | 'image';
-  imageBase64: string | null; // Changed from string | undefined to string | null
+  imageBase64?: string;
 }
 
 export interface MessageBroadcastResult {

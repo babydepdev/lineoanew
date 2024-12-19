@@ -1,16 +1,14 @@
-import { MessageCreateParams } from '../../message/types';
-import { MessageCreateResult } from './types/results';
-import { LineMessageCreateParams } from './types/params';
+import { MessageCreateParams, MessageCreateResult } from './types';
 import { findOrCreateConversation } from '../../conversation';
 import { createMessage } from '../../message';
 import { broadcastMessageUpdate } from '../../message/broadcast';
 import { getChatIdentifier } from '../utils/chatIdentifier';
 import { validateMessageContent } from './validate/content';
 import { getImageBase64 } from '../image/process';
-import { clientManager } from '../client/manager';
+import { getLineClient } from '../client/instance';
 import { isImageContent } from '../image/content';
 
-export async function createLineMessage(params: LineMessageCreateParams): Promise<MessageCreateResult> {
+export async function createLineMessage(params: MessageCreateParams): Promise<MessageCreateResult> {
   try {
     const { 
       userId, 
@@ -43,19 +41,19 @@ export async function createLineMessage(params: LineMessageCreateParams): Promis
       lineAccountId
     );
 
-    // Process image if needed
-    let imageBase64: string | null = null;
+    // Handle image message
+    let imageBase64: string | undefined;
     if (messageType === 'image' && isImageContent(contentValidation.content)) {
       try {
-        const client = clientManager.getClient();
+        const client = getLineClient();
         imageBase64 = await getImageBase64(client, messageId);
       } catch (error) {
         console.error('Error processing image:', error);
       }
     }
 
-    // Create message params
-    const messageParams: MessageCreateParams = {
+    // Create message
+    const message = await createMessage({
       conversationId: conversation.id,
       content: contentValidation.content,
       sender: 'USER',
@@ -66,10 +64,7 @@ export async function createLineMessage(params: LineMessageCreateParams): Promis
       chatId,
       messageType,
       imageBase64
-    };
-
-    // Create message
-    const message = await createMessage(messageParams);
+    });
 
     // Broadcast update
     await broadcastMessageUpdate(conversation.id);

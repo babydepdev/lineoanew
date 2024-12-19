@@ -1,15 +1,9 @@
 import { ClientConfig } from '@line/bot-sdk';
+import { lineConfig } from '@/lib/config/line';
 
-export function createLineClientConfig(
-  channelAccessToken: string,
-  channelSecret: string
-): ClientConfig {
-  if (!channelAccessToken || !channelSecret) {
-    throw new Error('Missing required LINE credentials');
-  }
-  
+export function getLineClientConfig(): ClientConfig {
   return {
-    channelAccessToken,
-    channelSecret
+    channelAccessToken: lineConfig.channelAccessToken,
+    channelSecret: lineConfig.channelSecret
   };
 }

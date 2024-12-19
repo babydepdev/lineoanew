@@ -12,9 +12,7 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
     externalId, 
     timestamp,
     chatType,
-    chatId,
-    messageType,
-    imageBase64
+    chatId
   } = params;
 
   return prisma.message.create({
@@ -26,8 +24,7 @@ export async function createMessage(params: MessageCreateParams): Promise<Messag
       externalId,
       timestamp: timestamp || new Date(),
       chatType,
-      chatId,
-      imageBase64: messageType === 'image' ? imageBase64 : null // Only set imageBase64 for image messages
+      chatId
     }
   });
 }

@@ -1,8 +1,8 @@
 // Export types
 export * from './types';
 
-// Export config utilities
+// Export config
 export * from './config';
 
-// Export client manager and functions
-export { clientManager, getLineClient } from './instance';
+// Export manager instance and functions
+export { clientManager, getLineClient } from './manager';
