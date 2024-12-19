@@ -1,4 +1,3 @@
-
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../../pusher';
 import { formatConversationForPusher } from '../../messageFormatter';

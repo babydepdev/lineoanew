@@ -2,6 +2,7 @@ import { LineMessageEvent, LineAccount } from '@/app/types/line';
 import { WebhookEventResult } from '../types';
 import { validateLineMessage } from '../../message/validate';
 import { createLineMessage } from '../../message/create';
+import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
 
 export async function processMessageEvent(
   event: LineMessageEvent,
@@ -29,6 +30,9 @@ export async function processMessageEvent(
       source: event.source,
       messageType: validation.messageType
     });
+
+    // Broadcast all conversations to update the list
+    await broadcastAllConversations();
 
     return {
       success: result.success,
