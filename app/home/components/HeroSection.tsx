@@ -29,13 +29,13 @@ export function HeroSection() {
                 href="#"
                 className="backdrop-blur-sm bg-white/10 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/20 transition-all duration-300 border border-white/20 hover:border-white/30 inline-flex items-center"
               >
-                Get Started <span className="ml-2">→</span>
+             Started <span className="ml-2">→</span>
               </Link>
               <Link 
                 href="#"
                 className="backdrop-blur-sm bg-black/30 text-white px-6 py-3 rounded-lg font-medium hover:bg-black/40 transition-all duration-300 border border-white/10 hover:border-white/20 inline-flex items-center"
               >
-                Documentation
+                Contact
               </Link>
             </div>
           </FadeIn>
