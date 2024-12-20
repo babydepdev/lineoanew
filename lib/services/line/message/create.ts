@@ -7,6 +7,7 @@ import { validateMessageContent } from './validate/content';
 import { getImageBase64 } from '../image/base64';
 import { getLineClient } from '../client/instance';
 import { isImageContent } from '../image/content';
+import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
 
 export async function createLineMessage(params: MessageCreateParams): Promise<MessageCreateResult> {
   try {
@@ -66,8 +67,11 @@ export async function createLineMessage(params: MessageCreateParams): Promise<Me
       imageBase64
     });
 
-    // Broadcast update
-    await broadcastMessageUpdate(conversation.id);
+    // Broadcast updates
+    await Promise.all([
+      broadcastMessageUpdate(conversation.id),
+      broadcastAllConversations()
+    ]);
 
     return {
       success: true,

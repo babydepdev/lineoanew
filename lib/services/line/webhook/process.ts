@@ -6,45 +6,62 @@ import { WebhookProcessingResult } from './types';
 import { processMessageEvent } from './events/message';
 import { processFollowEvent } from './events/follow';
 import { processUnfollowEvent } from './events/unfollow';
+import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
 
 export async function processWebhookEvents(
   webhookBody: LineWebhookBody,
   account: LineAccount
 ): Promise<WebhookProcessingResult> {
-  const results = await Promise.allSettled(
-    webhookBody.events.map(event => processEvent(event, account))
-  );
+  try {
+    const results = await Promise.allSettled(
+      webhookBody.events.map(event => processEvent(event, account))
+    );
 
-  const processedResults = results.map(result => {
-    if (result.status === 'fulfilled') {
-      return result.value;
-    }
+    const processedResults = results.map(result => {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      }
+      return {
+        success: false,
+        error: 'Failed to process event'
+      };
+    });
+
+    // Broadcast conversation updates after processing all events
+    await broadcastAllConversations();
+
     return {
-      success: false,
-      error: 'Failed to process event'
+      processed: processedResults.filter(r => r.success).length,
+      total: webhookBody.events.length,
+      results: processedResults
     };
-  });
-
-  return {
-    processed: processedResults.filter(r => r.success).length,
-    total: webhookBody.events.length,
-    results: processedResults
-  };
+  } catch (error) {
+    console.error('Error processing webhook events:', error);
+    throw error;
+  }
 }
 
 async function processEvent(event: any, account: LineAccount) {
   try {
+    console.log('Processing LINE event:', { type: event.type, account: account.name });
+    
+    let result;
     switch (event.type) {
       case 'message':
-        return processMessageEvent(event, account);
+        result = await processMessageEvent(event, account);
+        break;
       case 'follow':
-        return processFollowEvent(event, account);
+        result = await processFollowEvent(event, account);
+        break;
       case 'unfollow':
-        return processUnfollowEvent(event, account);
+        result = await processUnfollowEvent(event, account);
+        break;
       default:
         console.log('Unsupported event type:', event.type);
         return { success: true };
     }
+
+    return result;
   } catch (error) {
     console.error('Error processing event:', error);
     return {
