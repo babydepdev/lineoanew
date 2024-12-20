@@ -1,18 +1,16 @@
-"use client";
-
 import { APIResponse } from '@/app/types/api';
 import { ConversationWithMessages } from '@/app/types/chat';
-import { useChatState } from './useChatState';
 import { Message, Platform, SenderType } from '@prisma/client';
+import { useChatState } from './useChatState';
 
 export function useChatActions() {
-  const { selectedConversation, updateConversation, setSelectedConversation } = useChatState();
+  const { selectedConversation, updateConversation, setSelectedConversation, refreshConversations } = useChatState();
 
   const sendMessage = async (content: string) => {
     if (!selectedConversation) return;
 
     try {
-      // Create temporary message with all required fields
+      // Create temporary message
       const tempMessage: Message = {
         id: `temp-${Date.now()}`,
         conversationId: selectedConversation.id,
@@ -23,7 +21,7 @@ export function useChatActions() {
         externalId: null,
         chatType: null,
         chatId: null,
-        imageBase64: null // Add the missing imageBase64 field
+        imageBase64: null
       };
 
       // Update conversation with temporary message
@@ -56,29 +54,20 @@ export function useChatActions() {
       const data = await response.json() as APIResponse;
       if (data.conversation) {
         const finalConversation: ConversationWithMessages = {
-          id: data.conversation.id,
-          platform: data.conversation.platform,
-          channelId: data.conversation.channelId,
-          userId: data.conversation.userId,
+          ...data.conversation,
           messages: data.conversation.messages.map(msg => ({
-            id: msg.id,
-            conversationId: msg.conversationId,
-            content: msg.content,
-            sender: msg.sender,
-            timestamp: new Date(msg.timestamp),
-            platform: msg.platform,
-            externalId: msg.externalId,
-            chatType: msg.chatType,
-            chatId: msg.chatId,
-            imageBase64: msg.imageBase64
+            ...msg,
+            timestamp: new Date(msg.timestamp)
           })),
           createdAt: new Date(data.conversation.createdAt),
-          updatedAt: new Date(data.conversation.updatedAt),
-          lineAccountId: data.conversation.lineAccountId
+          updatedAt: new Date(data.conversation.updatedAt)
         };
 
         updateConversation(finalConversation);
         setSelectedConversation(finalConversation);
+        
+        // Refresh all conversations to ensure proper ordering
+        await refreshConversations();
       }
     } catch (error) {
       console.error('Error sending message:', error);

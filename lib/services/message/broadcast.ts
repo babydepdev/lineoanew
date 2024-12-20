@@ -14,9 +14,10 @@ export async function broadcastMessageUpdate(
       where: { id: conversationId },
       include: {
         messages: {
-          orderBy: { timestamp: 'asc' },
-          take: -50 // Get last 50 messages
-        }
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+        },
+        lineAccount: true
       }
     });
 
@@ -27,7 +28,10 @@ export async function broadcastMessageUpdate(
       };
     }
 
-    const latestMessage = conversation.messages[conversation.messages.length - 1];
+    const latestMessage = conversation.messages[0];
+    if (!latestMessage) {
+      return { success: true };
+    }
 
     // Broadcast updates in parallel
     await Promise.all([
@@ -38,12 +42,23 @@ export async function broadcastMessageUpdate(
         formatMessageForPusher(latestMessage)
       ),
 
-      // Broadcast conversation update
+      // Broadcast conversation update with minimal data
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
-        formatConversationForPusher(conversation)
-      )
+        {
+          id: conversation.id,
+          platform: conversation.platform,
+          userId: conversation.userId,
+          updatedAt: conversation.updatedAt.toISOString(),
+          lineAccountId: conversation.lineAccountId,
+          lineAccount: conversation.lineAccount,
+          lastMessage: formatMessageForPusher(latestMessage)
+        }
+      ),
+
+      // Get and broadcast all conversations list
+      broadcastConversationsList()
     ]);
 
     return { success: true };
@@ -54,4 +69,33 @@ export async function broadcastMessageUpdate(
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
+}
+
+async function broadcastConversationsList() {
+  const conversations = await prisma.conversation.findMany({
+    include: {
+      messages: {
+        orderBy: { timestamp: 'desc' },
+        take: 1
+      },
+      lineAccount: true
+    },
+    orderBy: {
+      updatedAt: 'desc'
+    }
+  });
+
+  await pusherServer.trigger(
+    PUSHER_CHANNELS.CHAT,
+    PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+    conversations.map(conv => ({
+      id: conv.id,
+      platform: conv.platform,
+      userId: conv.userId,
+      updatedAt: conv.updatedAt.toISOString(),
+      lineAccountId: conv.lineAccountId,
+      lineAccount: conv.lineAccount,
+      lastMessage: conv.messages[0] ? formatMessageForPusher(conv.messages[0]) : null
+    }))
+  );
 }

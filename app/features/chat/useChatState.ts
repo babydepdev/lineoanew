@@ -1,7 +1,5 @@
-"use client";
-
 import { create } from 'zustand';
-import { ConversationWithMessages } from '@/app/types/chat';
+import { ConversationWithMessages } from '../../types/chat';
 import { Message } from '@prisma/client';
 
 interface ChatState {
@@ -14,7 +12,7 @@ interface ChatState {
   refreshConversations: () => Promise<void>;
 }
 
-export const useChatState = create<ChatState>((set) => ({
+export const useChatState = create<ChatState>((set, get) => ({
   conversations: [],
   selectedConversation: null,
   setConversations: (conversations) => 
@@ -49,29 +47,22 @@ export const useChatState = create<ChatState>((set) => ({
 
       if (messageExists) return state;
 
-      const updatedConversations = state.conversations.map((conv) => {
-        if (conv.id === message.conversationId) {
-          return {
-            ...conv,
-            messages: sortMessages([...conv.messages, message]),
-            updatedAt: message.timestamp
-          };
-        }
-        return conv;
-      });
+      const updatedConversation = {
+        ...conversationToUpdate,
+        messages: sortMessages([...conversationToUpdate.messages, message]),
+        updatedAt: message.timestamp
+      };
 
-      const updatedSelectedConversation = 
-        state.selectedConversation?.id === message.conversationId
-          ? {
-              ...state.selectedConversation,
-              messages: sortMessages([...state.selectedConversation.messages, message]),
-              updatedAt: message.timestamp
-            }
-          : state.selectedConversation;
+      const updatedConversations = state.conversations.map((conv) =>
+        conv.id === message.conversationId ? updatedConversation : conv
+      );
 
       return {
         conversations: sortConversations(updatedConversations),
-        selectedConversation: updatedSelectedConversation,
+        selectedConversation:
+          state.selectedConversation?.id === message.conversationId
+            ? updatedConversation
+            : state.selectedConversation,
       };
     }),
   refreshConversations: async () => {
@@ -81,10 +72,22 @@ export const useChatState = create<ChatState>((set) => ({
           'Authorization': `Bearer ${process.env.API_SECRET_KEY}`
         }
       });
+      
       if (!response.ok) throw new Error('Failed to fetch conversations');
       
       const conversations = await response.json();
       set({ conversations: sortConversations(conversations) });
+
+      // Update selected conversation if needed
+      const state = get();
+      if (state.selectedConversation) {
+        const updatedSelected = conversations.find(
+          (conv: ConversationWithMessages) => conv.id === state.selectedConversation?.id
+        );
+        if (updatedSelected) {
+          set({ selectedConversation: updatedSelected });
+        }
+      }
     } catch (error) {
       console.error('Error refreshing conversations:', error);
     }
@@ -98,9 +101,7 @@ function sortMessages(messages: Message[]): Message[] {
 }
 
 function sortConversations(conversations: ConversationWithMessages[]): ConversationWithMessages[] {
-  return [...conversations].sort((a, b) => {
-    const aTime = new Date(a.updatedAt).getTime();
-    const bTime = new Date(b.updatedAt).getTime();
-    return bTime - aTime;
-  });
+  return [...conversations].sort((a, b) => 
+    new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
 }
