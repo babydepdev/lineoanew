@@ -10,7 +10,12 @@ export function useConversationUpdates() {
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
 
     const handleNewMessage = (message: Message) => {
-      addMessage(message);
+      // Convert timestamp to Date object
+      const messageWithDate = {
+        ...message,
+        timestamp: new Date(message.timestamp)
+      };
+      addMessage(messageWithDate);
     };
 
     const handleConversationUpdate = () => {
