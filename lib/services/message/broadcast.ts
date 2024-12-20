@@ -8,7 +8,7 @@ export async function broadcastMessageUpdate(
   conversationId: string
 ): Promise<MessageBroadcastResult> {
   try {
-    // Get minimal conversation data
+    // Get conversation with latest message
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
@@ -25,7 +25,10 @@ export async function broadcastMessageUpdate(
             content: true,
             sender: true,
             timestamp: true,
-            conversationId: true
+            conversationId: true,
+            platform: true,
+            externalId: true,
+            imageBase64: true
           }
         }
       }
@@ -43,22 +46,29 @@ export async function broadcastMessageUpdate(
       return { success: true };
     }
 
-    // Broadcast minimal data
+    // Prepare message data for broadcast
+    const messageData = {
+      ...latestMessage,
+      timestamp: latestMessage.timestamp.toISOString()
+    };
+
+    // Broadcast to both channels simultaneously
     await Promise.all([
-      // Broadcast just the new message
+      // Broadcast to conversation-specific channel
       pusherServer.trigger(
         `private-conversation-${conversationId}`,
         PUSHER_EVENTS.MESSAGE_RECEIVED,
-        {
-          id: latestMessage.id,
-          content: latestMessage.content,
-          sender: latestMessage.sender,
-          timestamp: latestMessage.timestamp.toISOString(),
-          conversationId: latestMessage.conversationId
-        }
+        messageData
       ),
 
-      // Broadcast minimal conversation update
+      // Broadcast to main chat channel
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        messageData
+      ),
+
+      // Broadcast conversation update
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
@@ -68,12 +78,7 @@ export async function broadcastMessageUpdate(
           userId: conversation.userId,
           updatedAt: conversation.updatedAt.toISOString(),
           lineAccountId: conversation.lineAccountId,
-          lastMessage: {
-            id: latestMessage.id,
-            content: latestMessage.content,
-            sender: latestMessage.sender,
-            timestamp: latestMessage.timestamp.toISOString()
-          }
+          lastMessage: messageData
         }
       )
     ]);

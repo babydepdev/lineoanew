@@ -1,35 +1,9 @@
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
-import { pusherConfig, isPusherConfigured } from './config/pusher';
+import { PusherConfig } from '@/app/types/config';
 import { PusherClientEvent } from '@/app/types/pusher';
 
-if (!isPusherConfigured()) {
-  console.warn('Pusher configuration is missing or incomplete');
-}
-
-// Server-side Pusher instance
-export const pusherServer = new Pusher({
-  appId: pusherConfig.appId,
-  key: pusherConfig.key,
-  secret: pusherConfig.secret,
-  cluster: pusherConfig.cluster,
-  useTLS: true,
-});
-
-// Client-side Pusher instance
-export const pusherClient = new PusherClient(
-  pusherConfig.key,
-  {
-    cluster: pusherConfig.cluster,
-    forceTLS: true,
-    enabledTransports: ['ws', 'wss'],
-    channelAuthorization: {
-      endpoint: '/api/pusher/auth',
-      transport: 'ajax',
-    }
-  }
-);
-
+// Constants for events and channels
 export const PUSHER_EVENTS = {
   MESSAGE_RECEIVED: 'message-received',
   CONVERSATION_UPDATED: 'conversation-updated',
@@ -45,10 +19,33 @@ export const PUSHER_CHANNELS = {
   CLIENT: 'private-client-events',
 } as const;
 
+// Server-side Pusher instance
+export const pusherServer = new Pusher({
+  appId: process.env.PUSHER_APP_ID || '',
+  key: process.env.NEXT_PUBLIC_PUSHER_KEY || '',
+  secret: process.env.PUSHER_SECRET || '',
+  cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || '',
+  useTLS: true,
+});
+
+// Client-side Pusher instance
+export const pusherClient = new PusherClient(
+  process.env.NEXT_PUBLIC_PUSHER_KEY || '',
+  {
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || '',
+    forceTLS: true,
+    enabledTransports: ['ws', 'wss'],
+    channelAuthorization: {
+      endpoint: '/api/pusher/auth',
+      transport: 'ajax',
+    }
+  }
+);
+
 // Helper function to trigger client events
 export const triggerClientEvent = (eventName: string, data: PusherClientEvent) => {
   const channel = pusherClient.channel(PUSHER_CHANNELS.CLIENT);
-  if (channel && channel.subscribed) {
+  if (channel?.subscribed) {
     return channel.trigger(eventName, data);
   }
 };
