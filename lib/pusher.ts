@@ -1,6 +1,6 @@
 import Pusher from 'pusher';
 import PusherClient from 'pusher-js';
-import { PusherConfig } from '@/app/types/config';
+
 import { PusherClientEvent } from '@/app/types/pusher';
 
 // Constants for events and channels
