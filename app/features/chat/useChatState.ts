@@ -11,6 +11,7 @@ interface ChatState {
   setSelectedConversation: (conversation: ConversationWithMessages | null) => void;
   updateConversation: (updatedConversation: ConversationWithMessages) => void;
   addMessage: (message: Message) => void;
+  refreshConversations: () => Promise<void>;
 }
 
 export const useChatState = create<ChatState>((set) => ({
@@ -73,6 +74,21 @@ export const useChatState = create<ChatState>((set) => ({
         selectedConversation: updatedSelectedConversation,
       };
     }),
+  refreshConversations: async () => {
+    try {
+      const response = await fetch('/api/webhooks/conversations', {
+        headers: {
+          'Authorization': `Bearer ${process.env.API_SECRET_KEY}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch conversations');
+      
+      const conversations = await response.json();
+      set({ conversations: sortConversations(conversations) });
+    } catch (error) {
+      console.error('Error refreshing conversations:', error);
+    }
+  }
 }));
 
 function sortMessages(messages: Message[]): Message[] {
