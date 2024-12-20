@@ -11,6 +11,7 @@ import { Header } from './layout/Header';
 import { Sidebar } from './chat/Sidebar';
 import { ChatHeader } from './chat/ChatHeader';
 import { MessageCircle } from 'lucide-react';
+import { LineAccountStatus } from './line-account/LineAccountStatus';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -39,7 +40,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
         externalId: null,
         chatType: null,
         chatId: null,
-        imageBase64: null // Add the missing imageBase64 field
+        imageBase64: null
       };
 
       messageListRef.current?.addLocalMessage(tempMessage);
@@ -108,6 +109,8 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
           )}
         </main>
       </div>
+
+      <LineAccountStatus />
     </div>
   );
 }
