@@ -3,7 +3,7 @@ import { Platform, Message, Conversation } from '@prisma/client';
 import { MessageCreateParams } from './message/types';
 import { findOrCreateConversation } from './conversation';
 import { createMessage } from './message';
-import { broadcastConversationUpdate } from './conversation/broadcast';
+import { broadcastConversationUpdate } from './messageService';
 
 interface WebhookResult {
   message: Message;
