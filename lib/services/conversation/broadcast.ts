@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 export async function broadcastAllConversations() {
   try {
-    // Get minimal conversation data
+    // Get all conversations with latest messages
     const conversations = await prisma.conversation.findMany({
       select: {
         id: true,
@@ -26,7 +26,12 @@ export async function broadcastAllConversations() {
             id: true,
             content: true,
             sender: true,
-            timestamp: true
+            timestamp: true,
+            platform: true,
+            externalId: true,
+            chatType: true,
+            chatId: true,
+            imageBase64: true
           }
         }
       },
@@ -35,8 +40,8 @@ export async function broadcastAllConversations() {
       }
     });
 
-    // Format minimal data for broadcast
-    const minimalData = conversations.map(conv => ({
+    // Format data for broadcast
+    const formattedData = conversations.map(conv => ({
       id: conv.id,
       platform: conv.platform,
       userId: conv.userId,
@@ -44,17 +49,16 @@ export async function broadcastAllConversations() {
       lineAccountId: conv.lineAccountId,
       lineAccount: conv.lineAccount,
       lastMessage: conv.messages[0] ? {
-        id: conv.messages[0].id,
-        content: conv.messages[0].content,
-        sender: conv.messages[0].sender,
+        ...conv.messages[0],
         timestamp: conv.messages[0].timestamp.toISOString()
       } : null
     }));
 
+    // Broadcast to all clients
     await pusherServer.trigger(
       PUSHER_CHANNELS.CHAT,
       PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-      minimalData
+      formattedData
     );
 
     return true;

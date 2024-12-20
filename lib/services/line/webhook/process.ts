@@ -7,6 +7,7 @@ import { processMessageEvent } from './events/message';
 import { processFollowEvent } from './events/follow';
 import { processUnfollowEvent } from './events/unfollow';
 import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
+import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
 
 export async function processWebhookEvents(
   webhookBody: LineWebhookBody,
@@ -27,8 +28,18 @@ export async function processWebhookEvents(
       };
     });
 
-    // Broadcast conversation updates after processing all events
-    await broadcastAllConversations();
+    // Broadcast updates to all clients
+    await Promise.all([
+      // Broadcast conversation updates
+      broadcastAllConversations(),
+      
+      // Notify clients of webhook processing completion
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+        { timestamp: new Date().toISOString() }
+      )
+    ]);
 
     return {
       processed: processedResults.filter(r => r.success).length,
@@ -43,7 +54,11 @@ export async function processWebhookEvents(
 
 async function processEvent(event: any, account: LineAccount) {
   try {
-    console.log('Processing LINE event:', { type: event.type, account: account.name });
+    console.log('Processing LINE event:', { 
+      type: event.type, 
+      account: account.name,
+      timestamp: new Date().toISOString()
+    });
     
     let result;
     switch (event.type) {
