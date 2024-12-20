@@ -8,7 +8,7 @@ export async function broadcastMessageUpdate(
   conversationId: string
 ): Promise<MessageBroadcastResult> {
   try {
-    // Get conversation with latest message
+    // Get minimal conversation data
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
@@ -27,8 +27,7 @@ export async function broadcastMessageUpdate(
             timestamp: true,
             conversationId: true,
             platform: true,
-            externalId: true,
-            imageBase64: true
+            externalId: true
           }
         }
       }
@@ -46,29 +45,23 @@ export async function broadcastMessageUpdate(
       return { success: true };
     }
 
-    // Prepare message data for broadcast
-    const messageData = {
-      ...latestMessage,
-      timestamp: latestMessage.timestamp.toISOString()
-    };
+    // Create a unique event ID for deduplication
+    const eventId = `${latestMessage.id}-${Date.now()}`;
 
-    // Broadcast to both channels simultaneously
+    // Broadcast with event ID
     await Promise.all([
-      // Broadcast to conversation-specific channel
+      // Broadcast just the new message
       pusherServer.trigger(
         `private-conversation-${conversationId}`,
         PUSHER_EVENTS.MESSAGE_RECEIVED,
-        messageData
+        {
+          ...latestMessage,
+          timestamp: latestMessage.timestamp.toISOString(),
+          eventId // Add event ID
+        }
       ),
 
-      // Broadcast to main chat channel
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        messageData
-      ),
-
-      // Broadcast conversation update
+      // Broadcast minimal conversation update
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
@@ -78,7 +71,11 @@ export async function broadcastMessageUpdate(
           userId: conversation.userId,
           updatedAt: conversation.updatedAt.toISOString(),
           lineAccountId: conversation.lineAccountId,
-          lastMessage: messageData
+          lastMessage: {
+            ...latestMessage,
+            timestamp: latestMessage.timestamp.toISOString(),
+            eventId // Add event ID
+          }
         }
       )
     ]);
