@@ -4,6 +4,7 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback 
 import { ScrollArea } from './ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
 import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
+import { useWebNotifications } from '../hooks/useWebNotifications';
 import { Message } from '@prisma/client';
 
 interface MessageListProps {
@@ -17,9 +18,11 @@ export interface MessageListHandle {
 const MessageList = forwardRef<MessageListHandle, MessageListProps>(
   ({ conversationId }, ref) => {
     const { messages, isLoading, addMessage } = useRealtimeMessages(conversationId);
+    const { permission, requestPermission, showNotification } = useWebNotifications();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Handle auto-scrolling
     useEffect(() => {
       if (scrollAreaRef.current) {
         const scrollContainer = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
@@ -28,6 +31,23 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
         }
       }
     }, [messages]);
+
+    // Handle notifications for new messages
+    useEffect(() => {
+      const lastMessage = messages[messages.length - 1];
+      
+      if (lastMessage?.sender === 'USER' && document.hidden) {
+        if (permission === 'default') {
+          requestPermission();
+        } else if (permission === 'granted') {
+          showNotification('New Message', {
+            body: lastMessage.content,
+            tag: 'new-message',
+            requireInteraction: true // Use this instead of renotify
+          });
+        }
+      }
+    }, [messages, permission, requestPermission, showNotification]);
 
     const addLocalMessage = useCallback((message: Message) => {
       addMessage(message);
