@@ -17,6 +17,8 @@ export function useConversationUpdates() {
         timestamp: new Date(message.timestamp)
       };
       addMessage(messageWithDate);
+      // Refresh conversations to update order
+      refreshConversations();
     };
 
     const handleConversationUpdate = (conversation: PusherConversation) => {
@@ -30,6 +32,8 @@ export function useConversationUpdates() {
         updatedAt: new Date(conversation.updatedAt)
       };
       updateConversation(formattedConversation);
+      // Refresh conversations to update order
+      refreshConversations();
     };
 
     const handleConversationsUpdate = () => {

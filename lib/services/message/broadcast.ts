@@ -8,27 +8,13 @@ export async function broadcastMessageUpdate(
   conversationId: string
 ): Promise<MessageBroadcastResult> {
   try {
-    // Get minimal conversation data
+    // Get conversation with messages
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
-      select: {
-        id: true,
-        platform: true,
-        userId: true,
-        updatedAt: true,
-        lineAccountId: true,
+      include: {
         messages: {
           orderBy: { timestamp: 'desc' },
-          take: 1,
-          select: {
-            id: true,
-            content: true,
-            sender: true,
-            timestamp: true,
-            conversationId: true,
-            platform: true,
-            externalId: true
-          }
+          take: 1
         }
       }
     });
@@ -48,37 +34,72 @@ export async function broadcastMessageUpdate(
     // Create a unique event ID for deduplication
     const eventId = `${latestMessage.id}-${Date.now()}`;
 
-    // Broadcast with event ID
+    // Broadcast updates
     await Promise.all([
-      // Broadcast just the new message
+      // Broadcast message to conversation channel
       pusherServer.trigger(
         `private-conversation-${conversationId}`,
         PUSHER_EVENTS.MESSAGE_RECEIVED,
         {
           ...latestMessage,
           timestamp: latestMessage.timestamp.toISOString(),
-          eventId // Add event ID
+          eventId
         }
       ),
 
-      // Broadcast minimal conversation update
+      // Broadcast to main chat channel
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.MESSAGE_RECEIVED,
+        {
+          ...latestMessage,
+          timestamp: latestMessage.timestamp.toISOString(),
+          eventId
+        }
+      ),
+
+      // Broadcast conversation update
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
         {
-          id: conversation.id,
-          platform: conversation.platform,
-          userId: conversation.userId,
-          updatedAt: conversation.updatedAt.toISOString(),
-          lineAccountId: conversation.lineAccountId,
-          lastMessage: {
-            ...latestMessage,
-            timestamp: latestMessage.timestamp.toISOString(),
-            eventId // Add event ID
-          }
+          ...conversation,
+          messages: conversation.messages.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp.toISOString()
+          })),
+          createdAt: conversation.createdAt.toISOString(),
+          updatedAt: conversation.updatedAt.toISOString()
         }
       )
     ]);
+
+    // Get and broadcast all conversations
+    const allConversations = await prisma.conversation.findMany({
+      include: {
+        messages: {
+          orderBy: { timestamp: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    });
+
+    await pusherServer.trigger(
+      PUSHER_CHANNELS.CHAT,
+      PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+      allConversations.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => ({
+          ...msg,
+          timestamp: msg.timestamp.toISOString()
+        })),
+        createdAt: conv.createdAt.toISOString(),
+        updatedAt: conv.updatedAt.toISOString()
+      }))
+    );
 
     return { success: true };
   } catch (error) {
