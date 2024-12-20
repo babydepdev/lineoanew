@@ -9,6 +9,7 @@ import { Message } from '@prisma/client';
 
 interface MessageListProps {
   conversationId: string;
+  userId?: string | null; // Make userId optional and allow null
 }
 
 export interface MessageListHandle {
@@ -16,11 +17,12 @@ export interface MessageListHandle {
 }
 
 const MessageList = forwardRef<MessageListHandle, MessageListProps>(
-  ({ conversationId }, ref) => {
+  ({ conversationId, userId }, ref) => {
     const { messages, isLoading, addMessage } = useRealtimeMessages(conversationId);
-    const { permission, requestPermission, showNotification } = useWebNotifications();
+    const { permission, requestPermission, showNotification } = useWebNotifications(userId);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const lastNotificationRef = useRef<number>(0);
 
     // Handle auto-scrolling
     useEffect(() => {
@@ -35,16 +37,17 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
     // Handle notifications for new messages
     useEffect(() => {
       const lastMessage = messages[messages.length - 1];
+      const now = Date.now();
       
-      if (lastMessage?.sender === 'USER' && document.hidden) {
+      if (lastMessage?.sender === 'USER' && 
+          document.hidden && 
+          now - lastNotificationRef.current > 5000) {
+        
         if (permission === 'default') {
           requestPermission();
         } else if (permission === 'granted') {
-          showNotification('New Message', {
-            body: lastMessage.content,
-            tag: 'new-message',
-            requireInteraction: true // Use this instead of renotify
-          });
+          showNotification(lastMessage.content);
+          lastNotificationRef.current = now;
         }
       }
     }, [messages, permission, requestPermission, showNotification]);
