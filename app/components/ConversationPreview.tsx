@@ -22,6 +22,24 @@ export function ConversationPreview({
   const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
+
+  // Format last message preview
+  const getLastMessagePreview = () => {
+    if (!lastMessage) return '';
+    
+    const prefix = lastMessage.sender === 'USER' ? 'User: ' : 'Bot: ';
+    return (
+      <p className="text-sm text-slate-600 truncate mt-1">
+        <span className={cn(
+          "font-medium",
+          lastMessage.sender === 'USER' ? "text-primary/80" : "text-slate-500"
+        )}>
+          {prefix}
+        </span>
+        {lastMessage.content}
+      </p>
+    );
+  };
   
   return (
     <motion.div
@@ -83,17 +101,7 @@ export function ConversationPreview({
             )}
           </div>
           
-          {lastMessage && (
-            <p className="text-sm text-slate-600 truncate mt-1">
-              <span className={cn(
-                "font-medium",
-                lastMessage.sender === 'USER' ? "text-primary/80" : "text-slate-500"
-              )}>
-                {lastMessage.sender === 'USER' ? 'You: ' : 'Bot: '}
-              </span>
-              {lastMessage.content}
-            </p>
-          )}
+          {getLastMessagePreview()}
         </div>
       </div>
     </motion.div>
