@@ -4,7 +4,7 @@ import { useLineProfile } from './useLineProfile';
 
 export function useWebNotifications(userId: string | null | undefined) {
   const [permission, setPermission] = useState<NotificationPermission>('default');
-  const { profile } = useLineProfile(userId || null); // Ensure null is passed instead of undefined
+  const { profile } = useLineProfile(userId || null);
 
   useEffect(() => {
     if ('Notification' in window) {
@@ -21,10 +21,13 @@ export function useWebNotifications(userId: string | null | undefined) {
   }, []);
 
   const showNotification = useCallback((content: string) => {
+    if (!content.trim()) return { success: false, error: 'Empty content' };
+
     const config: NotificationConfig = {
       content,
-      profile: profile || undefined // Ensure undefined is passed instead of null
+      profile: profile || undefined
     };
+
     return NotificationService.show(config);
   }, [profile]);
 

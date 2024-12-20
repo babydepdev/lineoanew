@@ -86,7 +86,8 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
 
               <MessageListWithRef 
                 ref={messageListRef}
-                conversationId={selectedConversation.id} 
+                conversationId={selectedConversation.id}
+                userId={selectedConversation.userId}
               />
               <TypingIndicator conversationId={selectedConversation.id} />
               <MessageInput 

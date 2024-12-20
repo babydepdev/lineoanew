@@ -13,14 +13,22 @@ export class NotificationService {
     }
 
     try {
-      const notification = new Notification(NOTIFICATION_CONFIG.TITLE, {
-        body: content,
-        icon: profile?.pictureUrl || NOTIFICATION_CONFIG.DEFAULT_ICON,
-        badge: NOTIFICATION_CONFIG.DEFAULT_ICON,
-        tag: 'chat-message',
-        requireInteraction: true,
-        silent: false
-      });
+      const notification = new Notification(
+        profile?.displayName || NOTIFICATION_CONFIG.TITLE, 
+        {
+          body: content,
+          icon: profile?.pictureUrl || NOTIFICATION_CONFIG.DEFAULT_ICON,
+          badge: NOTIFICATION_CONFIG.DEFAULT_ICON,
+          tag: 'chat-message',
+          requireInteraction: true,
+          silent: false,
+          // Remove renotify as it's not a standard property
+          data: { // Add data for any custom properties we want to track
+            userId: profile?.userId,
+            timestamp: new Date().toISOString()
+          }
+        }
+      );
 
       notification.onclick = () => {
         window.focus();
