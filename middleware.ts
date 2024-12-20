@@ -3,6 +3,15 @@ import type { NextRequest } from 'next/server';
 import { AUTH_COOKIE_NAME, PUBLIC_PATHS } from './lib/auth/constants';
 import { verifyToken } from './lib/auth/token';
 
+// Add /home to public paths
+const PUBLIC_ROUTES = [
+  '/login',
+  '/api/auth/login',
+  '/api/auth/logout',
+  '/home',
+  ...PUBLIC_PATHS
+];
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -20,8 +29,8 @@ export async function middleware(request: NextRequest) {
     return response;
   }
 
-  // Allow public paths (like login)
-  if (PUBLIC_PATHS.includes(pathname)) {
+  // Allow public paths (like login and home)
+  if (PUBLIC_ROUTES.some(path => pathname.startsWith(path))) {
     return NextResponse.next();
   }
 
