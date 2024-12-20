@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../../pusher';
-import { formatMessageForPusher, formatConversationForPusher } from '../../messageFormatter';
+import { formatMessageForPusher } from '../../messageFormatter';
 import { MessageBroadcastResult } from './types';
 
 const prisma = new PrismaClient();
