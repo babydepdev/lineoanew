@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
+import { useConversationUpdates } from '../hooks/useConversationUpdates';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -22,8 +23,10 @@ export function ConversationPreview({
   const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
+  
+  // Use the conversation updates hook
+  useConversationUpdates();
 
-  // Format last message preview
   const getLastMessagePreview = () => {
     if (!lastMessage) return '';
     
@@ -40,7 +43,7 @@ export function ConversationPreview({
       </p>
     );
   };
-  
+
   return (
     <motion.div
       onClick={onClick}
@@ -52,6 +55,7 @@ export function ConversationPreview({
         isSelected && "bg-primary/5 hover:bg-primary/5"
       )}
     >
+      {/* Rest of the component remains the same */}
       <div className="flex gap-3 w-full min-w-0">
         <Avatar className={cn(
           "h-10 w-10 flex-shrink-0 ring-2 ring-transparent transition-all duration-200",
