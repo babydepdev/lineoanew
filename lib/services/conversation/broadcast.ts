@@ -1,48 +1,33 @@
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../../pusher';
-import { formatConversationForPusher } from '../../messageFormatter';
 
 const prisma = new PrismaClient();
 
-export async function broadcastConversationUpdate(conversationId: string) {
-  try {
-    // Get updated conversation
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      include: {
-        messages: {
-          orderBy: { timestamp: 'asc' }
-        }
-      }
-    });
-
-    if (!conversation) {
-      throw new Error(`Conversation not found: ${conversationId}`);
-    }
-
-    // Format and broadcast conversation update
-    const formattedConversation = formatConversationForPusher(conversation);
-    await pusherServer.trigger(
-      PUSHER_CHANNELS.CHAT,
-      PUSHER_EVENTS.CONVERSATION_UPDATED,
-      formattedConversation
-    );
-
-    // Get and broadcast all conversations
-    await broadcastAllConversations();
-
-  } catch (error) {
-    console.error('Error broadcasting conversation update:', error);
-    throw error;
-  }
-}
-
 export async function broadcastAllConversations() {
   try {
+    // Get minimal conversation data
     const conversations = await prisma.conversation.findMany({
-      include: {
+      select: {
+        id: true,
+        platform: true,
+        userId: true,
+        updatedAt: true,
+        lineAccountId: true,
+        lineAccount: {
+          select: {
+            id: true,
+            name: true
+          }
+        },
         messages: {
-          orderBy: { timestamp: 'asc' }
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+          select: {
+            id: true,
+            content: true,
+            sender: true,
+            timestamp: true
+          }
         }
       },
       orderBy: {
@@ -50,13 +35,31 @@ export async function broadcastAllConversations() {
       }
     });
 
+    // Format minimal data for broadcast
+    const minimalData = conversations.map(conv => ({
+      id: conv.id,
+      platform: conv.platform,
+      userId: conv.userId,
+      updatedAt: conv.updatedAt.toISOString(),
+      lineAccountId: conv.lineAccountId,
+      lineAccount: conv.lineAccount,
+      lastMessage: conv.messages[0] ? {
+        id: conv.messages[0].id,
+        content: conv.messages[0].content,
+        sender: conv.messages[0].sender,
+        timestamp: conv.messages[0].timestamp.toISOString()
+      } : null
+    }));
+
     await pusherServer.trigger(
       PUSHER_CHANNELS.CHAT,
       PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-      conversations.map(formatConversationForPusher)
+      minimalData
     );
+
+    return true;
   } catch (error) {
-    console.error('Error broadcasting all conversations:', error);
-    throw error;
+    console.error('Error broadcasting conversations:', error);
+    return false;
   }
 }

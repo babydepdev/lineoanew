@@ -1,6 +1,5 @@
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../../pusher';
-import { formatMessageForPusher } from '../../messageFormatter';
 import { MessageBroadcastResult } from './types';
 
 const prisma = new PrismaClient();
@@ -9,15 +8,26 @@ export async function broadcastMessageUpdate(
   conversationId: string
 ): Promise<MessageBroadcastResult> {
   try {
-    // Get conversation with messages
+    // Get minimal conversation data
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
-      include: {
+      select: {
+        id: true,
+        platform: true,
+        userId: true,
+        updatedAt: true,
+        lineAccountId: true,
         messages: {
           orderBy: { timestamp: 'desc' },
           take: 1,
-        },
-        lineAccount: true
+          select: {
+            id: true,
+            content: true,
+            sender: true,
+            timestamp: true,
+            conversationId: true
+          }
+        }
       }
     });
 
@@ -33,16 +43,22 @@ export async function broadcastMessageUpdate(
       return { success: true };
     }
 
-    // Broadcast updates in parallel
+    // Broadcast minimal data
     await Promise.all([
-      // Broadcast new message
+      // Broadcast just the new message
       pusherServer.trigger(
         `private-conversation-${conversationId}`,
         PUSHER_EVENTS.MESSAGE_RECEIVED,
-        formatMessageForPusher(latestMessage)
+        {
+          id: latestMessage.id,
+          content: latestMessage.content,
+          sender: latestMessage.sender,
+          timestamp: latestMessage.timestamp.toISOString(),
+          conversationId: latestMessage.conversationId
+        }
       ),
 
-      // Broadcast conversation update with minimal data
+      // Broadcast minimal conversation update
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
@@ -52,13 +68,14 @@ export async function broadcastMessageUpdate(
           userId: conversation.userId,
           updatedAt: conversation.updatedAt.toISOString(),
           lineAccountId: conversation.lineAccountId,
-          lineAccount: conversation.lineAccount,
-          lastMessage: formatMessageForPusher(latestMessage)
+          lastMessage: {
+            id: latestMessage.id,
+            content: latestMessage.content,
+            sender: latestMessage.sender,
+            timestamp: latestMessage.timestamp.toISOString()
+          }
         }
-      ),
-
-      // Get and broadcast all conversations list
-      broadcastConversationsList()
+      )
     ]);
 
     return { success: true };
@@ -69,33 +86,4 @@ export async function broadcastMessageUpdate(
       error: error instanceof Error ? error.message : 'Unknown error'
     };
   }
-}
-
-async function broadcastConversationsList() {
-  const conversations = await prisma.conversation.findMany({
-    include: {
-      messages: {
-        orderBy: { timestamp: 'desc' },
-        take: 1
-      },
-      lineAccount: true
-    },
-    orderBy: {
-      updatedAt: 'desc'
-    }
-  });
-
-  await pusherServer.trigger(
-    PUSHER_CHANNELS.CHAT,
-    PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-    conversations.map(conv => ({
-      id: conv.id,
-      platform: conv.platform,
-      userId: conv.userId,
-      updatedAt: conv.updatedAt.toISOString(),
-      lineAccountId: conv.lineAccountId,
-      lineAccount: conv.lineAccount,
-      lastMessage: conv.messages[0] ? formatMessageForPusher(conv.messages[0]) : null
-    }))
-  );
 }
