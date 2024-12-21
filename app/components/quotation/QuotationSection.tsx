@@ -9,12 +9,11 @@ interface QuotationSectionProps {
 }
 
 export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
-  const { quotations, mutate } = useQuotationsByAccount(account.id);
+  const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
 
-  // Show section skeleton only during initial load
-  //if (isLoading) {
-    //return <QuotationSectionSkeleton name={account.name} />;
-  //}
+  if (isLoading) {
+    return <QuotationSectionSkeleton name={account.name} />;
+  }
 
   const filteredQuotations = filterQuotations(quotations, searchQuery);
 
@@ -48,6 +47,18 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
   );
 }
 
+function QuotationSectionSkeleton({ name }: { name: string }) {
+  return (
+    <div className="space-y-3">
+      <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
+      <div className="space-y-2">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-16 bg-slate-50 rounded animate-pulse" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function filterQuotations(quotations: Quotation[], query: string): Quotation[] {
   if (!query) return quotations;

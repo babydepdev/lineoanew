@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Quotation } from '../types/quotation';
 
 interface UseQuotationsByAccountResult {
@@ -13,11 +13,12 @@ interface QuotationResponse extends Omit<Quotation, 'createdAt'> {
 
 export function useQuotationsByAccount(accountId: string): UseQuotationsByAccountResult {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchQuotations = useCallback(async () => {
+  const fetchQuotations = async () => {
     if (!accountId) {
       setQuotations([]);
+      setIsLoading(false);
       return;
     }
 
@@ -41,14 +42,12 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
     } finally {
       setIsLoading(false);
     }
-  }, [accountId]);
+  };
 
-  // Only fetch when accountId changes
+  // Fetch quotations when accountId changes
   useEffect(() => {
-    if (accountId) {
-      fetchQuotations();
-    }
-  }, [accountId, fetchQuotations]);
+    fetchQuotations();
+  }, [accountId]);
 
   return { 
     quotations, 
