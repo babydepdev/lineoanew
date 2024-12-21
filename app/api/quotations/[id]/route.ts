@@ -12,27 +12,30 @@ export async function DELETE(
   try {
     const { id } = params;
 
-    // Delete all items first due to foreign key constraint
-    await prisma.quotationItem.deleteMany({
-      where: { quotationId: id }
+    // Use a single transaction for atomic deletion
+    await prisma.$transaction(async (tx) => {
+      // Delete items and quotation in parallel for better performance
+      await Promise.all([
+        tx.quotationItem.deleteMany({
+          where: { quotationId: id }
+        }),
+        tx.quotation.delete({
+          where: { id }
+        })
+      ]);
+    }, {
+      // Set a shorter timeout for faster execution
+      timeout: 5000 // 5 seconds max
     });
 
-    // Then delete the quotation
-    await prisma.quotation.delete({
-      where: { id }
-    });
-
-    // Get updated metrics
+    // Get updated metrics and broadcast updates in parallel
     const metrics = await getDashboardMetrics();
-
-    // Broadcast metrics update
     await Promise.all([
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'metrics-updated',
         metrics
       ),
-      // Also trigger a specific quotation event
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'quotation-deleted',
@@ -90,19 +93,20 @@ export async function PATCH(
           items: true
         }
       });
+    }, {
+      timeout: 5000 // 5 seconds max
     });
 
     // Get updated metrics
     const metrics = await getDashboardMetrics();
 
-    // Broadcast metrics update
+    // Broadcast updates in parallel
     await Promise.all([
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'metrics-updated',
         metrics
       ),
-      // Also trigger a specific quotation event
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'quotation-updated',

@@ -7,6 +7,7 @@ datasource db {
 // Prisma Client generator
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
 }
 
 // ======= Authentication & User Models =======
@@ -59,7 +60,7 @@ model Conversation {
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
-// Update Message model to include base64 field for images
+
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
@@ -97,6 +98,7 @@ model Quotation {
   invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
   invoiceId     String?
 
+  @@index([id]) // Add index for faster deletion
   @@index([lineAccountId])
   @@index([createdAt])
   @@index([status])
@@ -110,10 +112,10 @@ model QuotationItem {
   total       Float
   
   // Relationships
-  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade) // Add cascade delete
   quotationId String
 
-  @@index([quotationId])
+  @@index([quotationId]) // Add index for faster deletion
 }
 
 model Invoice {
