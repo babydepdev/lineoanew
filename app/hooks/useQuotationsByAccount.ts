@@ -28,7 +28,13 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
       if (!response.ok) throw new Error('Failed to fetch quotations');
       
       const data = await response.json() as QuotationResponse[];
-      const sortedQuotations = data
+      
+      // Ensure we're getting unique quotations by ID
+      const uniqueQuotations = Array.from(
+        new Map(data.map(q => [q.id, q])).values()
+      );
+      
+      const sortedQuotations = uniqueQuotations
         .map((quotation) => ({
           ...quotation,
           createdAt: new Date(quotation.createdAt)

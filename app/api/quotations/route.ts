@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { pusherServer, PUSHER_CHANNELS } from '@/lib/pusher';
-import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
-import { createQuotation } from '@/lib/services/quotation/create';
+import { fetchQuotationsByAccount } from './services/fetch';
+import { createQuotationWithItems } from './services/create';
 import { QuotationCreateParams } from '@/lib/services/quotation/types';
-
-const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,18 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const quotations = await prisma.quotation.findMany({
-      where: {
-        lineAccountId: accountId
-      },
-      include: {
-        items: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
+    const quotations = await fetchQuotationsByAccount(accountId);
     return NextResponse.json(quotations);
   } catch (error) {
     console.error('Error fetching quotations:', error);
@@ -76,28 +61,8 @@ export async function POST(request: NextRequest) {
       }))
     };
 
-    // Create quotation
-    const quotation = await createQuotation(params);
-
-    // Get updated metrics
-    const metrics = await getDashboardMetrics();
-
-    // Broadcast metrics update
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        'metrics-updated',
-        metrics
-      ),
-      // Also trigger a specific quotation event
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        'quotation-created',
-        { quotation: quotation.quotation, metrics }
-      )
-    ]);
-
-    return NextResponse.json(quotation.quotation);
+    const quotation = await createQuotationWithItems(params);
+    return NextResponse.json(quotation);
   } catch (error) {
     console.error('Error creating quotation:', error);
     return NextResponse.json(
