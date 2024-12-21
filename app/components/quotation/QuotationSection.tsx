@@ -11,6 +11,7 @@ interface QuotationSectionProps {
 export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
   const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
 
+  // Show section skeleton only during initial load
   if (isLoading) {
     return <QuotationSectionSkeleton name={account.name} />;
   }
@@ -52,7 +53,7 @@ function QuotationSectionSkeleton({ name }: { name: string }) {
     <div className="space-y-3">
       <h3 className="text-lg font-semibold text-slate-900">{name}</h3>
       <div className="space-y-2">
-        {[1, 2, 3].map((i) => (
+        {[1, 2].map((i) => (
           <div key={i} className="h-16 bg-slate-50 rounded animate-pulse" />
         ))}
       </div>
