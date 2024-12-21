@@ -9,7 +9,7 @@ interface QuotationSectionProps {
 }
 
 export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
-  const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
+  const { quotations, mutate } = useQuotationsByAccount(account.id);
 
   // Show section skeleton only during initial load
   //if (isLoading) {
