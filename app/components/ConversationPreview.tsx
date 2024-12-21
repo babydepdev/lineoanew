@@ -19,7 +19,12 @@ export function ConversationPreview({
   isSelected,
   onClick,
 }: ConversationPreviewProps) {
-  const lastMessage = conversation.messages[conversation.messages.length - 1];
+  // Sort messages by timestamp in descending order to get latest first
+  const sortedMessages = [...conversation.messages].sort(
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+  );
+  const lastMessage = sortedMessages[0];
+
   const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
@@ -55,7 +60,6 @@ export function ConversationPreview({
         isSelected && "bg-primary/5 hover:bg-primary/5"
       )}
     >
-      {/* Rest of the component remains the same */}
       <div className="flex gap-3 w-full min-w-0">
         <Avatar className={cn(
           "h-10 w-10 flex-shrink-0 ring-2 ring-transparent transition-all duration-200",
