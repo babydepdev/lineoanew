@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
-import { useConversationUpdates } from '../hooks/useConversationUpdates';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -22,23 +21,11 @@ export function ConversationPreview({
   const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
-  
-  // Subscribe to real-time updates
-  useConversationUpdates();
 
-  // Get the latest message, sorted by timestamp
+  // Get the latest message
   const lastMessage = React.useMemo(() => {
     if (!conversation.messages?.length) return null;
-    
-    // Create a new array to avoid mutating the original
-    const sortedMessages = [...conversation.messages].sort((a, b) => {
-      // Ensure we're comparing Date objects
-      const dateA = new Date(a.timestamp);
-      const dateB = new Date(b.timestamp);
-      return dateB.getTime() - dateA.getTime();
-    });
-
-    return sortedMessages[0];
+    return conversation.messages[conversation.messages.length - 1];
   }, [conversation.messages]);
 
   const getLastMessagePreview = () => {
