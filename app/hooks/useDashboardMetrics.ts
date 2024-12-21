@@ -13,17 +13,17 @@ export function useDashboardMetrics(initialMetrics: DashboardMetrics) {
       setMetrics(updatedMetrics);
     };
 
-    // Listen for all metrics update events
+    // Listen for metrics updates
     channel.bind('metrics-updated', handleMetricsUpdate);
     channel.bind('quotation-created', (data: { metrics: DashboardMetrics }) => handleMetricsUpdate(data.metrics));
-    channel.bind('quotation-updated', (data: { metrics: DashboardMetrics }) => handleMetricsUpdate(data.metrics));
     channel.bind('quotation-deleted', (data: { metrics: DashboardMetrics }) => handleMetricsUpdate(data.metrics));
+    channel.bind('quotation-updated', (data: { metrics: DashboardMetrics }) => handleMetricsUpdate(data.metrics));
 
     return () => {
       channel.unbind('metrics-updated', handleMetricsUpdate);
       channel.unbind('quotation-created');
-      channel.unbind('quotation-updated');
       channel.unbind('quotation-deleted');
+      channel.unbind('quotation-updated');
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
   }, []);
