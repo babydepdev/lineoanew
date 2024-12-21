@@ -19,15 +19,13 @@ export function ConversationPreview({
   isSelected,
   onClick,
 }: ConversationPreviewProps) {
+  const lastMessage = conversation.messages[conversation.messages.length - 1];
   const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
-
-  // Use conversation updates hook
+  
+  // Use the conversation updates hook
   useConversationUpdates();
-
-  // Get latest message
-  const lastMessage = conversation.messages[conversation.messages.length - 1];
 
   const getLastMessagePreview = () => {
     if (!lastMessage) return '';
