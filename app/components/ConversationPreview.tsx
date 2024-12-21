@@ -23,15 +23,22 @@ export function ConversationPreview({
     conversation.platform === 'LINE' ? conversation.userId : null
   );
   
+  // Subscribe to real-time updates
   useConversationUpdates();
 
-  // Sort messages by timestamp in descending order and get the latest
+  // Get the latest message, sorted by timestamp
   const lastMessage = React.useMemo(() => {
-    if (!conversation.messages.length) return null;
+    if (!conversation.messages?.length) return null;
     
-    return [...conversation.messages].sort((a, b) => {
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
-    })[0];
+    // Create a new array to avoid mutating the original
+    const sortedMessages = [...conversation.messages].sort((a, b) => {
+      // Ensure we're comparing Date objects
+      const dateA = new Date(a.timestamp);
+      const dateB = new Date(b.timestamp);
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return sortedMessages[0];
   }, [conversation.messages]);
 
   const getLastMessagePreview = () => {
