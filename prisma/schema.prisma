@@ -59,7 +59,7 @@ model Conversation {
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
-// Update Message model to include base64 field for images
+
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
@@ -69,7 +69,7 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
-  imageBase64    String?      @db.Text  // New field for storing base64 image data
+  imageBase64    String?      @db.Text  // For storing base64 image data
   
   // Relationships
   conversation   Conversation @relation(fields: [conversationId], references: [id])
@@ -86,17 +86,18 @@ model Quotation {
   number        String          @unique
   customerName  String
   total         Float
-  status        DocumentStatus @default(DRAFT)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  status        DocumentStatus  @default(DRAFT)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
   // Relationships
-  items         QuotationItem[]
-  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  items         QuotationItem[] @relation("QuotationToItems")
+  lineAccount   LineAccount     @relation(fields: [lineAccountId], references: [id])
   lineAccountId String
-  invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
+  invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
   invoiceId     String?
 
+  @@index([id, lineAccountId])
   @@index([lineAccountId])
   @@index([createdAt])
   @@index([status])
@@ -110,7 +111,7 @@ model QuotationItem {
   total       Float
   
   // Relationships
-  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  quotation   Quotation @relation("QuotationToItems", fields: [quotationId], references: [id], onDelete: Cascade)
   quotationId String
 
   @@index([quotationId])
@@ -121,15 +122,15 @@ model Invoice {
   number        String          @unique
   customerName  String
   total         Float
-  status        DocumentStatus @default(DRAFT)
+  status        DocumentStatus  @default(DRAFT)
   dueDate       DateTime
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
   // Relationships
   items         InvoiceItem[]
   quotations    Quotation[]
-  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  lineAccount   LineAccount     @relation(fields: [lineAccountId], references: [id])
   lineAccountId String
 
   @@index([lineAccountId])
