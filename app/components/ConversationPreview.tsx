@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
+import { useChatState } from '../features/chat/useChatState';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -22,11 +23,8 @@ export function ConversationPreview({
     conversation.platform === 'LINE' ? conversation.userId : null
   );
 
-  // Get the latest message
-  const lastMessage = React.useMemo(() => {
-    if (!conversation.messages?.length) return null;
-    return conversation.messages[conversation.messages.length - 1];
-  }, [conversation.messages]);
+  // Get the latest message from sorted messages array
+  const lastMessage = conversation.messages[conversation.messages.length - 1];
 
   const getLastMessagePreview = () => {
     if (!lastMessage) return '';
@@ -56,6 +54,7 @@ export function ConversationPreview({
         isSelected && "bg-primary/5 hover:bg-primary/5"
       )}
     >
+      {/* Rest of the component remains the same */}
       <div className="flex gap-3 w-full min-w-0">
         <Avatar className={cn(
           "h-10 w-10 flex-shrink-0 ring-2 ring-transparent transition-all duration-200",
