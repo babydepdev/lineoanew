@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -7,6 +7,10 @@ import { QuotationItemInputs } from './QuotationItemInputs';
 import { AccountSelect } from './AccountSelect';
 import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';
 import { showToast } from '@/app/utils/toast';
+
+// Memoize form components
+const MemoizedAccountSelect = memo(AccountSelect);
+const MemoizedQuotationItemInputs = memo(QuotationItemInputs);
 
 interface CreateQuotationDialogProps {
   isOpen: boolean;
@@ -23,8 +27,23 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
 
   const { mutate: refreshQuotations } = useQuotationsByAccount(formData.lineAccountId);
 
+  // Memoize handlers
+  const handleAccountChange = useCallback((value: string) => {
+    setFormData(prev => ({ ...prev, lineAccountId: value }));
+  }, []);
+
+  const handleCustomerNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({ ...prev, customerName: e.target.value }));
+  }, []);
+
+  const handleItemsChange = useCallback((items: any[]) => {
+    setFormData(prev => ({ ...prev, items }));
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    
     setIsSubmitting(true);
 
     try {
@@ -70,9 +89,9 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>LINE Account</Label>
-              <AccountSelect
+              <MemoizedAccountSelect
                 value={formData.lineAccountId}
-                onChange={(value) => setFormData(prev => ({ ...prev, lineAccountId: value }))}
+                onChange={handleAccountChange}
               />
             </div>
 
@@ -80,16 +99,16 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
               <Label>ชื่อลูกค้า</Label>
               <Input
                 value={formData.customerName}
-                onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
+                onChange={handleCustomerNameChange}
                 placeholder="ระบุชื่อลูกค้า"
                 className="h-11"
               />
             </div>
           </div>
 
-          <QuotationItemInputs 
+          <MemoizedQuotationItemInputs 
             items={formData.items}
-            onChange={(items) => setFormData(prev => ({ ...prev, items }))}
+            onChange={handleItemsChange}
           />
 
           <div className="flex justify-end gap-2 pt-4 border-t">

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -9,7 +10,10 @@ interface QuotationItemInputsProps {
   onChange: (items: QuotationFormItem[]) => void;
 }
 
-export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProps) {
+export const QuotationItemInputs = memo(function QuotationItemInputs({ 
+  items, 
+  onChange 
+}: QuotationItemInputsProps) {
   const addItem = () => {
     onChange([...items, { name: '', quantity: 1, price: 0 }]);
   };
@@ -30,6 +34,10 @@ export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProp
 
   const calculateTotal = (item: QuotationFormItem) => {
     return item.quantity * item.price;
+  };
+
+  const calculateGrandTotal = () => {
+    return items.reduce((sum, item) => sum + calculateTotal(item), 0);
   };
 
   return (
@@ -108,7 +116,7 @@ export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProp
         <div className="w-[200px]">
           <Label>ยอดรวมทั้งหมด</Label>
           <Input
-            value={`฿${items.reduce((sum, item) => sum + calculateTotal(item), 0).toLocaleString()}`}
+            value={`฿${calculateGrandTotal().toLocaleString()}`}
             readOnly
             disabled
             className="mt-2 text-lg font-semibold"
@@ -117,4 +125,4 @@ export function QuotationItemInputs({ items, onChange }: QuotationItemInputsProp
       </div>
     </div>
   );
-}
+});
