@@ -6,7 +6,6 @@ import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
-import { useChatState } from '../features/chat/useChatState';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
