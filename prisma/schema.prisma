@@ -29,16 +29,17 @@ model LineAccount {
   name               String
   channelAccessToken String         @unique
   channelSecret      String
-  active            Boolean        @default(true)
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  active             Boolean        @default(true)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
   
-  // Relationships
-  conversations     Conversation[]
-  quotations       Quotation[]
-  invoices         Invoice[]
+  // Relationships with cascading deletes
+  conversations      Conversation[]
+  quotations        Quotation[]    @relation("LineAccountQuotations")
+  invoices          Invoice[]      @relation("LineAccountInvoices")
 
   @@index([active])
+  @@index([createdAt])
 }
 
 // ======= Chat & Messaging Models =======
@@ -50,16 +51,17 @@ model Conversation {
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
   
-  // Relationships
-  messages      Message[]
-  lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id])
+  // Relationships with cascading deletes
+  messages      Message[]   @relation("ConversationMessages")
+  lineAccount   LineAccount? @relation(fields: [lineAccountId], references: [id], onDelete: Cascade)
   lineAccountId String?
 
   @@unique([userId, platform, channelId, lineAccountId])
   @@index([platform, updatedAt])
   @@index([userId, platform])
+  @@index([lineAccountId, createdAt])
 }
-// Update Message model to include base64 field for images
+
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
@@ -69,10 +71,10 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
-  imageBase64    String?      @db.Text  // New field for storing base64 image data
+  imageBase64    String?      @db.Text
   
-  // Relationships
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  // Relationships with cascading deletes
+  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
   conversationId String
 
   @@index([conversationId, timestamp])
@@ -86,20 +88,21 @@ model Quotation {
   number        String          @unique
   customerName  String
   total         Float
-  status        DocumentStatus @default(DRAFT)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  status        DocumentStatus  @default(DRAFT)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
-  // Relationships
-  items         QuotationItem[]
-  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  // Relationships with cascading deletes
+  items         QuotationItem[] @relation("QuotationItems")
+  lineAccount   LineAccount     @relation("LineAccountQuotations", fields: [lineAccountId], references: [id], onDelete: Cascade)
   lineAccountId String
-  invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
+  invoice       Invoice?        @relation("InvoiceQuotations", fields: [invoiceId], references: [id])
   invoiceId     String?
 
-  @@index([lineAccountId])
-  @@index([createdAt])
-  @@index([status])
+  // Optimized compound indexes
+  @@index([lineAccountId, createdAt(sort: Desc)])
+  @@index([lineAccountId, status])
+  @@index([status, createdAt])
 }
 
 model QuotationItem {
@@ -109,8 +112,8 @@ model QuotationItem {
   price       Float
   total       Float
   
-  // Relationships
-  quotation   Quotation @relation(fields: [quotationId], references: [id])
+  // Relationship with cascading delete
+  quotation   Quotation @relation("QuotationItems", fields: [quotationId], references: [id], onDelete: Cascade)
   quotationId String
 
   @@index([quotationId])
@@ -121,21 +124,21 @@ model Invoice {
   number        String          @unique
   customerName  String
   total         Float
-  status        DocumentStatus @default(DRAFT)
+  status        DocumentStatus  @default(DRAFT)
   dueDate       DateTime
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
-  // Relationships
-  items         InvoiceItem[]
-  quotations    Quotation[]
-  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  // Relationships with cascading deletes
+  items         InvoiceItem[]   @relation("InvoiceItems")
+  quotations    Quotation[]     @relation("InvoiceQuotations")
+  lineAccount   LineAccount     @relation("LineAccountInvoices", fields: [lineAccountId], references: [id], onDelete: Cascade)
   lineAccountId String
 
-  @@index([lineAccountId])
-  @@index([createdAt])
-  @@index([status])
-  @@index([dueDate])
+  // Optimized compound indexes
+  @@index([lineAccountId, createdAt(sort: Desc)])
+  @@index([lineAccountId, status])
+  @@index([status, dueDate])
 }
 
 model InvoiceItem {
@@ -145,8 +148,8 @@ model InvoiceItem {
   price       Float
   total       Float
   
-  // Relationships
-  invoice     Invoice   @relation(fields: [invoiceId], references: [id])
+  // Relationship with cascading delete
+  invoice     Invoice   @relation("InvoiceItems", fields: [invoiceId], references: [id], onDelete: Cascade)
   invoiceId   String
 
   @@index([invoiceId])

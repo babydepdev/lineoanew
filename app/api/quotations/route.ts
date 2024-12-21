@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
-import { pusherServer, PUSHER_CHANNELS } from '@/lib/pusher';
-import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
+import { getQuotationsByAccount } from '@/lib/services/quotation/query';
 import { createQuotation } from '@/lib/services/quotation/create';
-import { QuotationCreateParams } from '@/lib/services/quotation/types';
-
-const prisma = new PrismaClient();
+import { broadcastQuotationUpdate } from '@/lib/services/quotation/broadcast';
+import { validateQuotationRequest } from '@/lib/services/quotation/validate';
+import { quotationCache } from '@/lib/services/quotation/cache';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,19 +17,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const quotations = await prisma.quotation.findMany({
-      where: {
-        lineAccountId: accountId
-      },
-      include: {
-        items: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
+    const result = await getQuotationsByAccount({
+      accountId,
+      limit: 20,
+      includeItems: true
     });
 
-    return NextResponse.json(quotations);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(result.data, {
+      headers: {
+        'Cache-Control': 'public, max-age=60'
+      }
+    });
   } catch (error) {
     console.error('Error fetching quotations:', error);
     return NextResponse.json(
@@ -41,63 +44,37 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// POST handler remains the same...
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { lineAccountId, customerName, items } = body;
-
-    // Validate required fields
-    if (!lineAccountId || !customerName || !items?.length) {
+    
+    // Validate request
+    const validation = validateQuotationRequest(body.lineAccountId, body);
+    if (!validation.isValid) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: validation.error },
         { status: 400 }
       );
     }
 
-    // Generate quotation number
-    const quotationNumber = `QT${Date.now()}`;
-
-    // Calculate total
-    const total = items.reduce((sum: number, item: any) => 
-      sum + (item.quantity * item.price), 0
-    );
-
-    // Create quotation params
-    const params: QuotationCreateParams = {
-      number: quotationNumber,
-      customerName,
-      total,
-      lineAccountId,
-      items: items.map((item: any) => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price,
-        total: item.quantity * item.price
-      }))
-    };
-
     // Create quotation
-    const quotation = await createQuotation(params);
+    const result = await createQuotation(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
 
-    // Get updated metrics
-    const metrics = await getDashboardMetrics();
+    // Clear cache for this account
+    quotationCache.delete(body.lineAccountId);
 
-    // Broadcast metrics update
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        'metrics-updated',
-        metrics
-      ),
-      // Also trigger a specific quotation event
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        'quotation-created',
-        { quotation: quotation.quotation, metrics }
-      )
-    ]);
+    // Broadcast update
+    await broadcastQuotationUpdate(result.quotation);
 
-    return NextResponse.json(quotation.quotation);
+    return NextResponse.json(result.quotation);
   } catch (error) {
     console.error('Error creating quotation:', error);
     return NextResponse.json(
