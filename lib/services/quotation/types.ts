@@ -1,17 +1,15 @@
-import { Quotation, QuotationItem } from '@prisma/client';
+import { QuotationItem } from '@prisma/client';
 
-export interface QuotationWithItems extends Quotation {
-  items: QuotationItem[];
+export interface QuotationCreateParams {
+  number: string;
+  customerName: string;
+  total: number;
+  lineAccountId: string;
+  items: Omit<QuotationItem, 'id' | 'quotationId'>[];
 }
 
-export interface QuotationQueryOptions {
-  accountId: string;
-  limit?: number;
-  includeItems?: boolean;
-}
-
-export interface QuotationQueryResult {
+export interface QuotationResult {
   success: boolean;
-  data: QuotationWithItems[];
+  quotation?: any; // Using any temporarily, should be properly typed
   error?: string;
 }

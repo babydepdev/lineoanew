@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
-import { QuotationWithItems } from '@/lib/services/quotation/types';
-import { pusherClient, PUSHER_CHANNELS } from '@/lib/pusher';
+import { Quotation } from '../types/quotation';
 
 interface UseQuotationsByAccountResult {
-  quotations: QuotationWithItems[];
+  quotations: Quotation[];
   isLoading: boolean;
   mutate: () => Promise<void>;
 }
 
+interface QuotationResponse extends Omit<Quotation, 'createdAt'> {
+  createdAt: string;
+}
+
 export function useQuotationsByAccount(accountId: string): UseQuotationsByAccountResult {
-  const [quotations, setQuotations] = useState<QuotationWithItems[]>([]);
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchQuotations = async () => {
@@ -22,18 +25,17 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
     try {
       setIsLoading(true);
       const response = await fetch(`/api/quotations?accountId=${accountId}`);
+      if (!response.ok) throw new Error('Failed to fetch quotations');
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch quotations');
-      }
-      
-      const data = await response.json();
-      const formattedQuotations = data.map((q: any) => ({
-        ...q,
-        createdAt: new Date(q.createdAt)
-      }));
+      const data = await response.json() as QuotationResponse[];
+      const sortedQuotations = data
+        .map((quotation) => ({
+          ...quotation,
+          createdAt: new Date(quotation.createdAt)
+        }))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-      setQuotations(formattedQuotations);
+      setQuotations(sortedQuotations);
     } catch (error) {
       console.error('Error fetching quotations:', error);
       setQuotations([]);
@@ -42,27 +44,7 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
     }
   };
 
-  // Subscribe to Pusher events
-  useEffect(() => {
-    const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
-
-    const handleQuotationUpdate = () => {
-      fetchQuotations();
-    };
-
-    channel.bind('quotation-created', handleQuotationUpdate);
-    channel.bind('quotation-updated', handleQuotationUpdate);
-    channel.bind('quotation-deleted', handleQuotationUpdate);
-
-    return () => {
-      channel.unbind('quotation-created', handleQuotationUpdate);
-      channel.unbind('quotation-updated', handleQuotationUpdate);
-      channel.unbind('quotation-deleted', handleQuotationUpdate);
-      pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
-    };
-  }, [accountId]);
-
-  // Initial fetch
+  // Fetch quotations when accountId changes
   useEffect(() => {
     fetchQuotations();
   }, [accountId]);
