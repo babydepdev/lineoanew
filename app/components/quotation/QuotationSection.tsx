@@ -1,3 +1,5 @@
+"use client";
+
 import { LineAccount } from '@/app/types/line';
 import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';
 import { QuotationItem } from './QuotationItem';
