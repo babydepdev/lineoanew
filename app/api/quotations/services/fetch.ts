@@ -8,11 +8,14 @@ export async function fetchQuotationsByAccount(accountId: string) {
       lineAccountId: accountId
     },
     include: {
-      items: true
+      items: {
+        orderBy: {
+          id: 'asc'
+        }
+      }
     },
     orderBy: {
       createdAt: 'desc'
-    },
-    distinct: ['id']
+    }
   });
 }

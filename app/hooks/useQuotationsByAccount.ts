@@ -29,17 +29,16 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
       
       const data = await response.json() as QuotationResponse[];
       
-      // Ensure we're getting unique quotations by ID
-      const uniqueQuotations = Array.from(
-        new Map(data.map(q => [q.id, q])).values()
+      // Map the quotations and ensure dates are properly converted
+      const processedQuotations = data.map((quotation) => ({
+        ...quotation,
+        createdAt: new Date(quotation.createdAt)
+      }));
+
+      // Sort by creation date descending
+      const sortedQuotations = processedQuotations.sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
       );
-      
-      const sortedQuotations = uniqueQuotations
-        .map((quotation) => ({
-          ...quotation,
-          createdAt: new Date(quotation.createdAt)
-        }))
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       setQuotations(sortedQuotations);
     } catch (error) {
