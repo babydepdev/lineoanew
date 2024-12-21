@@ -17,14 +17,18 @@ export async function handleCreateQuotation(request: NextRequest) {
     // Generate quotation number
     const number = generateQuotationNumber();
 
-    // Create quotation
+    // Create quotation with optimized process
     const quotation = await createQuotation({
       ...body,
       number
     });
 
-    // Broadcast updates
-    await broadcastQuotationCreated(quotation);
+    if (!quotation) {
+      throw new Error('Failed to create quotation');
+    }
+
+    // Broadcast updates asynchronously
+    broadcastQuotationCreated(quotation).catch(console.error);
 
     return NextResponse.json(quotation);
   } catch (error) {
