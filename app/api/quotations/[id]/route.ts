@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { pusherServer, PUSHER_CHANNELS } from '@/lib/pusher';
+import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
 
 const prisma = new PrismaClient();
 
@@ -19,6 +21,24 @@ export async function DELETE(
     await prisma.quotation.delete({
       where: { id }
     });
+
+    // Get updated metrics
+    const metrics = await getDashboardMetrics();
+
+    // Broadcast metrics update
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'metrics-updated',
+        metrics
+      ),
+      // Also trigger a specific quotation event
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'quotation-deleted',
+        { quotationId: id, metrics }
+      )
+    ]);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -71,6 +91,24 @@ export async function PATCH(
         }
       });
     });
+
+    // Get updated metrics
+    const metrics = await getDashboardMetrics();
+
+    // Broadcast metrics update
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'metrics-updated',
+        metrics
+      ),
+      // Also trigger a specific quotation event
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'quotation-updated',
+        { quotation, metrics }
+      )
+    ]);
 
     return NextResponse.json(quotation);
   } catch (error) {

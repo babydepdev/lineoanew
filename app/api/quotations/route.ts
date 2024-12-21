@@ -83,13 +83,21 @@ export async function POST(request: NextRequest) {
     const metrics = await getDashboardMetrics();
 
     // Broadcast metrics update
-    await pusherServer.trigger(
-      PUSHER_CHANNELS.CHAT,
-      'metrics-updated',
-      metrics
-    );
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'metrics-updated',
+        metrics
+      ),
+      // Also trigger a specific quotation event
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'quotation-created',
+        { quotation: quotation.quotation, metrics }
+      )
+    ]);
 
-    return NextResponse.json(quotation);
+    return NextResponse.json(quotation.quotation);
   } catch (error) {
     console.error('Error creating quotation:', error);
     return NextResponse.json(
