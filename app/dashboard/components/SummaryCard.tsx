@@ -20,16 +20,16 @@ export function SummaryCard({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className="bg-white rounded-lg shadow-md overflow-hidden"
+      className="bg-white rounded-lg shadow-sm overflow-hidden"
     >
-      <div className="p-6">
-        <div className="flex items-center gap-4">
-          <div className={`${color} p-3 rounded-lg text-white`}>
+      <div className="p-4">
+        <div className="flex items-center gap-3">
+          <div className={`${color} p-2 rounded-lg text-white`}>
             {icon}
           </div>
           <div>
-            <p className="text-sm text-gray-500">{title}</p>
-            <p className="text-2xl font-bold text-gray-900">{value.toLocaleString()}</p>
+            <p className="text-sm text-slate-500">{title}</p>
+            <p className="text-lg font-bold text-slate-900">{value.toLocaleString()}</p>
           </div>
         </div>
       </div>
