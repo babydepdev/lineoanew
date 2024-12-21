@@ -32,7 +32,7 @@ export function MessageActions({ message }: MessageActionsProps) {
     )}>
       <ResponsiveDocumentButton
         onClick={handleQuotation}
-        title="ใบเสนอราคา"
+        title="Quantation"
         icon={<FileText className="w-4 h-4" />}
       />
       

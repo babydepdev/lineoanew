@@ -20,7 +20,7 @@ export function DocumentButtons() {
       <div className="flex items-center gap-2">
         <ResponsiveDocumentButton
           onClick={handleQuotation}
-          title="ใบเสนอราคา"
+          title="Quantation"
           icon={<FileText className="w-4 h-4" />}
         />
         
