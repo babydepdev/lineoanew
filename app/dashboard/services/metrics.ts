@@ -2,12 +2,13 @@ import { PrismaClient } from '@prisma/client';
 import { DashboardMetrics } from '../types';
 import { getMessagesByAccount, getTotalMessageCount } from './queries/messageQueries';
 import { getConversationsByLineAccount } from './queries/conversationQueries';
+import { getTotalQuotations } from '@/app/api/quotations/services/queries/quotationQueries';
 
 const prisma = new PrismaClient();
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   const [quotations, lineAccounts, totalMessages, conversations] = await Promise.all([
-    prisma.quotation.count(),
+    getTotalQuotations(), // Use the new direct query
     prisma.lineAccount.findMany({
       where: { active: true }
     }),
