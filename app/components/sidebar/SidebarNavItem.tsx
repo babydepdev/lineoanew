@@ -7,7 +7,7 @@ interface SidebarNavItemProps {
   onClick?: () => void;
 }
 
-export function SidebarNavItem({ href, icon, label, onClick }: SidebarNavItemProps) {
+export function SidebarNavItem({  icon, label, onClick }: SidebarNavItemProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onClick?.();
