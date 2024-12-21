@@ -28,17 +28,12 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
       if (!response.ok) throw new Error('Failed to fetch quotations');
       
       const data = await response.json() as QuotationResponse[];
-      
-      // Map the quotations and ensure dates are properly converted
-      const processedQuotations = data.map((quotation) => ({
-        ...quotation,
-        createdAt: new Date(quotation.createdAt)
-      }));
-
-      // Sort by creation date descending
-      const sortedQuotations = processedQuotations.sort(
-        (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-      );
+      const sortedQuotations = data
+        .map((quotation) => ({
+          ...quotation,
+          createdAt: new Date(quotation.createdAt)
+        }))
+        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
       setQuotations(sortedQuotations);
     } catch (error) {
