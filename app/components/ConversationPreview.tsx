@@ -7,7 +7,6 @@ import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
 import { useConversationUpdates } from '../hooks/useConversationUpdates';
-import { Message } from '@prisma/client';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
