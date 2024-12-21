@@ -7,10 +7,6 @@ interface UseQuotationsByAccountResult {
   mutate: () => Promise<void>;
 }
 
-interface QuotationResponse extends Omit<Quotation, 'createdAt'> {
-  createdAt: string;
-}
-
 export function useQuotationsByAccount(accountId: string): UseQuotationsByAccountResult {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -24,16 +20,23 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
 
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/quotations?accountId=${accountId}`);
+      const response = await fetch(`/api/quotations?accountId=${accountId}`, {
+        headers: {
+          'Cache-Control': 'no-cache'
+        }
+      });
+      
       if (!response.ok) throw new Error('Failed to fetch quotations');
       
-      const data = await response.json() as QuotationResponse[];
+      const data = await response.json();
       const sortedQuotations = data
-        .map((quotation) => ({
+        .map((quotation: any) => ({
           ...quotation,
           createdAt: new Date(quotation.createdAt)
         }))
-        .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        .sort((a: Quotation, b: Quotation) => 
+          b.createdAt.getTime() - a.createdAt.getTime()
+        );
 
       setQuotations(sortedQuotations);
     } catch (error) {
@@ -44,13 +47,12 @@ export function useQuotationsByAccount(accountId: string): UseQuotationsByAccoun
     }
   };
 
-  // Fetch quotations when accountId changes
   useEffect(() => {
     fetchQuotations();
   }, [accountId]);
 
-  return { 
-    quotations, 
+  return {
+    quotations,
     isLoading,
     mutate: fetchQuotations
   };
