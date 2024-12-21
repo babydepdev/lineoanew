@@ -4,10 +4,10 @@ import { SidebarNavItem } from './SidebarNavItem';
 
 interface SidebarHeaderProps {
   onClose: () => void;
-  conversationCount: number;
+  onDashboardClick: () => void;
 }
 
-export function SidebarHeader({ onClose }: SidebarHeaderProps) {
+export function SidebarHeader({ onClose, onDashboardClick }: SidebarHeaderProps) {
   return (
     <div className="flex-none p-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
       <div className="flex items-center justify-between mb-4">
@@ -32,17 +32,18 @@ export function SidebarHeader({ onClose }: SidebarHeaderProps) {
 
       <nav className="space-y-1">
         <SidebarNavItem 
-          href="/dashboard" 
+          href="#" 
           icon={<LayoutDashboard className="w-5 h-5" />}
           label="Dashboard"
+          onClick={onDashboardClick}
         />
         <SidebarNavItem 
-          href="/settings" 
+          href="#" 
           icon={<Settings className="w-5 h-5" />}
           label="Home Setting"
         />
         <SidebarNavItem 
-          href="/users" 
+          href="#" 
           icon={<Users className="w-5 h-5" />}
           label="Manage User"
         />

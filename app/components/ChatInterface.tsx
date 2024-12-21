@@ -10,8 +10,8 @@ import { Message, Platform, SenderType } from '@prisma/client';
 import { Header } from './layout/Header';
 import { Sidebar } from './chat/Sidebar';
 import { ChatHeader } from './chat/ChatHeader';
-import { MessageCircle } from 'lucide-react';
 import { LineAccountStatus } from './line-account/LineAccountStatus';
+import { DashboardMetrics } from './dashboard/DashboardMetrics';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -27,6 +27,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
 
   const messageListRef = useRef<MessageListHandle>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true);
 
   const handleSendMessage = async (content: string) => {
     if (selectedConversation) {
@@ -50,6 +51,15 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
 
   const handleConversationSelect = (conversation: typeof selectedConversation) => {
     setSelectedConversation(conversation);
+    setShowDashboard(false);
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleDashboardClick = () => {
+    setSelectedConversation(null);
+    setShowDashboard(true);
     if (window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
@@ -72,6 +82,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
           selectedId={selectedConversation?.id}
           onSelect={handleConversationSelect}
           onClose={closeSidebar}
+          onDashboardClick={handleDashboardClick}
         />
 
         <Separator orientation="vertical" className="hidden lg:block" />
@@ -95,19 +106,11 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
                 conversationId={selectedConversation.id}
               />
             </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 bg-slate-50">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                <MessageCircle className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
-              </div>
-              <h3 className="text-lg sm:text-xl font-semibold text-slate-900 mb-2 text-center">
-                Welcome to Chat Dashboard
-              </h3>
-              <p className="text-sm sm:text-base text-slate-500 text-center max-w-sm">
-                Select a conversation from the list to start chatting
-              </p>
+          ) : showDashboard ? (
+            <div className="flex-1 flex flex-col bg-slate-50 overflow-auto">
+              <DashboardMetrics />
             </div>
-          )}
+          ) : null}
         </main>
       </div>
 

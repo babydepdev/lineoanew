@@ -1,30 +1,29 @@
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 interface SidebarNavItemProps {
   href: string;
   icon: React.ReactNode;
   label: string;
+  onClick?: () => void;
 }
 
-export function SidebarNavItem({ href, icon, label }: SidebarNavItemProps) {
-  const pathname = usePathname();
-  const isActive = pathname === href;
+export function SidebarNavItem({ href, icon, label, onClick }: SidebarNavItemProps) {
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onClick?.();
+  };
 
   return (
-    <Link
-      href={href}
+    <button
+      onClick={handleClick}
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
+        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors w-full text-left",
         "text-sm font-medium",
-        isActive 
-          ? "bg-primary text-primary-foreground" 
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+        "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
       )}
     >
       {icon}
       <span>{label}</span>
-    </Link>
+    </button>
   );
 }
