@@ -39,7 +39,7 @@ export function MessageActions({ message }: MessageActionsProps) {
       <ResponsiveDocumentButton
         onClick={handleInvoice}
         variant="secondary"
-        title="ใบเรียกเก็บเงิน"
+        title="Invoices"
         icon={<FileSpreadsheet className="w-4 h-4" />}
       />
     </div>
