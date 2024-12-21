@@ -1,15 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef, forwardRef, useImperativeHandle, useCallback } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { MessageBubble } from './MessageBubble';
-import { useRealtimeMessages } from '../hooks/useRealtimeMessages';
-import { useWebNotifications } from '../hooks/useWebNotifications';
+import { useMessageStore } from '../hooks/useMessageStore';
+import { useMessageUpdates } from '../hooks/useMessageUpdates';
 import { Message } from '@prisma/client';
 
 interface MessageListProps {
   conversationId: string;
-  userId?: string | null; // Make userId optional and allow null
 }
 
 export interface MessageListHandle {
@@ -17,12 +16,13 @@ export interface MessageListHandle {
 }
 
 const MessageList = forwardRef<MessageListHandle, MessageListProps>(
-  ({ conversationId, userId }, ref) => {
-    const { messages, isLoading, addMessage } = useRealtimeMessages(conversationId);
-    const { permission, requestPermission, showNotification } = useWebNotifications(userId);
+  ({ conversationId }, ref) => {
+    const { messages, addMessage, setMessages } = useMessageStore();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const lastNotificationRef = useRef<number>(0);
+
+    // Subscribe to real-time updates
+    useMessageUpdates(conversationId, addMessage);
 
     // Handle auto-scrolling
     useEffect(() => {
@@ -34,45 +34,38 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
       }
     }, [messages]);
 
-    // Handle notifications for new messages
+    // Load initial messages
     useEffect(() => {
-      const lastMessage = messages[messages.length - 1];
-      const now = Date.now();
-      
-      if (lastMessage?.sender === 'USER' && 
-          document.hidden && 
-          now - lastNotificationRef.current > 5000) {
-        
-        if (permission === 'default') {
-          requestPermission();
-        } else if (permission === 'granted') {
-          showNotification(lastMessage.content);
-          lastNotificationRef.current = now;
+      const fetchMessages = async () => {
+        try {
+          const response = await fetch(`/api/messages/line/${conversationId}`);
+          if (!response.ok) throw new Error('Failed to fetch messages');
+          
+          const data = await response.json();
+          const allMessages = [...data.botMessages, ...data.userMessages]
+            .map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp)
+            }))
+            .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+          
+          setMessages(allMessages);
+        } catch (error) {
+          console.error('Error fetching messages:', error);
         }
-      }
-    }, [messages, permission, requestPermission, showNotification]);
+      };
 
-    const addLocalMessage = useCallback((message: Message) => {
-      addMessage(message);
-    }, [addMessage]);
+      fetchMessages();
+    }, [conversationId, setMessages]);
 
+    // Expose methods via ref
     useImperativeHandle(ref, () => ({
-      addLocalMessage
-    }), [addLocalMessage]);
-
-    if (isLoading) {
-      return (
-        <div className="flex-1 flex items-center justify-center bg-slate-50">
-          <div className="animate-pulse text-sm sm:text-base text-slate-500">
-            Loading messages...
-          </div>
-        </div>
-      );
-    }
+      addLocalMessage: addMessage
+    }));
 
     return (
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+        <div className="p-4 space-y-4">
           {messages.map((msg) => (
             <MessageBubble key={msg.id} message={msg} />
           ))}
