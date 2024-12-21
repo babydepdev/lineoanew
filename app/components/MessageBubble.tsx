@@ -1,19 +1,20 @@
 import React from 'react';
 import { Message } from '@prisma/client';
-import { formatTimestamp } from '../utils/dateFormatter';
-import { Avatar, AvatarFallback } from './ui/avatar';
-import { cn } from '@/lib/utils';
-import { ProfileAvatar } from './ProfileAvatar';
-import { useChatState } from '../features/chat/useChatState';
-import { MessageActions } from './chat/MessageActions';
 import { Image } from 'lucide-react';
+import { Avatar, AvatarFallback } from './ui/avatar';
+import { ProfileAvatar } from './ProfileAvatar';
+import { MessageActions } from './chat/MessageActions';
+import { useChatState } from '../features/chat/useChatState';
+import { formatTimestamp } from '../utils/dateFormatter';
 import { isImageContent, extractImageUrl } from '@/lib/services/line/image/content';
+import { cn } from '@/lib/utils';
 
 interface MessageBubbleProps {
   message: Message;
+  userId?: string;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, userId }: MessageBubbleProps) {
   const { conversations } = useChatState();
   const conversation = conversations.find(conv => conv.id === message.conversationId);
   const isUser = message.sender === 'USER';
@@ -27,9 +28,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
       "flex items-end gap-2 group relative px-2 sm:px-4 lg:px-8",
       displayAsUser ? "flex-row-reverse" : "flex-row"
     )}>
+      {/* Avatar Section */}
       {displayAsUser ? (
         <ProfileAvatar 
-          userId={conversation?.userId || ''} 
+          userId={userId || conversation?.userId || ''} 
           platform={message.platform}
         />
       ) : (
@@ -40,6 +42,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </Avatar>
       )}
       
+      {/* Message Content Section */}
       <div className={cn(
         "max-w-[70%] space-y-1",
         displayAsUser ? "items-end" : "items-start"
@@ -66,11 +69,12 @@ export function MessageBubble({ message }: MessageBubbleProps) {
             </div>
           ) : (
             <span className="text-sm flex items-center gap-2">
-              {isImage && <Image className="w-4 h-4" />}
               {message.content}
             </span>
           )}
         </div>
+
+        {/* Timestamp */}
         <div className={cn(
           "px-2 text-xs text-muted opacity-0 group-hover:opacity-100 transition-opacity",
           displayAsUser ? "text-right" : "text-left"
@@ -79,6 +83,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         </div>
       </div>
 
+      {/* Message Actions */}
       <MessageActions message={message} />
     </div>
   );

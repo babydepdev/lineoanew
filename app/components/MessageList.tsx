@@ -9,6 +9,7 @@ import { Message } from '@prisma/client';
 
 interface MessageListProps {
   conversationId: string;
+  userId?: string; // Make userId optional
 }
 
 export interface MessageListHandle {
@@ -16,7 +17,7 @@ export interface MessageListHandle {
 }
 
 const MessageList = forwardRef<MessageListHandle, MessageListProps>(
-  ({ conversationId }, ref) => {
+  ({ conversationId, userId }, ref) => {
     const { messages, addMessage, setMessages } = useMessageStore();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -67,7 +68,11 @@ const MessageList = forwardRef<MessageListHandle, MessageListProps>(
       <ScrollArea className="flex-1" ref={scrollAreaRef}>
         <div className="p-4 space-y-4">
           {messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} />
+            <MessageBubble 
+              key={msg.id} 
+              message={msg}
+              userId={userId} // Pass userId to MessageBubble if needed
+            />
           ))}
           <div ref={messagesEndRef} />
         </div>
