@@ -7,9 +7,6 @@ const prisma = new PrismaClient();
 const CACHE_TAG = 'quotations';
 const CACHE_REVALIDATE_SECONDS = 10;
 
-// Helper function to generate cache key
-const generateCacheKey = (accountId: string) => `quotations:${accountId}`;
-
 // Optimized query function with caching
 export const getQuotations = unstable_cache(
   async (accountId: string) => {
@@ -39,8 +36,7 @@ export const getQuotations = unstable_cache(
       take: 50 // Limit results for better performance
     });
   },
-  // Use string array for cache keys instead of function
-  ['quotations'],
+  [`quotations:list`], // Use a simple static cache key
   {
     tags: [CACHE_TAG],
     revalidate: CACHE_REVALIDATE_SECONDS
