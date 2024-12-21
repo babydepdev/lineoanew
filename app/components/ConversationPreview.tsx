@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
+import { useConversationUpdates } from '../hooks/useConversationUpdates';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -22,7 +23,10 @@ export function ConversationPreview({
     conversation.platform === 'LINE' ? conversation.userId : null
   );
 
-  // Get the latest message from sorted messages array
+  // Use conversation updates hook
+  useConversationUpdates();
+
+  // Get latest message
   const lastMessage = conversation.messages[conversation.messages.length - 1];
 
   const getLastMessagePreview = () => {

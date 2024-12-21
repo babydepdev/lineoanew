@@ -5,24 +5,22 @@ import { Message } from '@prisma/client';
 import { PusherConversation } from '../types/chat';
 
 export function useConversationUpdates() {
-  const { refreshConversations, addMessage, updateConversation } = useChatState();
+  const { addMessage, updateConversation, refreshConversations } = useChatState();
 
   useEffect(() => {
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
 
     const handleNewMessage = (message: Message) => {
-      // Convert timestamp to Date object
-      const messageWithDate = {
+      console.log('New message received:', message);
+      addMessage({
         ...message,
         timestamp: new Date(message.timestamp)
-      };
-      addMessage(messageWithDate);
-      // Refresh conversations to update order
-      refreshConversations();
+      });
     };
 
     const handleConversationUpdate = (conversation: PusherConversation) => {
-      const formattedConversation = {
+      console.log('Conversation updated:', conversation);
+      updateConversation({
         ...conversation,
         messages: conversation.messages.map(msg => ({
           ...msg,
@@ -30,13 +28,11 @@ export function useConversationUpdates() {
         })),
         createdAt: new Date(conversation.createdAt),
         updatedAt: new Date(conversation.updatedAt)
-      };
-      updateConversation(formattedConversation);
-      // Refresh conversations to update order
-      refreshConversations();
+      });
     };
 
     const handleConversationsUpdate = () => {
+      console.log('Refreshing all conversations');
       refreshConversations();
     };
 
