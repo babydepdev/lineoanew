@@ -67,9 +67,8 @@ model Message {
   timestamp      DateTime     @default(now())
   platform       Platform
   externalId     String?      @unique
-  chatType       String?      // Type of chat: 'user', 'group', 'room'
-  chatId         String?      // Specific chat identifier
-  imageBase64    String?      @db.Text  // For storing base64 image data
+  messageType    String?      // Add messageType field
+  imageBase64    String?      @db.Text
   
   // Relationships
   conversation   Conversation @relation(fields: [conversationId], references: [id])

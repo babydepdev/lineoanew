@@ -7,9 +7,7 @@ export interface MessageCreateParams {
   platform: Platform;
   externalId?: string | null;
   timestamp?: Date;
-  chatType?: string;
-  chatId?: string;
-  messageType?: 'text' | 'image';
+  messageType?: string;
   imageBase64?: string;
 }
 

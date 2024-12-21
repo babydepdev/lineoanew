@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { LineWebhookBody } from '@/app/types/line';
 import { validateWebhookRequest } from '@/lib/services/line/webhook/validate';
 import { handleIncomingMessage } from '@/lib/services/message/handlers';
+import { createImageContent } from '@/lib/services/line/image/content';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,16 +23,29 @@ export async function POST(request: NextRequest) {
 
     // Process each message event
     for (const event of webhookBody.events) {
-      if (event.type === 'message' && 
-          event.message.type === 'text' && 
-          event.message.text) { // Add null check for text
+      if (event.type === 'message') {
+        let content: string;
+        
+        // Handle different message types
+        switch (event.message.type) {
+          case 'text':
+            content = event.message.text || '';
+            break;
+          case 'image':
+            content = createImageContent({ messageId: event.message.id });
+            break;
+          default:
+            continue; // Skip unsupported message types
+        }
+
         await handleIncomingMessage({
           userId: event.source.userId,
-          content: event.message.text, // Now guaranteed to be string
+          content,
           platform: 'LINE',
           messageId: event.message.id,
           timestamp: new Date(event.timestamp),
-          lineAccountId: validation.account.id
+          lineAccountId: validation.account.id,
+          messageType: event.message.type
         });
       }
     }
