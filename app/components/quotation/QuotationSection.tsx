@@ -12,9 +12,9 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
   const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
 
   // Show section skeleton only during initial load
-  if (isLoading) {
-    return <QuotationSectionSkeleton name={account.name} />;
-  }
+  //if (isLoading) {
+    //return <QuotationSectionSkeleton name={account.name} />;
+  //}
 
   const filteredQuotations = filterQuotations(quotations, searchQuery);
 
