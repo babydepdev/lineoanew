@@ -24,18 +24,16 @@ export function ConversationPreview({
     conversation.platform === 'LINE' ? conversation.userId : null
   );
   
-  // Use the conversation updates hook
   useConversationUpdates();
 
-  // Get the latest message
-  const getLatestMessage = (messages: Message[]) => {
-    if (!messages.length) return null;
-    return messages.reduce((latest, current) => {
-      return latest.timestamp > current.timestamp ? latest : current;
-    });
-  };
-
-  const lastMessage = getLatestMessage(conversation.messages);
+  // Sort messages by timestamp in descending order and get the latest
+  const lastMessage = React.useMemo(() => {
+    if (!conversation.messages.length) return null;
+    
+    return [...conversation.messages].sort((a, b) => {
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    })[0];
+  }, [conversation.messages]);
 
   const getLastMessagePreview = () => {
     if (!lastMessage) return '';
