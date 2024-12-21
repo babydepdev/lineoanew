@@ -1,5 +1,5 @@
 import { pusherServer } from '@/lib/pusher';
-import { PrismaClient, Conversation, Message } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import { PUSHER_EVENTS, PUSHER_CHANNELS } from '@/app/config/constants';
 import { formatConversationForPusher } from '@/lib/messageFormatter';
 

@@ -1,4 +1,4 @@
-import { Message, Platform } from '@prisma/client';
+import { Platform } from '@prisma/client';
 import { findOrCreateConversation } from '../conversation';
 import { createMessage } from './create';
 import { broadcastConversationUpdate } from '../conversation/realtime';
