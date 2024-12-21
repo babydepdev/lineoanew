@@ -1,5 +1,3 @@
-"use client";
-
 import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { QuotationSection } from './QuotationSection';
 import { ScrollArea } from '../ui/scroll-area';

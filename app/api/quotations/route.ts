@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createQuotation } from './services/create';
-import { getQuotations } from './services/get';
-import { validateQuotation } from './validators';
-import { broadcastQuotationUpdate } from '@/lib/services/quotation/broadcast';
+import { PrismaClient } from '@prisma/client';
+import { pusherServer, PUSHER_CHANNELS } from '@/lib/pusher';
+import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
+import { createQuotation } from '@/lib/services/quotation/create';
+import { QuotationCreateParams } from '@/lib/services/quotation/types';
+
+const prisma = new PrismaClient();
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,12 +14,23 @@ export async function GET(request: NextRequest) {
 
     if (!accountId) {
       return NextResponse.json(
-        { error: 'Missing accountId parameter' },
+        { error: 'Account ID is required' },
         { status: 400 }
       );
     }
 
-    const quotations = await getQuotations(accountId);
+    const quotations = await prisma.quotation.findMany({
+      where: {
+        lineAccountId: accountId
+      },
+      include: {
+        items: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
     return NextResponse.json(quotations);
   } catch (error) {
     console.error('Error fetching quotations:', error);
@@ -30,19 +44,60 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
-    const validation = validateQuotation(body);
-    if (!validation.isValid) {
+    const { lineAccountId, customerName, items } = body;
+
+    // Validate required fields
+    if (!lineAccountId || !customerName || !items?.length) {
       return NextResponse.json(
-        { error: validation.error },
+        { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    const quotation = await createQuotation(body);
-    broadcastQuotationUpdate('created', quotation.id).catch(console.error);
+    // Generate quotation number
+    const quotationNumber = `QT${Date.now()}`;
 
-    return NextResponse.json(quotation);
+    // Calculate total
+    const total = items.reduce((sum: number, item: any) => 
+      sum + (item.quantity * item.price), 0
+    );
+
+    // Create quotation params
+    const params: QuotationCreateParams = {
+      number: quotationNumber,
+      customerName,
+      total,
+      lineAccountId,
+      items: items.map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.quantity * item.price
+      }))
+    };
+
+    // Create quotation
+    const quotation = await createQuotation(params);
+
+    // Get updated metrics
+    const metrics = await getDashboardMetrics();
+
+    // Broadcast metrics update
+    await Promise.all([
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'metrics-updated',
+        metrics
+      ),
+      // Also trigger a specific quotation event
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'quotation-created',
+        { quotation: quotation.quotation, metrics }
+      )
+    ]);
+
+    return NextResponse.json(quotation.quotation);
   } catch (error) {
     console.error('Error creating quotation:', error);
     return NextResponse.json(

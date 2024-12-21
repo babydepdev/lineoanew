@@ -1,17 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LineWebhookBody } from '@/app/types/line';
 import { validateWebhookRequest } from '@/lib/services/line/webhook/validate';
-import { handleIncomingMessage } from '@/lib/services/message/handlers';
-import { createImageContent } from '@/lib/services/line/image/content';
+import { processWebhookEvents } from '@/lib/services/line/webhook/process';
 
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
+    console.log('Received LINE webhook');
+
+    // Get signature from headers
     const signature = request.headers.get('x-line-signature');
+    console.log('LINE signature:', signature);
 
     // Validate webhook request
     const validation = await validateWebhookRequest(rawBody, signature);
     if (!validation.isValid || !validation.account) {
+      console.error('Invalid webhook request:', validation.error);
       return NextResponse.json(
         { error: validation.error || 'Invalid request' },
         { status: 401 }
@@ -19,38 +23,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse webhook body
-    const webhookBody: LineWebhookBody = JSON.parse(rawBody);
-
-    // Process each message event
-    for (const event of webhookBody.events) {
-      if (event.type === 'message') {
-        let content: string;
-        
-        // Handle different message types
-        switch (event.message.type) {
-          case 'text':
-            content = event.message.text || '';
-            break;
-          case 'image':
-            content = createImageContent({ messageId: event.message.id });
-            break;
-          default:
-            continue; // Skip unsupported message types
-        }
-
-        await handleIncomingMessage({
-          userId: event.source.userId,
-          content,
-          platform: 'LINE',
-          messageId: event.message.id,
-          timestamp: new Date(event.timestamp),
-          lineAccountId: validation.account.id,
-          messageType: event.message.type
-        });
-      }
+    let webhookBody: LineWebhookBody;
+    try {
+      webhookBody = JSON.parse(rawBody);
+    } catch (error) {
+      console.error('Invalid webhook body:', error);
+      return NextResponse.json(
+        { error: 'Invalid webhook body' },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ message: 'OK' });
+    // Process webhook events
+    const result = await processWebhookEvents(webhookBody, validation.account);
+    console.log('Webhook processing result:', result);
+
+    return NextResponse.json({
+      message: 'Processed LINE webhook',
+      processed: result.processed,
+      total: result.total
+    });
   } catch (error) {
     console.error('Error processing webhook:', error);
     return NextResponse.json(
@@ -58,4 +50,8 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({ status: 'ok' });
 }
