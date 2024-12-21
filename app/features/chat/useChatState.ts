@@ -57,9 +57,7 @@ export const useChatState = create<ChatState>((set, get) => ({
       // Create updated conversation with new message
       const updatedConversation = {
         ...conversationToUpdate,
-        messages: [...conversationToUpdate.messages, message].sort(
-          (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
-        ),
+        messages: sortMessages([...conversationToUpdate.messages, message]),
         updatedAt: message.timestamp
       };
 
@@ -119,8 +117,15 @@ export const useChatState = create<ChatState>((set, get) => ({
   }
 }));
 
+function sortMessages(messages: Message[]): Message[] {
+  return [...messages].sort((a, b) => 
+    new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+  );
+}
+
 function sortConversations(conversations: ConversationWithMessages[]): ConversationWithMessages[] {
   return [...conversations].sort((a, b) => {
+    // Get latest message timestamp for each conversation
     const aLatest = a.messages.length > 0 ? 
       new Date(a.messages[a.messages.length - 1].timestamp).getTime() : 
       new Date(a.updatedAt).getTime();
@@ -129,6 +134,7 @@ function sortConversations(conversations: ConversationWithMessages[]): Conversat
       new Date(b.messages[b.messages.length - 1].timestamp).getTime() : 
       new Date(b.updatedAt).getTime();
 
+    // Sort by latest message/update time
     return bLatest - aLatest;
   });
 }
