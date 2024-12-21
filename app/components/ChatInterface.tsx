@@ -1,6 +1,8 @@
-"use client"
+"use client";
+
 import React, { useRef, useState } from 'react';
 import { SerializedConversation } from '../types/chat';
+import { DashboardMetrics } from '../types/dashboard';
 import { MessageListWithRef, MessageListHandle } from './MessageList';
 import { MessageInput } from './MessageInput';
 import { useChat } from '../features/chat/useChat';
@@ -11,13 +13,14 @@ import { Header } from './layout/Header';
 import { Sidebar } from './chat/Sidebar';
 import { ChatHeader } from './chat/ChatHeader';
 import { LineAccountStatus } from './line-account/LineAccountStatus';
-import { DashboardMetrics } from './dashboard/DashboardMetrics';
+import { MetricsContainer } from './dashboard/metrics/MetricsContainer';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
+  metrics: DashboardMetrics;
 }
 
-export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
+export function ChatInterface({ initialConversations, metrics }: ChatInterfaceProps) {
   const {
     conversations,
     selectedConversation,
@@ -108,7 +111,7 @@ export function ChatInterface({ initialConversations }: ChatInterfaceProps) {
             </>
           ) : showDashboard ? (
             <div className="flex-1 flex flex-col bg-slate-50 overflow-auto">
-              <DashboardMetrics />
+              <MetricsContainer metrics={metrics} />
             </div>
           ) : null}
         </main>
