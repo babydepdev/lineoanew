@@ -1,21 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { LineWebhookBody } from '@/app/types/line';
 import { validateWebhookRequest } from '@/lib/services/line/webhook/validate';
-import { processWebhookEvents } from '@/lib/services/line/webhook/process';
+import { handleIncomingMessage } from '@/lib/services/message/handlers';
 
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text();
-    console.log('Received LINE webhook');
-
-    // Get signature from headers
     const signature = request.headers.get('x-line-signature');
-    console.log('LINE signature:', signature);
 
     // Validate webhook request
     const validation = await validateWebhookRequest(rawBody, signature);
     if (!validation.isValid || !validation.account) {
-      console.error('Invalid webhook request:', validation.error);
       return NextResponse.json(
         { error: validation.error || 'Invalid request' },
         { status: 401 }
@@ -23,26 +18,25 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse webhook body
-    let webhookBody: LineWebhookBody;
-    try {
-      webhookBody = JSON.parse(rawBody);
-    } catch (error) {
-      console.error('Invalid webhook body:', error);
-      return NextResponse.json(
-        { error: 'Invalid webhook body' },
-        { status: 400 }
-      );
+    const webhookBody: LineWebhookBody = JSON.parse(rawBody);
+
+    // Process each message event
+    for (const event of webhookBody.events) {
+      if (event.type === 'message' && 
+          event.message.type === 'text' && 
+          event.message.text) { // Add null check for text
+        await handleIncomingMessage({
+          userId: event.source.userId,
+          content: event.message.text, // Now guaranteed to be string
+          platform: 'LINE',
+          messageId: event.message.id,
+          timestamp: new Date(event.timestamp),
+          lineAccountId: validation.account.id
+        });
+      }
     }
 
-    // Process webhook events
-    const result = await processWebhookEvents(webhookBody, validation.account);
-    console.log('Webhook processing result:', result);
-
-    return NextResponse.json({
-      message: 'Processed LINE webhook',
-      processed: result.processed,
-      total: result.total
-    });
+    return NextResponse.json({ message: 'OK' });
   } catch (error) {
     console.error('Error processing webhook:', error);
     return NextResponse.json(
@@ -50,8 +44,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-export async function GET() {
-  return NextResponse.json({ status: 'ok' });
 }
