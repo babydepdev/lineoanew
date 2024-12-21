@@ -1,6 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createQuotation } from './services/create';
-import { broadcastQuotationCreated } from './services/broadcast';
+import { PrismaClient } from '@prisma/client';
+import { broadcastQuotationUpdate } from '@/lib/services/quotation/broadcast';
+
+const prisma = new PrismaClient();
+
+export async function GET(request: NextRequest) {
+  try {
+    const searchParams = request.nextUrl.searchParams;
+    const accountId = searchParams.get('accountId');
+
+    const quotations = await prisma.quotation.findMany({
+      where: accountId ? {
+        lineAccountId: accountId
+      } : undefined,
+      include: {
+        items: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    return NextResponse.json(quotations);
+  } catch (error) {
+    console.error('Error fetching quotations:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch quotations' },
+      { status: 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,17 +49,29 @@ export async function POST(request: NextRequest) {
       sum + (item.quantity * item.price), 0
     );
 
-    // Create quotation
-    const quotation = await createQuotation({
-      number: `QT${Date.now()}`,
-      customerName,
-      lineAccountId,
-      total,
-      items
+    // Create quotation with items
+    const quotation = await prisma.quotation.create({
+      data: {
+        number: `QT${Date.now()}`,
+        customerName,
+        total,
+        lineAccountId,
+        items: {
+          create: items.map((item: any) => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.quantity * item.price
+          }))
+        }
+      },
+      include: {
+        items: true
+      }
     });
 
-    // Broadcast updates asynchronously - don't wait
-    broadcastQuotationCreated(quotation).catch(console.error);
+    // Broadcast update
+    await broadcastQuotationUpdate('created', quotation.id);
 
     return NextResponse.json(quotation);
   } catch (error) {
