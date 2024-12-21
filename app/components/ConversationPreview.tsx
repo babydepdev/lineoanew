@@ -7,6 +7,7 @@ import { useLineProfile } from '../hooks/useLineProfile';
 import { LineAccountInfo } from './conversation/LineAccountInfo';
 import { motion } from 'framer-motion';
 import { useConversationUpdates } from '../hooks/useConversationUpdates';
+import { Message } from '@prisma/client';
 
 interface ConversationPreviewProps {
   conversation: ConversationWithMessages;
@@ -19,18 +20,22 @@ export function ConversationPreview({
   isSelected,
   onClick,
 }: ConversationPreviewProps) {
-  // Sort messages by timestamp in descending order to get latest first
-  const sortedMessages = [...conversation.messages].sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-  );
-  const lastMessage = sortedMessages[0];
-
   const { profile, isLoading: isProfileLoading } = useLineProfile(
     conversation.platform === 'LINE' ? conversation.userId : null
   );
   
   // Use the conversation updates hook
   useConversationUpdates();
+
+  // Get the latest message
+  const getLatestMessage = (messages: Message[]) => {
+    if (!messages.length) return null;
+    return messages.reduce((latest, current) => {
+      return latest.timestamp > current.timestamp ? latest : current;
+    });
+  };
+
+  const lastMessage = getLatestMessage(conversation.messages);
 
   const getLastMessagePreview = () => {
     if (!lastMessage) return '';
