@@ -32,7 +32,7 @@ export async function DELETE(
         'metrics-updated',
         metrics
       ),
-      // Also trigger a specific quotation event
+      // Also trigger a specific quotation events
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'quotation-deleted',
