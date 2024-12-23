@@ -2,14 +2,16 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  relationMode = "prisma"
 }
 
 // Prisma Client generator
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["metrics"]
 }
 
-// User Profile Model
+// ======= Authentication & User Models =======
 model UserProfile {
   userId        String
   platform      Platform
@@ -23,12 +25,12 @@ model UserProfile {
   @@index([platform, updatedAt])
 }
 
-// LINE Account Model
+// ======= LINE Integration Models =======
 model LineAccount {
-  id                String         @id @default(cuid())
-  name              String
-  channelAccessToken String        @unique
-  channelSecret     String
+  id                 String         @id @default(cuid())
+  name               String
+  channelAccessToken String         @unique
+  channelSecret      String
   active            Boolean        @default(true)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -41,11 +43,11 @@ model LineAccount {
   @@index([active])
 }
 
-// Conversation Model
+// ======= Chat & Messaging Models =======
 model Conversation {
   id            String       @id @default(cuid())
   platform      Platform
-  channelId     String      // Chat identifier (user/room/group)
+  channelId     String      // Stores chat identifier (user/room/group)
   userId        String      // User who initiated the conversation
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -60,7 +62,6 @@ model Conversation {
   @@index([userId, platform])
 }
 
-// Message Model
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
@@ -70,7 +71,7 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
-  imageBase64    String?      @db.Text
+  imageBase64    String?      @db.Text  // For storing base64 image data
   
   // Relationships
   conversation   Conversation @relation(fields: [conversationId], references: [id])
@@ -81,7 +82,7 @@ model Message {
   @@index([externalId])
 }
 
-// Quotation Model
+// ======= Document Models =======
 model Quotation {
   id            String          @id @default(cuid())
   number        String          @unique
@@ -98,12 +99,13 @@ model Quotation {
   invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
   invoiceId     String?
 
+  @@index([lineAccountId, createdAt(sort: Desc)], name: "idx_quotations_account_date")
+  @@index([status, createdAt(sort: Desc)], name: "idx_quotations_status_date")
   @@index([lineAccountId])
   @@index([createdAt])
   @@index([status])
 }
 
-// Quotation Item Model
 model QuotationItem {
   id          String    @id @default(cuid())
   name        String
@@ -118,7 +120,6 @@ model QuotationItem {
   @@index([quotationId])
 }
 
-// Invoice Model
 model Invoice {
   id            String          @id @default(cuid())
   number        String          @unique
@@ -141,7 +142,6 @@ model Invoice {
   @@index([dueDate])
 }
 
-// Invoice Item Model
 model InvoiceItem {
   id          String    @id @default(cuid())
   name        String
@@ -156,7 +156,7 @@ model InvoiceItem {
   @@index([invoiceId])
 }
 
-// Enums
+// ======= Enums =======
 enum Platform {
   LINE
   FACEBOOK
