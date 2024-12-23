@@ -1,17 +1,14 @@
 import { Redis } from '@upstash/redis';
 
-if (!process.env.REDIS_URL) {
-  throw new Error('REDIS_URL is not defined');
+if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+  throw new Error('Redis environment variables are not defined');
 }
 
-// Parse URL to extract token
-const url = new URL(process.env.REDIS_URL);
-const token = url.password;
-
 export const redis = new Redis({
-  url: process.env.REDIS_URL,
-  token: token,
-  // Optional configuration
-  automaticDeserialization: true,
-  enableTelemetry: false
+  url: process.env.UPSTASH_REDIS_REST_URL,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN,
+  retry: {
+    retries: 3,
+    backoff: (retryCount) => Math.min(retryCount * 200, 2000)
+  }
 });
