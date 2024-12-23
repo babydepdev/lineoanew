@@ -9,7 +9,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ======= Authentication & User Models =======
+// User Profile Model
 model UserProfile {
   userId        String
   platform      Platform
@@ -23,12 +23,12 @@ model UserProfile {
   @@index([platform, updatedAt])
 }
 
-// ======= LINE Integration Models =======
+// LINE Account Model
 model LineAccount {
-  id                 String         @id @default(cuid())
-  name               String
-  channelAccessToken String         @unique
-  channelSecret      String
+  id                String         @id @default(cuid())
+  name              String
+  channelAccessToken String        @unique
+  channelSecret     String
   active            Boolean        @default(true)
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
@@ -41,11 +41,11 @@ model LineAccount {
   @@index([active])
 }
 
-// ======= Chat & Messaging Models =======
+// Conversation Model
 model Conversation {
   id            String       @id @default(cuid())
   platform      Platform
-  channelId     String      // Stores chat identifier (user/room/group)
+  channelId     String      // Chat identifier (user/room/group)
   userId        String      // User who initiated the conversation
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
@@ -59,7 +59,8 @@ model Conversation {
   @@index([platform, updatedAt])
   @@index([userId, platform])
 }
-// Update Message model to include base64 field for images
+
+// Message Model
 model Message {
   id             String       @id @default(cuid())
   content        String       @db.Text
@@ -69,7 +70,7 @@ model Message {
   externalId     String?      @unique
   chatType       String?      // Type of chat: 'user', 'group', 'room'
   chatId         String?      // Specific chat identifier
-  imageBase64    String?      @db.Text  // New field for storing base64 image data
+  imageBase64    String?      @db.Text
   
   // Relationships
   conversation   Conversation @relation(fields: [conversationId], references: [id])
@@ -80,21 +81,21 @@ model Message {
   @@index([externalId])
 }
 
-// ======= Document Models =======
+// Quotation Model
 model Quotation {
   id            String          @id @default(cuid())
   number        String          @unique
   customerName  String
   total         Float
-  status        DocumentStatus @default(DRAFT)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  status        DocumentStatus  @default(DRAFT)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
   // Relationships
   items         QuotationItem[]
-  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  lineAccount   LineAccount     @relation(fields: [lineAccountId], references: [id])
   lineAccountId String
-  invoice       Invoice?       @relation(fields: [invoiceId], references: [id])
+  invoice       Invoice?        @relation(fields: [invoiceId], references: [id])
   invoiceId     String?
 
   @@index([lineAccountId])
@@ -102,6 +103,7 @@ model Quotation {
   @@index([status])
 }
 
+// Quotation Item Model
 model QuotationItem {
   id          String    @id @default(cuid())
   name        String
@@ -116,20 +118,21 @@ model QuotationItem {
   @@index([quotationId])
 }
 
+// Invoice Model
 model Invoice {
   id            String          @id @default(cuid())
   number        String          @unique
   customerName  String
   total         Float
-  status        DocumentStatus @default(DRAFT)
+  status        DocumentStatus  @default(DRAFT)
   dueDate       DateTime
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
   // Relationships
   items         InvoiceItem[]
   quotations    Quotation[]
-  lineAccount   LineAccount    @relation(fields: [lineAccountId], references: [id])
+  lineAccount   LineAccount     @relation(fields: [lineAccountId], references: [id])
   lineAccountId String
 
   @@index([lineAccountId])
@@ -138,6 +141,7 @@ model Invoice {
   @@index([dueDate])
 }
 
+// Invoice Item Model
 model InvoiceItem {
   id          String    @id @default(cuid())
   name        String
@@ -152,7 +156,7 @@ model InvoiceItem {
   @@index([invoiceId])
 }
 
-// ======= Enums =======
+// Enums
 enum Platform {
   LINE
   FACEBOOK
