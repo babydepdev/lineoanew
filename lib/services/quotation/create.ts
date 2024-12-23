@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/db";
+import { PrismaClient } from '@prisma/client';
 import { QuotationCreateParams, QuotationResult } from './types';
 
-
+const prisma = new PrismaClient();
 
 export async function createQuotation(params: QuotationCreateParams): Promise<QuotationResult> {
   try {
