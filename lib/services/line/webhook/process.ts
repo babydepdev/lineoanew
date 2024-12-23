@@ -8,6 +8,7 @@ import { processFollowEvent } from './events/follow';
 import { processUnfollowEvent } from './events/unfollow';
 import { broadcastAllConversations } from '@/lib/services/conversation/broadcast';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '@/lib/pusher';
+import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
 
 export async function processWebhookEvents(
   webhookBody: LineWebhookBody,
@@ -28,12 +29,22 @@ export async function processWebhookEvents(
       };
     });
 
+    // Get updated metrics
+    const metrics = await getDashboardMetrics();
+
     // Broadcast updates to all clients
     await Promise.all([
       // Broadcast conversation updates
       broadcastAllConversations(),
       
-      // Notify clients of webhook processing completion
+      // Broadcast metrics update
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        'metrics-updated',
+        metrics
+      ),
+
+      // Broadcast conversations update event
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATIONS_UPDATED,

@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../../pusher';
+import { formatConversationForPusher } from '@/lib/messageFormatter';
 
 const prisma = new PrismaClient();
 
@@ -7,31 +8,15 @@ export async function broadcastAllConversations() {
   try {
     // Get all conversations with latest messages
     const conversations = await prisma.conversation.findMany({
-      select: {
-        id: true,
-        platform: true,
-        userId: true,
-        updatedAt: true,
-        lineAccountId: true,
+      include: {
+        messages: {
+          orderBy: { timestamp: 'desc' },
+          take: 50 // Limit to most recent messages
+        },
         lineAccount: {
           select: {
             id: true,
             name: true
-          }
-        },
-        messages: {
-          orderBy: { timestamp: 'desc' },
-          take: 1,
-          select: {
-            id: true,
-            content: true,
-            sender: true,
-            timestamp: true,
-            platform: true,
-            externalId: true,
-            chatType: true,
-            chatId: true,
-            imageBase64: true
           }
         }
       },
@@ -40,25 +25,14 @@ export async function broadcastAllConversations() {
       }
     });
 
-    // Format data for broadcast
-    const formattedData = conversations.map(conv => ({
-      id: conv.id,
-      platform: conv.platform,
-      userId: conv.userId,
-      updatedAt: conv.updatedAt.toISOString(),
-      lineAccountId: conv.lineAccountId,
-      lineAccount: conv.lineAccount,
-      lastMessage: conv.messages[0] ? {
-        ...conv.messages[0],
-        timestamp: conv.messages[0].timestamp.toISOString()
-      } : null
-    }));
+    // Format conversations for broadcast
+    const formattedConversations = conversations.map(conv => formatConversationForPusher(conv));
 
     // Broadcast to all clients
     await pusherServer.trigger(
       PUSHER_CHANNELS.CHAT,
       PUSHER_EVENTS.CONVERSATIONS_UPDATED,
-      formattedData
+      formattedConversations
     );
 
     return true;

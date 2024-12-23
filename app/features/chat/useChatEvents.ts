@@ -10,6 +10,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
     setSelectedConversation,
     updateConversation,
     addMessage,
+    refreshConversations
   } = useChatState();
 
   // Initialize conversations
@@ -39,10 +40,11 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
       const updatedMessage = {
         ...message,
         timestamp: new Date(message.timestamp),
-        imageBase64: message.imageBase64 || null // Add imageBase64 field
+        imageBase64: message.imageBase64 || null
       };
       
       addMessage(updatedMessage);
+      refreshConversations(); // Refresh conversations when new message received
     };
 
     const handleConversationUpdated = (pusherConversation: PusherConversation) => {
@@ -53,7 +55,7 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
         messages: pusherConversation.messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp),
-          imageBase64: msg.imageBase64 || null // Add imageBase64 field
+          imageBase64: msg.imageBase64 || null
         })),
         createdAt: new Date(pusherConversation.createdAt),
         updatedAt: new Date(pusherConversation.updatedAt)
@@ -67,12 +69,17 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
     };
 
     const handleConversationsUpdated = (conversations: PusherConversation[]) => {
+      if (!Array.isArray(conversations)) {
+        refreshConversations();
+        return;
+      }
+
       const formattedConversations = conversations.map(conv => ({
         ...conv,
         messages: conv.messages.map(msg => ({
           ...msg,
           timestamp: new Date(msg.timestamp),
-          imageBase64: msg.imageBase64 || null // Add imageBase64 field
+          imageBase64: msg.imageBase64 || null
         })),
         createdAt: new Date(conv.createdAt),
         updatedAt: new Date(conv.updatedAt)
@@ -93,5 +100,5 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
       mainChannel.unbind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
       pusherClient.unsubscribe(PUSHER_CHANNELS.CHAT);
     };
-  }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations]);
+  }, [selectedConversation, addMessage, updateConversation, setSelectedConversation, setConversations, refreshConversations]);
 }
