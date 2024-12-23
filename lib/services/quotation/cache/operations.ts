@@ -1,4 +1,4 @@
-import { Quotation } from '@prisma/client';
+
 import { redis } from './redis';
 import { CACHE_KEYS, CACHE_DURATIONS } from './constants';
 import { CachedQuotation } from './types';
