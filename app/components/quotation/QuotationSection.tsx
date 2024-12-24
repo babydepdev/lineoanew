@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { LineAccount } from '@/app/types/line';
 import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';
 import { QuotationItem } from './QuotationItem';
@@ -8,7 +9,10 @@ interface QuotationSectionProps {
   searchQuery: string;
 }
 
-export function QuotationSection({ account, searchQuery }: QuotationSectionProps) {
+export const QuotationSection = memo(function QuotationSection({ 
+  account, 
+  searchQuery 
+}: QuotationSectionProps) {
   const { quotations, isLoading, mutate } = useQuotationsByAccount(account.id);
 
   if (isLoading) {
@@ -45,7 +49,7 @@ export function QuotationSection({ account, searchQuery }: QuotationSectionProps
       </div>
     </div>
   );
-}
+});
 
 function QuotationSectionSkeleton({ name }: { name: string }) {
   return (
