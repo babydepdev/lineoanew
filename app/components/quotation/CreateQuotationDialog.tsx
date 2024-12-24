@@ -12,12 +12,17 @@ import { showToast } from '@/app/utils/toast';
 const MemoizedAccountSelect = memo(AccountSelect);
 const MemoizedQuotationItemInputs = memo(QuotationItemInputs);
 
-interface CreateQuotationDialogProps {
+export interface CreateQuotationDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  onSuccess: () => void;  // Add onSuccess to props interface
 }
 
-export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialogProps) {
+export function CreateQuotationDialog({ 
+  isOpen, 
+  onClose,
+  onSuccess 
+}: CreateQuotationDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     lineAccountId: '',
@@ -67,7 +72,7 @@ export function CreateQuotationDialog({ isOpen, onClose }: CreateQuotationDialog
         items: [{ name: '', quantity: 1, price: 0 }]
       });
 
-      onClose();
+      onSuccess(); // Call onSuccess after successful creation
     } catch (error) {
       console.error('Error creating quotation:', error);
       showToast.error('เกิดข้อผิดพลาด', {

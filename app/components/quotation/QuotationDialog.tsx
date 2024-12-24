@@ -1,7 +1,8 @@
-import { Plus } from 'lucide-react';
+import { useCallback } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { QuotationList } from './QuotationList';
 import { Button } from '../ui/button';
+import { Plus } from 'lucide-react';
 import { CreateQuotationDialog } from './CreateQuotationDialog';
 import { useState } from 'react';
 
@@ -12,6 +13,10 @@ interface QuotationDialogProps {
 
 export function QuotationDialog({ isOpen, onClose }: QuotationDialogProps) {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+
+  const handleCreateSuccess = useCallback(() => {
+    setIsCreateDialogOpen(false);
+  }, []);
 
   return (
     <>
@@ -37,6 +42,7 @@ export function QuotationDialog({ isOpen, onClose }: QuotationDialogProps) {
       <CreateQuotationDialog 
         isOpen={isCreateDialogOpen}
         onClose={() => setIsCreateDialogOpen(false)}
+        onSuccess={handleCreateSuccess}
       />
     </>
   );

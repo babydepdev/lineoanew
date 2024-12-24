@@ -1,42 +1,43 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { QuotationCreateParams, QuotationCreateResult } from './types';
-import { generateQuotationNumber } from './utils';
-
-const prisma = new PrismaClient();
+import { 
+  generateQuotationNumber, 
+  validateQuotationItems, 
+  calculateQuotationTotal 
+} from './utils';
 
 export async function createQuotation(params: QuotationCreateParams): Promise<QuotationCreateResult> {
   try {
-    const quotation = await prisma.$transaction(async (tx) => {
-      // Generate quotation number
-      const number = await generateQuotationNumber();
+    // Validate items
+    if (!validateQuotationItems(params.items)) {
+      return {
+        success: false,
+        error: 'Invalid quotation items'
+      };
+    }
 
-      // Calculate total
-      const total = params.items.reduce((sum, item) => 
-        sum + (item.quantity * item.price), 0
-      );
+    // Generate number and calculate total
+    const number = await generateQuotationNumber();
+    const total = calculateQuotationTotal(params.items);
 
-      // Create quotation with items
-      return tx.quotation.create({
-        data: {
-          number,
-          customerName: params.customerName,
-          total,
-          lineAccountId: params.lineAccountId,
-          items: {
-            create: params.items.map(item => ({
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price,
-              total: item.quantity * item.price
-            }))
-          }
-        },
-        include: {
-          items: true
+    const quotation = await prisma.quotation.create({
+      data: {
+        number,
+        customerName: params.customerName,
+        total,
+        lineAccountId: params.lineAccountId,
+        items: {
+          create: params.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.quantity * item.price
+          }))
         }
-      });
-    }, {
-      timeout: 5000
+      },
+      include: {
+        items: true
+      }
     });
 
     return {
