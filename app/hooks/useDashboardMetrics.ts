@@ -2,15 +2,22 @@ import { useState, useEffect } from 'react';
 import { DashboardMetrics } from '../types/dashboard';
 import { pusherClient, PUSHER_CHANNELS } from '@/lib/pusher';
 
+const DEFAULT_METRICS: DashboardMetrics = {
+  totalQuotations: 0,
+  totalAccounts: 0,
+  totalMessages: 0,
+  accountStats: []
+};
+
 export function useDashboardMetrics(initialMetrics: DashboardMetrics) {
-  const [metrics, setMetrics] = useState<DashboardMetrics>(initialMetrics);
+  const [metrics, setMetrics] = useState<DashboardMetrics>(initialMetrics || DEFAULT_METRICS);
 
   useEffect(() => {
     const channel = pusherClient.subscribe(PUSHER_CHANNELS.CHAT);
 
     const handleMetricsUpdate = (updatedMetrics: DashboardMetrics) => {
       console.log('Received metrics update:', updatedMetrics);
-      setMetrics(updatedMetrics);
+      setMetrics(updatedMetrics || DEFAULT_METRICS);
     };
 
     // Listen for metrics updates
