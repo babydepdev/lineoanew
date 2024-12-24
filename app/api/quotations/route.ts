@@ -54,13 +54,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate quotation number
-    const quotationNumber = `QT${Date.now()}`;
-
-    // Calculate total
-    const total = items.reduce((sum: number, item: any) => 
-      sum + (item.quantity * item.price), 0
-    );
+    // Generate quotation number and calculate total in parallel
+    const [quotationNumber, total] = await Promise.all([
+      generateQuotationNumber(),
+      calculateTotal(items)
+    ]);
 
     // Create quotation params
     const params: QuotationCreateParams = {
@@ -76,28 +74,30 @@ export async function POST(request: NextRequest) {
       }))
     };
 
-    // Create quotation
-    const quotation = await createQuotation(params);
+    // Create quotation and get metrics in parallel
+    const [quotationResult, metrics] = await Promise.all([
+      createQuotation(params),
+      getDashboardMetrics()
+    ]);
 
-    // Get updated metrics
-    const metrics = await getDashboardMetrics();
-
-    // Broadcast metrics update
+    // Broadcast updates in parallel
     await Promise.all([
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'metrics-updated',
         metrics
       ),
-      // Also trigger a specific quotation event
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'quotation-created',
-        { quotation: quotation.quotation, metrics }
+        { 
+          quotation: quotationResult.quotation, 
+          metrics 
+        }
       )
     ]);
 
-    return NextResponse.json(quotation.quotation);
+    return NextResponse.json(quotationResult.quotation);
   } catch (error) {
     console.error('Error creating quotation:', error);
     return NextResponse.json(
@@ -105,4 +105,15 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+// Helper functions
+async function generateQuotationNumber(): Promise<string> {
+  return `QT${Date.now()}`;
+}
+
+function calculateTotal(items: any[]): number {
+  return items.reduce((sum: number, item: any) => 
+    sum + (item.quantity * item.price), 0
+  );
 }
