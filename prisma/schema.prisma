@@ -38,6 +38,8 @@ model LineAccount {
   quotations       Quotation[]
   invoices         Invoice[]
 
+  @@index([id,name])
+
   @@index([active])
 }
 
@@ -99,7 +101,7 @@ model Quotation {
 
   @@index([lineAccountId])
   @@index([createdAt])
-  @@index([status])
+  @@index([customerName,total])
 }
 
 model QuotationItem {
