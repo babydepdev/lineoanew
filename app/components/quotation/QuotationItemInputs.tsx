@@ -61,39 +61,47 @@ export const QuotationItemInputs = memo(function QuotationItemInputs({
         {items.map((item, index) => (
           <div key={index} className="grid grid-cols-12 gap-4 items-start">
             <div className="col-span-4  text-slate-800">
-              <Input
+              <input
                 placeholder="ชื่อสินค้า"
                 value={item.name}
                 onChange={(e) => updateItem(index, 'name', e.target.value)}
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+
               />
             </div>
             
             <div className="col-span-2 text-slate-800">
-              <Input
+              <input
                 type="number"
                 min="1"
                 placeholder="จำนวน"
                 value={item.quantity}
                 onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 0)}
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+
               />
             </div>
             
             <div className="col-span-2">
-              <Input
+              <input
                 type="number"
                 min="0"
                 step="0.01"
                 placeholder="ราคา"
                 value={item.price}
                 onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+
               />
             </div>
             
             <div className="col-span-3">
-              <Input
+              <input
                 value={`฿${calculateTotal(item).toLocaleString()}`}
                 readOnly
                 disabled
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+
               />
             </div>
             

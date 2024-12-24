@@ -24,7 +24,7 @@ export function AddLineAccountDialog({ isOpen, onClose }: AddLineAccountDialogPr
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] text-slate-600">
         <DialogHeader>
           <DialogTitle>Add LINE Official Account</DialogTitle>
           <DialogDescription>

@@ -97,16 +97,18 @@ export function CreateQuotationDialog({
               <MemoizedAccountSelect
                 value={formData.lineAccountId}
                 onChange={handleAccountChange}
+                
               />
             </div>
 
             <div className="space-y-2">
               <Label>ชื่อลูกค้า</Label>
-              <Input
+              <input
                 value={formData.customerName}
                 onChange={handleCustomerNameChange}
                 placeholder="ระบุชื่อลูกค้า"
-                className="h-11"
+                className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary font-mono text-sm"
+
               />
             </div>
           </div>

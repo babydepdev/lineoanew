@@ -33,7 +33,7 @@ export function LineAccountForm({ onSuccess }: LineAccountFormProps) {
       )}
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white">
+        <label className="text-sm font-medium text-slate-600">
           ชื่อ Line OA
         </label>
         <input
@@ -41,13 +41,13 @@ export function LineAccountForm({ onSuccess }: LineAccountFormProps) {
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          placeholder="e.g., Main Account"
+          placeholder="Name"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white">
+        <label className="text-sm font-medium text-slate-600">
           Channel Access Token
         </label>
         <input
@@ -61,7 +61,7 @@ export function LineAccountForm({ onSuccess }: LineAccountFormProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-white">
+        <label className="text-sm font-medium text-slate-600">
           Channel Secret
         </label>
         <input

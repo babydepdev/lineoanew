@@ -60,7 +60,7 @@ export function EditQuotationDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-3xl text-slate-900">
         <DialogHeader>
           <DialogTitle>แก้ไขใบเสนอราคา #{quotation.number}</DialogTitle>
         </DialogHeader>
@@ -68,10 +68,12 @@ export function EditQuotationDialog({
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label>ชื่อลูกค้า</Label>
-            <Input
+            <input
               value={formData.customerName}
               onChange={(e) => setFormData(prev => ({ ...prev, customerName: e.target.value }))}
               placeholder="ระบุชื่อลูกค้า"
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+
             />
           </div>
 

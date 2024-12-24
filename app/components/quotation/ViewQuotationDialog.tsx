@@ -56,7 +56,7 @@ export function ViewQuotationDialog({ quotation, isOpen, onClose }: ViewQuotatio
               </tbody>
               <tfoot className="bg-slate-50">
                 <tr>
-                  <td colSpan={3} className="px-4 py-3 text-right font-medium">ยอดรวมทั้งหมด</td>
+                  <td colSpan={3} className="px-4 py-3 text-right font-medium bg-slate-50">ยอดรวมทั้งหมด</td>
                   <td className="px-4 py-3 text-right font-medium">฿{quotation.total.toLocaleString()}</td>
                 </tr>
               </tfoot>
