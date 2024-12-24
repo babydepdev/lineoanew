@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
+
 import { Label } from '../ui/label';
 import { QuotationItemInputs } from './QuotationItemInputs';
 import { Quotation, QuotationFormData } from '@/app/types/quotation';
