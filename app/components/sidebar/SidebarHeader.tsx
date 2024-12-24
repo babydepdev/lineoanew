@@ -5,9 +5,10 @@ import { SidebarNavItem } from './SidebarNavItem';
 interface SidebarHeaderProps {
   onClose: () => void;
   onDashboardClick: () => void;
+  showDashboard: boolean;
 }
 
-export function SidebarHeader({ onClose, onDashboardClick }: SidebarHeaderProps) {
+export function SidebarHeader({ onClose, onDashboardClick, showDashboard }: SidebarHeaderProps) {
   return (
     <div className="flex-none p-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
       <div className="flex items-center justify-between mb-4">
@@ -36,6 +37,7 @@ export function SidebarHeader({ onClose, onDashboardClick }: SidebarHeaderProps)
           icon={<LayoutDashboard className="w-5 h-5" />}
           label="Dashboard"
           onClick={onDashboardClick}
+          isActive={showDashboard}
         />
         <SidebarNavItem 
           href="#" 

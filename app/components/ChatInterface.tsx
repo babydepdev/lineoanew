@@ -86,6 +86,7 @@ export function ChatInterface({ initialConversations, metrics }: ChatInterfacePr
           onSelect={handleConversationSelect}
           onClose={closeSidebar}
           onDashboardClick={handleDashboardClick}
+          showDashboard={showDashboard}
         />
 
         <Separator orientation="vertical" className="hidden lg:block" />

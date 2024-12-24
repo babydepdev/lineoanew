@@ -13,6 +13,7 @@ interface SidebarProps {
   onSelect: (conversation: ConversationWithMessages) => void;
   onClose: () => void;
   onDashboardClick: () => void;
+  showDashboard: boolean;
 }
 
 export function Sidebar({ 
@@ -21,7 +22,8 @@ export function Sidebar({
   selectedId, 
   onSelect,
   onClose,
-  onDashboardClick
+  onDashboardClick,
+  showDashboard
 }: SidebarProps) {
   const showSidebar = isOpen || (typeof window !== 'undefined' && window.innerWidth >= 1024);
 
@@ -50,6 +52,7 @@ export function Sidebar({
             <SidebarHeader 
               onClose={onClose}
               onDashboardClick={onDashboardClick}
+              showDashboard={showDashboard}
             />
 
             <ConversationList 
