@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_CHANNELS } from '@/lib/pusher';
 import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
-
-const prisma = new PrismaClient();
+import { deleteQuotation } from '@/lib/services/quotation/delete';
+import { updateQuotation } from '@/lib/services/quotation/update';
 
 export async function DELETE(
   _request: NextRequest,
@@ -11,40 +10,36 @@ export async function DELETE(
 ) {
   try {
     const { id } = params;
+    const result = await deleteQuotation(id);
 
-    // Delete all items first due to foreign key constraint
-    await prisma.quotationItem.deleteMany({
-      where: { quotationId: id }
-    });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
 
-    // Then delete the quotation
-    await prisma.quotation.delete({
-      where: { id }
-    });
-
-    // Get updated metrics
-    const metrics = await getDashboardMetrics();
-
-    // Broadcast metrics update
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        'metrics-updated',
-        metrics
-      ),
-      // Also trigger a specific quotation events
+    // Handle updates in parallel
+    const [metrics] = await Promise.all([
+      getDashboardMetrics(),
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'quotation-deleted',
-        { quotationId: id, metrics }
+        { quotationId: id }
       )
     ]);
 
+    await pusherServer.trigger(
+      PUSHER_CHANNELS.CHAT,
+      'metrics-updated',
+      metrics
+    );
+
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting quotation:', error);
+    console.error('Error in delete endpoint:', error);
     return NextResponse.json(
-      { error: 'Failed to delete quotation' },
+      { error: 'Failed to process delete request' },
       { status: 500 }
     );
   }
@@ -57,64 +52,40 @@ export async function PATCH(
   try {
     const { id } = params;
     const body = await request.json();
-    const { customerName, items } = body;
-
-    // Calculate new total
-    const total = items.reduce((sum: number, item: any) => 
-      sum + (item.quantity * item.price), 0
-    );
-
-    // Update quotation and items in a transaction
-    const quotation = await prisma.$transaction(async (tx) => {
-      // Delete existing items
-      await tx.quotationItem.deleteMany({
-        where: { quotationId: id }
-      });
-
-      // Update quotation and create new items
-      return tx.quotation.update({
-        where: { id },
-        data: {
-          customerName,
-          total,
-          items: {
-            create: items.map((item: any) => ({
-              name: item.name,
-              quantity: item.quantity,
-              price: item.price,
-              total: item.quantity * item.price
-            }))
-          }
-        },
-        include: {
-          items: true
-        }
-      });
+    
+    const result = await updateQuotation(id, {
+      customerName: body.customerName,
+      items: body.items
     });
 
-    // Get updated metrics
-    const metrics = await getDashboardMetrics();
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 500 }
+      );
+    }
 
-    // Broadcast metrics update
-    await Promise.all([
-      pusherServer.trigger(
-        PUSHER_CHANNELS.CHAT,
-        'metrics-updated',
-        metrics
-      ),
-      // Also trigger a specific quotation event
+    // Handle updates in parallel
+    const [metrics] = await Promise.all([
+      getDashboardMetrics(),
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         'quotation-updated',
-        { quotation, metrics }
+        { quotation: result.quotation }
       )
     ]);
 
-    return NextResponse.json(quotation);
+    await pusherServer.trigger(
+      PUSHER_CHANNELS.CHAT,
+      'metrics-updated',
+      metrics
+    );
+
+    return NextResponse.json(result.quotation);
   } catch (error) {
-    console.error('Error updating quotation:', error);
+    console.error('Error in patch endpoint:', error);
     return NextResponse.json(
-      { error: 'Failed to update quotation' },
+      { error: 'Failed to process update request' },
       { status: 500 }
     );
   }

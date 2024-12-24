@@ -1,15 +1,21 @@
-import { QuotationItem } from '@prisma/client';
-
-export interface QuotationCreateParams {
-  number: string;
-  customerName: string;
-  total: number;
-  lineAccountId: string;
-  items: Omit<QuotationItem, 'id' | 'quotationId'>[];
+export interface QuotationItem {
+  name: string;
+  quantity: number;
+  price: number;
 }
 
-export interface QuotationResult {
+export interface QuotationUpdateParams {
+  customerName: string;
+  items: QuotationItem[];
+}
+
+export interface QuotationUpdateResult {
   success: boolean;
-  quotation?: any; // Using any temporarily, should be properly typed
+  quotation?: any; // Type this properly based on your Prisma schema
+  error?: string;
+}
+
+export interface QuotationDeleteResult {
+  success: boolean;
   error?: string;
 }
