@@ -14,7 +14,7 @@ import { Quotation } from '@/app/types/quotation';
 
 interface QuotationActionsProps {
   quotation: Quotation;
-  onUpdate?: () => void;  // Make onUpdate optional
+  onUpdate?: () => void;
 }
 
 export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps) {

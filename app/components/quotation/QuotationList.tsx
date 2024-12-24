@@ -1,8 +1,10 @@
+"use client";
+
+import { Search } from 'lucide-react';
 import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { QuotationSection } from './QuotationSection';
 import { ScrollArea } from '../ui/scroll-area';
 import { Input } from '../ui/input';
-import { Search } from 'lucide-react';
 import { useState } from 'react';
 
 export function QuotationList() {
@@ -14,7 +16,7 @@ export function QuotationList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 bg-slate-50">
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
         <Input

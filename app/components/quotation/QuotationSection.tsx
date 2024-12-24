@@ -1,3 +1,5 @@
+"use client";
+
 import { memo } from 'react';
 import { LineAccount } from '@/app/types/line';
 import { useQuotationsByAccount } from '@/app/hooks/useQuotationsByAccount';

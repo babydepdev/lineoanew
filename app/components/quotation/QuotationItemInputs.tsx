@@ -41,13 +41,14 @@ export const QuotationItemInputs = memo(function QuotationItemInputs({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-slate-950">
       <div className="flex items-center justify-between">
         <Label>รายการสินค้า</Label>
         <Button
           type="button"
           onClick={addItem}
           variant="outline"
+          
           size="sm"
           className="flex items-center gap-2"
         >
@@ -59,7 +60,7 @@ export const QuotationItemInputs = memo(function QuotationItemInputs({
       <div className="space-y-4">
         {items.map((item, index) => (
           <div key={index} className="grid grid-cols-12 gap-4 items-start">
-            <div className="col-span-4">
+            <div className="col-span-4  text-slate-800">
               <Input
                 placeholder="ชื่อสินค้า"
                 value={item.name}
@@ -67,7 +68,7 @@ export const QuotationItemInputs = memo(function QuotationItemInputs({
               />
             </div>
             
-            <div className="col-span-2">
+            <div className="col-span-2 text-slate-800">
               <Input
                 type="number"
                 min="1"
