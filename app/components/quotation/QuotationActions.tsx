@@ -36,15 +36,25 @@ export function QuotationActions({ quotation, onUpdate }: QuotationActionsProps)
   return (
     <>
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setViewOpen(true)}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0 flex-shrink-0" 
+          onClick={() => setViewOpen(true)}
+        >
           <FileText className="h-4 w-4 text-slate-500" />
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handlePrint}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0 flex-shrink-0" 
+          onClick={handlePrint}
+        >
           <Printer className="h-4 w-4 text-slate-500" />
         </Button>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <Button variant="ghost" size="sm" className="h-8 w-8 p-0 flex-shrink-0">
               <MoreHorizontal className="h-4 w-4 text-slate-500" />
             </Button>
           </DropdownMenuTrigger>
