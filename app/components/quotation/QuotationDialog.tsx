@@ -21,7 +21,7 @@ export function QuotationDialog({ isOpen, onClose }: QuotationDialogProps) {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl h-[calc(100vh-64px)] sm:h-auto flex flex-col">
+        <DialogContent className="max-w-4xl flex flex-col h-[90vh] sm:h-[85vh] md:h-[90vh]">
           <DialogHeader className="flex flex-row items-center justify-between flex-shrink-0">
             <DialogTitle>ใบเสนอราคา</DialogTitle>
             <Button 
