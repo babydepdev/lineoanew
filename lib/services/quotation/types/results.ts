@@ -1,5 +1,4 @@
-import { QuotationWithItems } from './models';
-import { PaginationMetadata } from './models';
+import { QuotationWithItems, PaginationMetadata } from './models';
 
 export interface QuotationFindResult {
   success: boolean;

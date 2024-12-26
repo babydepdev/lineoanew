@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
-import { QuotationFindResult } from './types';
-import { QuotationWithItems } from './types/models';
+import { QuotationFindResult } from './types/results';
+import { QuotationWithItems, PaginationMetadata } from './types/models';
 
 const DEFAULT_PAGE_SIZE = 20;
 
@@ -41,16 +41,18 @@ export async function findQuotationsByAccount(
     const totalPages = Math.ceil(total / pageSize);
     const hasMore = page < totalPages;
 
+    const paginationData: PaginationMetadata = {
+      page,
+      pageSize,
+      total,
+      totalPages,
+      hasMore
+    };
+
     return {
       success: true,
       quotations: quotations as QuotationWithItems[],
-      pagination: {
-        page,
-        pageSize,
-        total,
-        totalPages,
-        hasMore
-      }
+      pagination: paginationData
     };
   } catch (error) {
     console.error('Error finding quotations:', error);
@@ -61,9 +63,9 @@ export async function findQuotationsByAccount(
   }
 }
 
-// Add caching for frequently accessed quotations
-const quotationCache = new Map<string, { data: QuotationWithItems; timestamp: number }>();
+// Cache configuration
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const quotationCache = new Map<string, { data: QuotationWithItems; timestamp: number }>();
 
 export async function findQuotationById(id: string): Promise<QuotationWithItems | null> {
   // Check cache first
