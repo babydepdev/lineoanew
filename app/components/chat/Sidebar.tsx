@@ -46,7 +46,7 @@ export function Sidebar({
               "bg-white border-r border-slate-200",
               "z-40 lg:z-0",
               "flex flex-col pt-16 lg:pt-0",
-              "shadow-lg lg:shadow-none"
+              "shadow-lg lg:shadow-none" 
             )}
           >
             <SidebarHeader 
