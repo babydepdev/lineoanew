@@ -1,26 +1,56 @@
 import { prisma } from '@/lib/prisma';
-
 import { QuotationFindResult } from './types';
+import { QuotationWithItems } from './types/models';
 
+const DEFAULT_PAGE_SIZE = 20;
 
-
-export async function findQuotationsByAccount(accountId: string): Promise<QuotationFindResult> {
+export async function findQuotationsByAccount(
+  accountId: string,
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE
+): Promise<QuotationFindResult> {
   try {
-    const quotations = await prisma.quotation.findMany({
-      where: {
-        lineAccountId: accountId
-      },
-      include: {
-        items: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
+    // Calculate pagination
+    const skip = (page - 1) * pageSize;
+
+    // Run count and find in parallel
+    const [total, quotations] = await Promise.all([
+      prisma.quotation.count({
+        where: { lineAccountId: accountId }
+      }),
+      prisma.quotation.findMany({
+        where: { lineAccountId: accountId },
+        include: {
+          items: {
+            select: {
+              id: true,
+              name: true,
+              quantity: true,
+              price: true,
+              total: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: pageSize
+      })
+    ]);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(total / pageSize);
+    const hasMore = page < totalPages;
 
     return {
       success: true,
-      quotations
+      quotations: quotations as QuotationWithItems[],
+      pagination: {
+        page,
+        pageSize,
+        total,
+        totalPages,
+        hasMore
+      }
     };
   } catch (error) {
     console.error('Error finding quotations:', error);
@@ -29,4 +59,41 @@ export async function findQuotationsByAccount(accountId: string): Promise<Quotat
       error: error instanceof Error ? error.message : 'Failed to find quotations'
     };
   }
+}
+
+// Add caching for frequently accessed quotations
+const quotationCache = new Map<string, { data: QuotationWithItems; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+export async function findQuotationById(id: string): Promise<QuotationWithItems | null> {
+  // Check cache first
+  const cached = quotationCache.get(id);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  const quotation = await prisma.quotation.findUnique({
+    where: { id },
+    include: {
+      items: {
+        select: {
+          id: true,
+          name: true,
+          quantity: true,
+          price: true,
+          total: true
+        }
+      }
+    }
+  });
+
+  if (quotation) {
+    // Update cache
+    quotationCache.set(id, {
+      data: quotation as QuotationWithItems,
+      timestamp: Date.now()
+    });
+  }
+
+  return quotation as QuotationWithItems | null;
 }

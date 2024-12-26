@@ -1,14 +1,12 @@
 import { prisma } from '@/lib/prisma';
 import { QuotationCreateParams, QuotationCreateResult } from './types';
-import { 
-  generateQuotationNumber, 
-  validateQuotationItems, 
-  calculateQuotationTotal 
-} from './utils';
+import { generateQuotationNumber } from './utils/number';
+import { validateQuotationItems } from './utils/validation';
+import { calculateQuotationTotal } from './utils/calculation';
 
 export async function createQuotation(params: QuotationCreateParams): Promise<QuotationCreateResult> {
   try {
-    // Validate items
+    // Validate items first to fail fast
     if (!validateQuotationItems(params.items)) {
       return {
         success: false,
@@ -16,28 +14,40 @@ export async function createQuotation(params: QuotationCreateParams): Promise<Qu
       };
     }
 
-    // Generate number and calculate total
-    const number = await generateQuotationNumber();
-    const total = calculateQuotationTotal(params.items);
+    // Use Promise.all for parallel operations
+    const [number, total] = await Promise.all([
+      generateQuotationNumber(),
+      Promise.resolve(calculateQuotationTotal(params.items))
+    ]);
 
-    const quotation = await prisma.quotation.create({
-      data: {
-        number,
-        customerName: params.customerName,
-        total,
-        lineAccountId: params.lineAccountId,
-        items: {
-          create: params.items.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price,
-            total: item.quantity * item.price
-          }))
+    // Create quotation and items in a single transaction
+    const quotation = await prisma.$transaction(async (tx) => {
+      const newQuotation = await tx.quotation.create({
+        data: {
+          number,
+          customerName: params.customerName,
+          total,
+          lineAccountId: params.lineAccountId,
+          items: {
+            createMany: {
+              data: params.items.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price,
+                total: item.quantity * item.price
+              }))
+            }
+          }
+        },
+        include: {
+          items: true
         }
-      },
-      include: {
-        items: true
-      }
+      });
+
+      return newQuotation;
+    }, {
+      timeout: 10000, // 10 second timeout
+      maxWait: 5000 // 5 second max wait for transaction
     });
 
     return {
