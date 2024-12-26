@@ -93,7 +93,6 @@ export function useChatEvents(initialConversations: SerializedConversation[]) {
     mainChannel.bind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);
     mainChannel.bind(PUSHER_EVENTS.CONVERSATIONS_UPDATED, handleConversationsUpdated);
 
-    // Cleanup
     return () => {
       mainChannel.unbind(PUSHER_EVENTS.MESSAGE_RECEIVED, handleMessageReceived);
       mainChannel.unbind(PUSHER_EVENTS.CONVERSATION_UPDATED, handleConversationUpdated);

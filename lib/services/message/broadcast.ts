@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { pusherServer, PUSHER_EVENTS, PUSHER_CHANNELS } from '../../pusher';
 import { MessageBroadcastResult } from './types';
 import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
-import { formatMessageForPusher } from '@/lib/messageFormatter';
+import {  formatConversationForPusher } from '@/lib/messageFormatter';
 
 const prisma = new PrismaClient();
 
@@ -10,14 +10,14 @@ export async function broadcastMessageUpdate(
   conversationId: string
 ): Promise<MessageBroadcastResult> {
   try {
-    // Get conversation with limited messages
+    // Get conversation with all messages and related data
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       include: {
         messages: {
-          orderBy: { timestamp: 'desc' },
-          take: 1
-        }
+          orderBy: { timestamp: 'desc' }
+        },
+        lineAccount: true
       }
     });
 
@@ -28,35 +28,34 @@ export async function broadcastMessageUpdate(
       };
     }
 
-    const latestMessage = conversation.messages[0];
-    if (!latestMessage) {
-      return { success: true };
-    }
-
-    // Create unique event ID for deduplication
-    const eventId = `${latestMessage.id}-${Date.now()}`;
+    // Get all conversations for the list update
+    const allConversations = await prisma.conversation.findMany({
+      include: {
+        messages: {
+          orderBy: { timestamp: 'desc' },
+          take: 1
+        },
+        lineAccount: true
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    });
 
     // Broadcast updates in parallel
     await Promise.all([
-      // Broadcast message to conversation channel
-      pusherServer.trigger(
-        `private-conversation-${conversationId}`,
-        PUSHER_EVENTS.MESSAGE_RECEIVED,
-        {
-          ...formatMessageForPusher(latestMessage),
-          eventId
-        }
-      ),
-
-      // Broadcast minimal conversation update
+      // Broadcast full conversation update
       pusherServer.trigger(
         PUSHER_CHANNELS.CHAT,
         PUSHER_EVENTS.CONVERSATION_UPDATED,
-        {
-          id: conversation.id,
-          updatedAt: conversation.updatedAt.toISOString(),
-          lastMessage: formatMessageForPusher(latestMessage)
-        }
+        formatConversationForPusher(conversation)
+      ),
+
+      // Broadcast conversations list update
+      pusherServer.trigger(
+        PUSHER_CHANNELS.CHAT,
+        PUSHER_EVENTS.CONVERSATIONS_UPDATED,
+        allConversations.map(formatConversationForPusher)
       ),
 
       // Get and broadcast updated metrics
