@@ -3,6 +3,8 @@ import { QuotationCreateParams, QuotationCreateResult } from './types';
 import { generateQuotationNumber } from './utils/number';
 import { validateQuotationItems } from './utils/validation';
 import { calculateQuotationTotal } from './utils/calculation';
+import { batchProcessor } from './batch/processor';
+import { quotationCache } from './cache/store';
 
 export async function createQuotation(params: QuotationCreateParams): Promise<QuotationCreateResult> {
   try {
@@ -14,45 +16,42 @@ export async function createQuotation(params: QuotationCreateParams): Promise<Qu
       };
     }
 
-    // Use Promise.all for parallel operations
+    // Prepare data in parallel
     const [number, total] = await Promise.all([
       generateQuotationNumber(),
       Promise.resolve(calculateQuotationTotal(params.items))
     ]);
 
-    // Create quotation and items in a single transaction
-    const quotation = await prisma.$transaction(async (tx) => {
-      const newQuotation = await tx.quotation.create({
-        data: {
-          number,
-          customerName: params.customerName,
-          total,
-          lineAccountId: params.lineAccountId,
-          items: {
-            createMany: {
-              data: params.items.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price,
-                total: item.quantity * item.price
-              }))
-            }
-          }
-        },
-        include: {
-          items: true
-        }
-      });
-
-      return newQuotation;
-    }, {
-      timeout: 10000, // 10 second timeout
-      maxWait: 5000 // 5 second max wait for transaction
+    // Create quotation first
+    const quotation = await prisma.quotation.create({
+      data: {
+        number,
+        customerName: params.customerName,
+        total,
+        lineAccountId: params.lineAccountId
+      }
     });
+
+    // Add items in batches asynchronously
+    await batchProcessor.addItems(params.items, quotation.id);
+
+    // Fetch complete quotation with items
+    const completeQuotation = await prisma.quotation.findUnique({
+      where: { id: quotation.id },
+      include: { items: true }
+    });
+
+    if (!completeQuotation) {
+      throw new Error('Failed to fetch created quotation');
+    }
+
+    // Update cache
+    quotationCache.set(`quotation:${quotation.id}`, completeQuotation);
+    quotationCache.invalidatePattern(new RegExp(`quotations:${params.lineAccountId}`));
 
     return {
       success: true,
-      quotation
+      quotation: completeQuotation
     };
   } catch (error) {
     console.error('Error creating quotation:', error);
