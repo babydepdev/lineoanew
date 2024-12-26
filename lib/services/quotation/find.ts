@@ -10,7 +10,7 @@ export async function findQuotationsByAccount(
   pageSize = DEFAULT_PAGE_SIZE
 ): Promise<QuotationFindResult> {
   try {
-    // Calculate pagination
+    // Calculate paginationiui
     const skip = (page - 1) * pageSize;
 
     // Run count and find in parallel
