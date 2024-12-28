@@ -45,7 +45,7 @@ export function Sidebar({
               "w-[280px] sm:w-[320px] lg:w-80",
               "bg-white border-r border-slate-200",
               "z-40 lg:z-0",
-              "flex flex-col pt-16 lg:pt-0",
+              "flex flex-col pt-1 lg:pt-0",
               "shadow-lg lg:shadow-none" 
             )}
           >
