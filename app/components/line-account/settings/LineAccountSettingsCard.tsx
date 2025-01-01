@@ -25,19 +25,9 @@ export function LineAccountSettingsCard({ account, onUpdate }: LineAccountSettin
             </Badge>
           </div>
           <div>
- 
-    <p className="text-sm text-slate-500 mt-0.5">{account.companyName}</p>
-
-</div>
+            <p className="text-sm text-slate-500 mt-0.5">{account.companyName || 'No company name set'}</p>
+          </div>
           <div className="mt-4 space-y-3">
-            <div>
-              <label className="text-sm font-medium text-slate-500">Company Name</label>
-              <div className="mt-1 flex items-center gap-2">
-                <div className="px-3 py-1.5 bg-slate-50 rounded text-sm font-mono text-slate-600">
-                  {account.companyName || 'Not set'}
-                </div>
-              </div>
-            </div>
             <div>
               <label className="text-sm font-medium text-slate-500">Access Token</label>
               <div className="mt-1 flex items-center gap-2">
