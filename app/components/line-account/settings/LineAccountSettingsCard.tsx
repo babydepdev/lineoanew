@@ -19,10 +19,12 @@ export function LineAccountSettingsCard({ account, onUpdate }: LineAccountSettin
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-slate-900">{account.name}</h2>
-            {account.companyName && (
-              <span className="text-sm text-slate-500">({account.companyName})</span>
-            )}
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">{account.name}</h2>
+              {account.companyName && (
+                <p className="text-sm text-slate-500 mt-0.5">{account.companyName}</p>
+              )}
+            </div>
             <Badge variant={account.active ? "success" : "secondary"}>
               {account.active ? 'Active' : 'Inactive'}
             </Badge>
