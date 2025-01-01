@@ -42,7 +42,7 @@ export function SidebarHeader({ onClose, onDashboardClick, showDashboard }: Side
         <SidebarNavItem 
           href="#" 
           icon={<Settings className="w-5 h-5" />}
-          label="Home Setting"
+          label="Line OA Setting"
         />
         <SidebarNavItem 
           href="#" 
