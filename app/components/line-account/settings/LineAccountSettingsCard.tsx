@@ -2,18 +2,27 @@ import { LineAccount } from '@/app/types/line';
 import { Badge } from '../../ui/badge';
 import { Button } from '../../ui/button';
 import { Settings, Key } from 'lucide-react';
+import { useState } from 'react';
+import { LineAccountSettingsDialog } from './LineAccountSettingsDialog';
 
 interface LineAccountSettingsCardProps {
   account: LineAccount;
+  onUpdate: () => void;
 }
 
-export function LineAccountSettingsCard({ account }: LineAccountSettingsCardProps) {
+export function LineAccountSettingsCard({ account, onUpdate }: LineAccountSettingsCardProps) {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
   return (
+    <>
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-slate-900">{account.name}</h2>
+            {account.companyName && (
+              <span className="text-sm text-slate-500">({account.companyName})</span>
+            )}
             <Badge variant={account.active ? "success" : "secondary"}>
               {account.active ? 'Active' : 'Inactive'}
             </Badge>
@@ -39,11 +48,24 @@ export function LineAccountSettingsCard({ account }: LineAccountSettingsCardProp
             </div>
           </div>
         </div>
-        <Button variant="outline" size="sm" className="flex items-center gap-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center gap-2"
+          onClick={() => setIsSettingsOpen(true)}
+        >
           <Settings className="w-4 h-4" />
           <span>Edit</span>
         </Button>
       </div>
     </div>
+    
+    <LineAccountSettingsDialog
+      account={account}
+      isOpen={isSettingsOpen}
+      onClose={() => setIsSettingsOpen(false)}
+      onUpdate={onUpdate}
+    />
+    </>
   );
 }

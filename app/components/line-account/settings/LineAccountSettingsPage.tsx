@@ -2,7 +2,7 @@ import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { LineAccountSettingsCard } from './LineAccountSettingsCard';
 
 export function LineAccountSettingsPage() {
-  const { accounts, isLoading } = useLineAccounts();
+  const { accounts, isLoading, mutate } = useLineAccounts();
 
   if (isLoading) {
     return (
@@ -25,7 +25,11 @@ export function LineAccountSettingsPage() {
       <h1 className="text-2xl font-semibold text-slate-900">LINE Account Settings</h1>
       <div className="grid gap-6">
         {accounts.map((account) => (
-          <LineAccountSettingsCard key={account.id} account={account} />
+          <LineAccountSettingsCard 
+            key={account.id} 
+            account={account} 
+            onUpdate={mutate}
+          />
         ))}
       </div>
     </div>

@@ -8,6 +8,7 @@ export interface LineAccountCreateParams {
 
 export interface LineAccountUpdateParams {
   name?: string;
+  companyName?: string | null;
   channelAccessToken?: string;
   channelSecret?: string;
   active?: boolean;

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findLineAccountById } from '@/lib/services/line';
+import { findLineAccountById, updateLineAccount } from '@/lib/services/line';
 
 export async function GET(
   _request: NextRequest,
@@ -21,6 +21,35 @@ export async function GET(
     console.error('Error fetching LINE account:', error);
     return NextResponse.json(
       { error: 'Failed to fetch account' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const body = await request.json();
+    
+    const result = await updateLineAccount(id, {
+      companyName: body.companyName?.trim() || null
+    });
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error || 'Failed to update account' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(result.account);
+  } catch (error) {
+    console.error('Error updating LINE account:', error);
+    return NextResponse.json(
+      { error: 'Failed to update account' },
       { status: 500 }
     );
   }

@@ -27,6 +27,7 @@ model UserProfile {
 model LineAccount {
   id                 String         @id @default(cuid())
   name               String
+  companyName        String?
   channelAccessToken String         @unique
   channelSecret      String
   active            Boolean        @default(true)
