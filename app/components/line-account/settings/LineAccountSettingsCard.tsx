@@ -31,12 +31,11 @@ export function LineAccountSettingsCard({ account, onUpdate }: LineAccountSettin
 </div>
           <div className="mt-4 space-y-3">
             <div>
-              <label className="text-sm font-medium text-slate-500">Channel Secret</label>
+              <label className="text-sm font-medium text-slate-500">Company Name</label>
               <div className="mt-1 flex items-center gap-2">
                 <div className="px-3 py-1.5 bg-slate-50 rounded text-sm font-mono text-slate-600">
-                  {account.channelSecret.slice(0, 8)}...
+                  {account.companyName || 'Not set'}
                 </div>
-                <Key className="w-4 h-4 text-slate-400" />
               </div>
             </div>
             <div>
