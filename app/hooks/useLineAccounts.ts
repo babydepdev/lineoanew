@@ -19,6 +19,7 @@ export function useLineAccounts(): UseLineAccountsResult {
       if (!response.ok) throw new Error('Failed to fetch LINE accounts');
       
       const data = await response.json();
+      // Ensure we get the full account details including companyName
       setAccounts(data);
       setError(null);
     } catch (err) {

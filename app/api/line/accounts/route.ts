@@ -2,12 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import { pusherServer, PUSHER_CHANNELS } from '@/lib/pusher';
 import { getDashboardMetrics } from '@/app/dashboard/services/metrics';
 import { createLineAccount } from '@/lib/services/line/account/create';
-import { getActiveLineAccounts } from '@/lib/services/line/account/find';
 import { LineAccountCreateParams } from '@/lib/services/line/account/types';
+import { prisma } from '@/lib/prisma';
+
+
 
 export async function GET() {
   try {
-    const accounts = await getActiveLineAccounts();
+    // Update query to include companyName
+    const accounts = await prisma.lineAccount.findMany({
+      where: { active: true },
+      select: {
+        id: true,
+        name: true,
+        companyName: true,
+        channelAccessToken: true,
+        channelSecret: true,
+        active: true
+      }
+    });
     return NextResponse.json(accounts);
   } catch (error) {
     console.error('Error fetching LINE accounts:', error);
