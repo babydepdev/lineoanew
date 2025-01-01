@@ -1,27 +1,8 @@
 import { useLineAccounts } from '@/app/hooks/useLineAccounts';
 import { LineAccountSettingsCard } from './LineAccountSettingsCard';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
 
 export function LineAccountSettingsPage() {
   const { accounts, isLoading, mutate } = useLineAccounts();
-  
-  // Fetch full account details including companyName
-  const fetchAccountDetails = async (accountId: string) => {
-    const account = await prisma.lineAccount.findUnique({
-      where: { id: accountId },
-      select: {
-        id: true,
-        name: true,
-        companyName: true,
-        channelAccessToken: true,
-        channelSecret: true,
-        active: true
-      }
-    });
-    return account;
-  };
 
   if (isLoading) {
     return (
