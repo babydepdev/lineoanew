@@ -14,6 +14,7 @@ import { Sidebar } from './chat/Sidebar';
 import { ChatHeader } from './chat/ChatHeader';
 import { LineAccountStatus } from './line-account/LineAccountStatus';
 import { MetricsContainer } from './dashboard/metrics/MetricsContainer';
+import { LineAccountSettingsPage } from './line-account/settings/LineAccountSettingsPage';
 
 interface ChatInterfaceProps {
   initialConversations: SerializedConversation[];
@@ -31,6 +32,7 @@ export function ChatInterface({ initialConversations, metrics }: ChatInterfacePr
   const messageListRef = useRef<MessageListHandle>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [showLineSettings, setShowLineSettings] = useState(false);
 
   const handleSendMessage = async (content: string) => {
     if (selectedConversation) {
@@ -63,6 +65,16 @@ export function ChatInterface({ initialConversations, metrics }: ChatInterfacePr
   const handleDashboardClick = () => {
     setSelectedConversation(null);
     setShowDashboard(true);
+    setShowLineSettings(false);
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
+  };
+
+  const handleLineSettingsClick = () => {
+    setSelectedConversation(null);
+    setShowDashboard(false);
+    setShowLineSettings(true);
     if (window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
@@ -75,7 +87,7 @@ export function ChatInterface({ initialConversations, metrics }: ChatInterfacePr
     <div className="flex flex-col h-screen">
       <Header 
         toggleSidebar={toggleSidebar} 
-        title="Chat Dashboard" 
+        title={showLineSettings ? "LINE OA Settings" : showDashboard ? "Dashboard" : "Chat"}
       />
 
       <div className="flex-1 flex overflow-hidden">
@@ -86,7 +98,9 @@ export function ChatInterface({ initialConversations, metrics }: ChatInterfacePr
           onSelect={handleConversationSelect}
           onClose={closeSidebar}
           onDashboardClick={handleDashboardClick}
+          onLineSettingsClick={handleLineSettingsClick}
           showDashboard={showDashboard}
+          showLineSettings={showLineSettings}
         />
 
         <Separator orientation="vertical" className="hidden lg:block" />
@@ -110,6 +124,10 @@ export function ChatInterface({ initialConversations, metrics }: ChatInterfacePr
                 conversationId={selectedConversation.id}
               />
             </>
+          ) : showLineSettings ? (
+            <div className="flex-1 flex flex-col bg-slate-50 overflow-auto">
+             <LineAccountSettingsPage/>
+            </div>
           ) : showDashboard ? (
             <div className="flex-1 flex flex-col bg-slate-50 overflow-auto">
               <MetricsContainer metrics={metrics} />

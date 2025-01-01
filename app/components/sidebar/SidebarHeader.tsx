@@ -1,14 +1,22 @@
-import { ChevronLeft, LayoutDashboard, Settings, Users } from 'lucide-react';
+import { ChevronLeft, LayoutDashboard, MessageSquare, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SidebarNavItem } from './SidebarNavItem';
 
 interface SidebarHeaderProps {
   onClose: () => void;
   onDashboardClick: () => void;
+  onLineSettingsClick: () => void;
   showDashboard: boolean;
+  showLineSettings: boolean;
 }
 
-export function SidebarHeader({ onClose, onDashboardClick, showDashboard }: SidebarHeaderProps) {
+export function SidebarHeader({ 
+  onClose, 
+  onDashboardClick, 
+  onLineSettingsClick,
+  showDashboard,
+  showLineSettings 
+}: SidebarHeaderProps) {
   return (
     <div className="flex-none p-4 border-b border-slate-200 bg-gradient-to-r from-white to-slate-50">
       <div className="flex items-center justify-between mb-4">
@@ -41,13 +49,15 @@ export function SidebarHeader({ onClose, onDashboardClick, showDashboard }: Side
         />
         <SidebarNavItem 
           href="#" 
-          icon={<Settings className="w-5 h-5" />}
-          label="Line OA Setting"
+          icon={<MessageSquare className="w-5 h-5" />}
+          label="Chat"
         />
         <SidebarNavItem 
           href="#" 
-          icon={<Users className="w-5 h-5" />}
-          label="Manage User"
+          icon={<Settings className="w-5 h-5" />}
+          label="LINE OA Settings"
+          onClick={onLineSettingsClick}
+          isActive={showLineSettings}
         />
       </nav>
     </div>
