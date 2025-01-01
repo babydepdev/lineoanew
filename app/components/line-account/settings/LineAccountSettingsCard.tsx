@@ -45,8 +45,8 @@ export function LineAccountSettingsCard({ account, onUpdate }: LineAccountSettin
           className="flex items-center gap-2"
           onClick={() => setIsSettingsOpen(true)}
         >
-          <Settings className="w-4 h-4" />
-          <span>Edit</span>
+          <Settings className="w-4 h-4 text-slate-400" />
+          <span className=" text-slate-500">Edit</span>
         </Button>
       </div>
     </div>
