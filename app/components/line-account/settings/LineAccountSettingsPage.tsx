@@ -3,7 +3,7 @@ import { LineAccountSettingsCard } from './LineAccountSettingsCard';
 
 export function LineAccountSettingsPage() {
   const { accounts, isLoading, mutate } = useLineAccounts();
-
+  console.log(accounts)
   if (isLoading) {
     return (
       <div className="p-6 space-y-6">

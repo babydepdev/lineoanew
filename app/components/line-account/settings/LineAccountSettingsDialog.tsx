@@ -21,7 +21,7 @@ export function LineAccountSettingsDialog({
   const [companyName, setCompanyName] = useState(account.companyName || '');
   const [imageUrl, setImageUrl] = useState(account.imageUrl || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  // console.log(imageUrl)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;

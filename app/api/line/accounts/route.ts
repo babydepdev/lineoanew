@@ -12,14 +12,14 @@ export async function GET() {
     // Update query to include companyName
     const accounts = await prisma.lineAccount.findMany({
       where: { active: true },
-      select: {
-        id: true,
-        name: true,
-        companyName: true,
-        channelAccessToken: true,
-        channelSecret: true,
-        active: true
-      }
+      // select: {
+      //   id: true,
+      //   name: true,
+      //   companyName: true,
+      //   channelAccessToken: true,
+      //   channelSecret: true,
+      //   active: true,
+      // }
     });
     return NextResponse.json(accounts);
   } catch (error) {
