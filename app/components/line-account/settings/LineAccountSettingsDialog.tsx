@@ -34,7 +34,7 @@ export function LineAccountSettingsDialog({
         body: JSON.stringify({ 
           companyName: companyName.trim(),
           imageUrl: imageUrl 
-        })
+        }) 
       });
 
       if (!response.ok) {
