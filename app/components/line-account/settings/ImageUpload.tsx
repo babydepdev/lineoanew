@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { CldUploadWidget } from 'next-cloudinary';
-import { ImagePlus } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { ImagePlus, Upload } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { showToast } from '@/app/utils/toast';
+import { cn } from '@/lib/utils';
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
@@ -11,17 +11,80 @@ interface ImageUploadProps {
 
 export function ImageUpload({ onUpload, currentImage }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
-  const handleUpload = (result: any) => {
-    setIsUploading(false);
-    
-    if (!result.info || result.event !== "success") {
+  const handleUpload = async (file: File) => {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast.error('Invalid file type', {
+        description: 'Please upload an image file'
+      });
       return;
     }
 
-    const url = result.info.secure_url;
-    onUpload(url);
-    showToast.success('Image uploaded successfully');
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      showToast.error('File too large', {
+        description: 'Image must be less than 5MB'
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+
+      // Upload to Cloudinary
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: 'POST',
+          body: formData
+        }
+      );
+
+      if (!response.ok) throw new Error('Upload failed');
+
+      const data = await response.json();
+      onUpload(data.secure_url);
+      showToast.success('Image uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      showToast.error('Upload failed', {
+        description: 'Please try again'
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleUpload(file);
+    }
+  }, []);
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleUpload(file);
+    }
   };
 
   return (
@@ -36,52 +99,47 @@ export function ImageUpload({ onUpload, currentImage }: ImageUploadProps) {
         </div>
       )}
 
-      <CldUploadWidget
-        uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-        onUpload={handleUpload}
-        options={{
-          maxFiles: 1,
-          sources: ["local", "url", "camera"],
-          resourceType: "image",
-          clientAllowedFormats: ["jpg", "jpeg", "png", "gif"],
-          maxFileSize: 5000000,
-          showAdvancedOptions: false,
-          multiple: false,
-          styles: {
-            palette: {
-              window: "#FFFFFF",
-              windowBorder: "#90A0B3",
-              tabIcon: "#0078FF",
-              menuIcons: "#5A616A",
-              textDark: "#000000",
-              textLight: "#FFFFFF",
-              link: "#0078FF",
-              action: "#FF620C",
-              inactiveTabIcon: "#0E2F5A",
-              error: "#F44235",
-              inProgress: "#0078FF",
-              complete: "#20B832",
-              sourceBg: "#E4EBF1"
-            }
-          }
-        }}
-      >
-        {({ open }) => (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              setIsUploading(true);
-              open();
-            }}
-            disabled={isUploading}
-            className="w-full sm:w-auto"
-          >
-            <ImagePlus className="w-4 h-4 mr-2" />
-            {isUploading ? 'Uploading...' : 'Upload Image'}
-          </Button>
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={cn(
+          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
+          isDragging ? "border-primary bg-primary/5" : "border-slate-200",
+          "hover:border-primary hover:bg-primary/5"
         )}
-      </CldUploadWidget>
+      >
+        <div className="flex flex-col items-center gap-2">
+          <Upload className={cn(
+            "w-8 h-8 transition-colors",
+            isDragging ? "text-primary" : "text-slate-400"
+          )} />
+          <p className="text-sm text-slate-600">
+            Drag and drop an image here, or
+          </p>
+          <label className="cursor-pointer">
+            <input
+              type="file"
+              className="hidden"
+              accept="image/*"
+              onChange={handleFileSelect}
+              disabled={isUploading}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isUploading}
+              className="mt-2"
+            >
+              <ImagePlus className="w-4 h-4 mr-2" />
+              {isUploading ? 'Uploading...' : 'Browse Files'}
+            </Button>
+          </label>
+          <p className="text-xs text-slate-500 mt-2">
+            Maximum file size: 5MB
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
