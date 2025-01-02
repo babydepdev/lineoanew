@@ -19,7 +19,7 @@ export function HeroSection() {
 
           <FadeIn delay={0.2}>
             <p className="text-xl text-gray-300 mb-12 max-w-3xl mx-auto text-center">
-              Frontend, backend, and onchain tools to build complete web3 apps — on every EVM chain.
+              onchain tools to build complete web3 apps — on every EVM chain.
             </p>
           </FadeIn>
 
