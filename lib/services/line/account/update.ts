@@ -12,10 +12,19 @@ export async function updateLineAccount(
   try {
     const account = await prisma.lineAccount.update({
       where: { id },
-      data: params,
+      data: {
+        name: params.name,
+        companyName: params.companyName,
+        imageUrl: params.imageUrl,
+        channelAccessToken: params.channelAccessToken,
+        channelSecret: params.channelSecret,
+        active: params.active
+      },
       select: {
         id: true,
         name: true,
+        companyName: true,
+        imageUrl: true,
         channelSecret: true,
         channelAccessToken: true,
         active: true

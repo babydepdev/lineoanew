@@ -1,6 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { useState } from 'react';
+import { ImageUpload } from './ImageUpload';
 import { LineAccount } from '@/app/types/line';
 import { showToast } from '@/app/utils/toast';
 
@@ -18,6 +19,7 @@ export function LineAccountSettingsDialog({
   onUpdate
 }: LineAccountSettingsDialogProps) {
   const [companyName, setCompanyName] = useState(account.companyName || '');
+  const [imageUrl, setImageUrl] = useState(account.imageUrl || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -29,7 +31,10 @@ export function LineAccountSettingsDialog({
       const response = await fetch(`/api/line/accounts/${account.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companyName: companyName.trim() })
+        body: JSON.stringify({ 
+          companyName: companyName.trim(),
+          imageUrl: imageUrl 
+        })
       });
 
       if (!response.ok) {
@@ -55,6 +60,16 @@ export function LineAccountSettingsDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-600">
+              Account Image
+            </label>
+            <ImageUpload 
+              onUpload={setImageUrl}
+              currentImage={imageUrl || account.imageUrl}
+            />
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-600">
               Company/Shop Name

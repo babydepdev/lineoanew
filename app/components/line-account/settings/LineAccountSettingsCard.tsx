@@ -17,7 +17,16 @@ export function LineAccountSettingsCard({ account, onUpdate }: LineAccountSettin
     <>
     <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
       <div className="flex items-start justify-between">
-        <div>
+        <div className="flex items-center gap-4">
+          {account.imageUrl && (
+            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+              <img 
+                src={account.imageUrl} 
+                alt={account.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-slate-900">{account.name}</h2>
             <Badge variant={account.active ? "success" : "secondary"}>
