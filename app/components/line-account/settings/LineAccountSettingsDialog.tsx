@@ -88,7 +88,7 @@ export function LineAccountSettingsDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save Changes'}
+              {isSubmitting ? 'Saving....' : 'Save Changes'}
             </Button>
           </div>
         </form>
