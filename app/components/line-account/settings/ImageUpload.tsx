@@ -12,6 +12,18 @@ interface ImageUploadProps {
 export function ImageUpload({ onUpload, currentImage }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
 
+  const handleUpload = (result: any) => {
+    setIsUploading(false);
+    
+    if (!result.info || result.event !== "success") {
+      return;
+    }
+
+    const url = result.info.secure_url;
+    onUpload(url);
+    showToast.success('Image uploaded successfully');
+  };
+
   return (
     <div className="space-y-4">
       {currentImage && (
@@ -26,18 +38,32 @@ export function ImageUpload({ onUpload, currentImage }: ImageUploadProps) {
 
       <CldUploadWidget
         uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET}
-        onUpload={(result: any) => {
-          setIsUploading(false);
-          if (result.event !== "success") return;
-          
-          const url = result.info.secure_url;
-          onUpload(url);
-          showToast.success('Image uploaded successfully');
-        }}
+        onUpload={handleUpload}
         options={{
           maxFiles: 1,
+          sources: ["local", "url", "camera"],
           resourceType: "image",
-          folder: "line-accounts",
+          clientAllowedFormats: ["jpg", "jpeg", "png", "gif"],
+          maxFileSize: 5000000,
+          showAdvancedOptions: false,
+          multiple: false,
+          styles: {
+            palette: {
+              window: "#FFFFFF",
+              windowBorder: "#90A0B3",
+              tabIcon: "#0078FF",
+              menuIcons: "#5A616A",
+              textDark: "#000000",
+              textLight: "#FFFFFF",
+              link: "#0078FF",
+              action: "#FF620C",
+              inactiveTabIcon: "#0E2F5A",
+              error: "#F44235",
+              inProgress: "#0078FF",
+              complete: "#20B832",
+              sourceBg: "#E4EBF1"
+            }
+          }
         }}
       >
         {({ open }) => (
