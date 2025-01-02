@@ -35,11 +35,11 @@ export async function PATCH(
     const result = await updateLineAccount(id, {
       companyName: body.companyName?.trim() || null,
       imageUrl: imageUrl || null,
-    });
+    }); 
 
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error || "Failed to update account" },
+        { error: result.error || "Failed to up date account" },
         { status: 500 }
       );
     }
