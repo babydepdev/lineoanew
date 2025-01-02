@@ -3,6 +3,8 @@ import { ImagePlus, Upload } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { showToast } from '@/app/utils/toast';
 import { cn } from '@/lib/utils';
+import { validateImageFile } from '@/lib/utils/fileValidation';
+import { uploadToCloudinary } from '@/lib/services/cloudinary/upload';
 
 interface ImageUploadProps {
   onUpload: (url: string) => void;
@@ -14,16 +16,11 @@ export function ImageUpload({ onUpload, currentImage }: ImageUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleUpload = async (file: File) => {
-    if (!file || !file.type.startsWith('image/')) {
-      showToast.error('Invalid file type', {
-        description: 'Please upload an image file'
-      });
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      showToast.error('File too large', {
-        description: 'Image must be less than 5MB'
+    // Validate file
+    const validation = validateImageFile(file);
+    if (!validation.isValid) {
+      showToast.error('Invalid file', {
+        description: validation.error
       });
       return;
     }
@@ -31,29 +28,19 @@ export function ImageUpload({ onUpload, currentImage }: ImageUploadProps) {
     try {
       setIsUploading(true);
 
-      // Create form data
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
-
       // Upload to Cloudinary
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: 'POST',
-          body: formData
-        }
-      );
+      const result = await uploadToCloudinary(file);
+      
+      if (!result.success || !result.url) {
+        throw new Error(result.error || 'Upload failed');
+      }
 
-      if (!response.ok) throw new Error('Upload failed');
-
-      const data = await response.json();
-      onUpload(data.secure_url);
+      onUpload(result.url);
       showToast.success('Image uploaded successfully');
     } catch (error) {
       console.error('Upload error:', error);
       showToast.error('Upload failed', {
-        description: 'Please try again'
+        description: error instanceof Error ? error.message : 'Please try again'
       });
     } finally {
       setIsUploading(false);
